@@ -1,0 +1,9 @@
+name: '${projectName}'
+version: '${projectVersion}'
+main: '${projectMainClass}'
+# TODO Configure minecraft api version
+api-version: 1.19
+# TODO Configure authors
+authors: [ CKATEPTb ]
+# TODO Configure description
+description: Project template aimed at creating minecraft plugins with the ability to publish to the maven repository.
