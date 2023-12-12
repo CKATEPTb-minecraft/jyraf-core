@@ -15,39 +15,40 @@ plugins {
     id("com.github.johnrengelman.shadow").version("7.1.0")
     id("io.github.gradle-nexus.publish-plugin").version("1.1.0")
     // https://github.com/PaperMC/paperweight
-    id("io.papermc.paperweight.userdev").version("1.3.8")
+//    id("io.papermc.paperweight.userdev").version("1.5.11")
 }
-// TODO Change the group to the one you need
 group = "dev.ckateptb.minecraft"
-// TODO Control project version according to https://semver.org/spec/v2.0.0.html
 version = "1.0.0-SNAPSHOT"
 
-val rootPackage = "${project.group}.${project.name.toLowerCase()}"
+val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
 
 repositories {
     mavenCentral()
-    // TODO You can add the repositories you need
-//    maven("https://repo.animecraft.fun/repository/maven-snapshots/")
+//    maven("https://repo.jyraf.com/repository/maven-snapshots/")
+    maven("https://repo.codemc.io/repository/nms/")
 }
 
 dependencies {
-    // TODO Configure papermc version
-    paperDevBundle("1.19.2-R0.1-SNAPSHOT")
+//    paperDevBundle("1.20.2-R0.1-SNAPSHOT")
 
-    // TODO Using the line below you can add dependencies.
-    //  Plus, instead of the version, it will give you the latest version.
-//    implementation("com.example.group:example-library:+")
+    implementation("io.projectreactor:reactor-core:3.6.1")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8") {
+        exclude(module = "checker-qual")
+    }
+
+    compileOnly("org.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
+
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
 }
 
 tasks {
     shadowJar {
-        // TODO If you need to embed an external library, specify its initial package instead of <com> (2 places)
-//        relocate("com", "${internal}.com")
-//        ...
-//        relocate("com", "${internal}.com")
+        relocate("org.reactivestreams", "${rootPackage}.reactivestreams")
+        relocate("reactor", "${rootPackage}.reactor")
+        relocate("com.github.benmanes.caffeine.cache", "${rootPackage}.cache")
+        relocate("com.google.errorprone", "${internal}.errorprone")
     }
     register<ProGuardTask>("shrink") {
         dependsOn(shadowJar)
@@ -68,13 +69,13 @@ tasks {
         // Uncomment next line if u need only embed, without shrink
 //        dependsOn(reobfJar, shadowJar)
         // Comment next line if u need only embed, without shrink
-        dependsOn(reobfJar, "shrink")
+        dependsOn(/*reobfJar,*/ "shrink")
     }
     publish {
         // Uncomment next line if u need only embed
 //        dependsOn(reobfJar, shadowJar)
         // Comment next line if u need only embed, without shrink
-        dependsOn(reobfJar, "shrink")
+        dependsOn(/*reobfJar,*/ "shrink")
     }
     withType<JavaCompile> {
         options.encoding = "UTF-8"
@@ -84,7 +85,7 @@ tasks {
             expand(
                 "projectVersion" to project.version,
                 "projectName" to project.name,
-                "projectMainClass" to "${rootPackage}.${project.name}"
+                "projectMainClass" to "${rootPackage}.Jyraf"
             )
         }
         from("LICENSE") {
@@ -95,7 +96,7 @@ tasks {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(16))
     }
 }
 
@@ -111,12 +112,9 @@ publishing {
 
 nexusPublishing {
     repositories {
-        create("myNexus") {
-            // TODO Customize maven-publish to suit your needs.
-            //  As an example, here is the setting for nexus + github-action.
-            //  For the latter, you need to configure github-secrets
-            nexusUrl.set(uri("https://repo.animecraft.fun/"))
-            snapshotRepositoryUrl.set(uri("https://repo.animecraft.fun/repository/maven-snapshots/"))
+        create("jyrafRepo") {
+            nexusUrl.set(uri("https://repo.jyraf.com/"))
+            snapshotRepositoryUrl.set(uri("https://repo.jyraf.com/repository/maven-snapshots/"))
             username.set(System.getenv("NEXUS_USERNAME"))
             password.set(System.getenv("NEXUS_PASSWORD"))
         }

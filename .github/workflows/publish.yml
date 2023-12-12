@@ -21,12 +21,8 @@ jobs:
           distribution: "liberica"
       - name: Make gradlew executable
         run: chmod +x ./gradlew
-#         TODO Uncomment this field if you want to build only your project
-#      - name: Build with Gradle
-#        run: ./gradlew clean build
-#         TODO Uncomment this field if you want to build and publish your project
-#      - name: Build and Publish with Gradle
-#        run: ./gradlew clean build publishToMyNexus
-#        env: # TODO Configure you own github-secrets
-#          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-#          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      - name: Build and Publish with Gradle
+        run: ./gradlew clean build publishToMyNexus
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
