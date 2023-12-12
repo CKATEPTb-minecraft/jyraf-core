@@ -1,4 +1,4 @@
-package dev.ckateptb.minecraft.jyraf.container;
+package dev.ckateptb.minecraft.jyraf.container.reactive;
 
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -7,6 +7,7 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Autowired;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.container.annotation.PostConstruct;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Qualifier;
+import dev.ckateptb.minecraft.jyraf.container.api.AsyncContainer;
 import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class ReactiveContainer implements Container {
+public class ReactiveContainer implements AsyncContainer {
     private final AsyncCache<BeanKey<?>, Object> beans = Caffeine.newBuilder().buildAsync();
     private final AsyncCache<BeanKey<?>, Plugin> owners = Caffeine.newBuilder().buildAsync();
     private final ConcurrentLinkedQueue<ComponentRegisterCallback> handlers = new ConcurrentLinkedQueue<>();
@@ -93,6 +94,7 @@ public class ReactiveContainer implements Container {
         }
     }
 
+    @Override
     public void initialize() {
         Flux.fromIterable(this.owners.asMap().keySet())
                 .flatMap(this::registerBean)
@@ -182,7 +184,7 @@ public class ReactiveContainer implements Container {
     }
 
     private BeanKey<?> getBeanKey(Parameter parameter, Class<?> component) {
-        AtomicReference<String> qualifier = new AtomicReference<>(Container.DEFAULT_QUALIFIER);
+        AtomicReference<String> qualifier = new AtomicReference<>(Qualifier.DEFAULT_QUALIFIER);
         Qualifier qualifierAnnotation = parameter.getAnnotation(Qualifier.class);
         if (qualifierAnnotation != null) {
             qualifier.set(qualifierAnnotation.value());

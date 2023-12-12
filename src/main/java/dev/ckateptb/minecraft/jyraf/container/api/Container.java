@@ -1,21 +1,20 @@
-package dev.ckateptb.minecraft.jyraf.container;
-
+package dev.ckateptb.minecraft.jyraf.container.api;
 
 import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
 import org.bukkit.plugin.Plugin;
-import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public interface Container {
-    public static final String DEFAULT_QUALIFIER = "_DEFAULT";
+import static dev.ckateptb.minecraft.jyraf.container.annotation.Qualifier.DEFAULT_QUALIFIER;
 
-    default <T> Optional<Mono<T>> getBean(Class<T> beanClass) {
+interface Container {
+
+    default <T> Optional<?> getBean(Class<T> beanClass) {
         return this.getBean(beanClass, DEFAULT_QUALIFIER);
     }
 
-    <T> Optional<Mono<T>> getBean(Class<T> beanClass, String qualifier);
+    <T> Optional<?> getBean(Class<T> beanClass, String qualifier);
 
     default <T> void registerBean(Plugin plugin, T bean) {
         this.registerBean(plugin, bean, DEFAULT_QUALIFIER);
@@ -39,13 +38,15 @@ public interface Container {
 
     <P extends Plugin> void scan(P plugin, Predicate<String> filter, String... packages);
 
-    default <T> Optional<Mono<Plugin>> getOwner(Class<T> beanClass) {
+    default <T> Optional<?> getOwner(Class<T> beanClass) {
         return this.getOwner(beanClass, DEFAULT_QUALIFIER);
     }
 
-    <T> Optional<Mono<Plugin>> getOwner(Class<T> beanClass, String qualifier);
+    <T> Optional<?> getOwner(Class<T> beanClass, String qualifier);
 
     void addCallback(ComponentRegisterCallback callback);
 
     void removeCallback(ComponentRegisterCallback callback);
+
+    void initialize();
 }

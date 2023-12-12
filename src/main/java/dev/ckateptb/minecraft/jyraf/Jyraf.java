@@ -1,76 +1,72 @@
 package dev.ckateptb.minecraft.jyraf;
 
-import dev.ckateptb.minecraft.jyraf.container.ReactiveContainer;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import dev.ckateptb.minecraft.jyraf.container.IoC;
+import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
+import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import org.bukkit.Bukkit;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
-import reactor.core.Disposable;
+import org.bukkit.scheduler.BukkitScheduler;
 import reactor.core.scheduler.Scheduler;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class Jyraf extends JavaPlugin {
-    private static final AtomicReference<SyncScheduler> CACHED_SYNC = new AtomicReference<>();
+    private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
     private static Jyraf plugin;
-    private final ReactiveContainer container = new ReactiveContainer();
 
     public Jyraf() {
         Jyraf.plugin = this;
-        container.scan(this);
+        IoC.addCallback((component, qualifier, owner) -> {
+            if (component instanceof Listener listener) {
+                Bukkit.getPluginManager().registerEvents(listener, owner);
+            }
+            Class<?> clazz = component.getClass();
+            for (Method method : clazz.getDeclaredMethods()) {
+                if (!method.isAnnotationPresent(Schedule.class)) continue;
+                method.setAccessible(true);
+                try {
+                    Schedule annotation = method.getAnnotation(Schedule.class);
+                    int fixedRate = annotation.fixedRate();
+                    int initialDelay = annotation.initialDelay();
+                    boolean async = annotation.async();
+                    BukkitScheduler scheduler = Bukkit.getScheduler();
+                    Method task = scheduler.getClass()
+                            .getDeclaredMethod(async ? "runTaskTimerAsynchronously" : "runTaskTimer",
+                                    Plugin.class,
+                                    Runnable.class,
+                                    long.class,
+                                    long.class);
+                    task.setAccessible(true);
+                    task.invoke(scheduler, plugin, (Runnable) () -> {
+                        try {
+                            method.invoke(component);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            e.printStackTrace();
+                        }
+                    }, initialDelay, fixedRate);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        IoC.scan(this);
     }
 
     @Override
     public void onEnable() {
-        System.out.println("Hello World");
-        container.initialize();
+        Bukkit.getScheduler().runTask(this, IoC::initialize);
     }
 
-    public static Scheduler syncScheduler() {
-        SyncScheduler syncScheduler = CACHED_SYNC.get();
-        if (syncScheduler != null) return syncScheduler;
-        syncScheduler = new SyncScheduler();
-        CACHED_SYNC.set(syncScheduler);
-        return syncScheduler;
+    public Scheduler syncScheduler() {
+        return syncScheduler(this);
     }
 
-    public static class SyncScheduler implements Scheduler {
-        @Override
-        public Disposable schedule(Runnable task) {
-            BukkitRunnable runnable = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    task.run();
-                }
-            };
-
-            if (Bukkit.isPrimaryThread()) runnable.run();
-            else runnable.runTaskLater(Jyraf.plugin, 0);
-            return new Disposable() {
-                @Override
-                public void dispose() {
-                    runnable.cancel();
-                }
-
-                @Override
-                public boolean isDisposed() {
-                    return runnable.isCancelled();
-                }
-            };
-        }
-
-        @Override
-        public Worker createWorker() {
-            return new Worker() {
-                @Override
-                public Disposable schedule(Runnable task) {
-                    return SyncScheduler.this.schedule(task);
-                }
-
-                @Override
-                public void dispose() {
-                    SyncScheduler.this.dispose();
-                }
-            };
-        }
+    public static Scheduler syncScheduler(Plugin plugin) {
+        return SCHEDULER_CACHE.get(plugin, SyncScheduler::new);
     }
 }

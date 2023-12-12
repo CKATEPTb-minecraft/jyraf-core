@@ -1,4 +1,4 @@
-package dev.ckateptb.minecraft.jyraf.container.annotation;
+package dev.ckateptb.minecraft.jyraf.schedule;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,7 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Component {
-    String value() default Qualifier.DEFAULT_QUALIFIER;
+@Target({ElementType.METHOD})
+public @interface Schedule {
+    int initialDelay();
+
+    int fixedRate();
+
+    boolean async() default false;
 }
