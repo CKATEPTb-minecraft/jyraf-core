@@ -12,15 +12,17 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Jyraf extends JavaPlugin {
     private static final AtomicReference<SyncScheduler> CACHED_SYNC = new AtomicReference<>();
     private static Jyraf plugin;
+    private final ReactiveContainer container = new ReactiveContainer();
 
     public Jyraf() {
         Jyraf.plugin = this;
-        new ReactiveContainer().scan(this);
+        container.scan(this);
     }
 
     @Override
     public void onEnable() {
         System.out.println("Hello World");
+        container.initialize();
     }
 
     public static Scheduler syncScheduler() {

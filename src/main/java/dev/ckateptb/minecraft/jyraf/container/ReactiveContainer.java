@@ -5,16 +5,23 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.reflect.ClassPath;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Autowired;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
+import dev.ckateptb.minecraft.jyraf.container.annotation.PostConstruct;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Qualifier;
+import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.plugin.Plugin;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -23,12 +30,28 @@ import java.util.stream.Collectors;
 public class ReactiveContainer implements Container {
     private final AsyncCache<BeanKey<?>, Object> beans = Caffeine.newBuilder().buildAsync();
     private final AsyncCache<BeanKey<?>, Plugin> owners = Caffeine.newBuilder().buildAsync();
+    private final ConcurrentLinkedQueue<ComponentRegisterCallback> handlers = new ConcurrentLinkedQueue<>();
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> Optional<Mono<T>> getBean(Class<T> beanClass, String qualifier) {
         return Optional.ofNullable(this.beans.getIfPresent(new BeanKey<>(beanClass, qualifier)))
                 .map(future -> Mono.fromFuture((CompletableFuture<T>) future));
+    }
+
+    public <T> Optional<Mono<Plugin>> getOwner(Class<T> beanClass, String qualifier) {
+        return Optional.ofNullable(this.owners.getIfPresent(new BeanKey<>(beanClass, qualifier)))
+                .map(Mono::fromFuture);
+    }
+
+    @Override
+    public void addCallback(ComponentRegisterCallback callback) {
+        this.handlers.add(callback);
+    }
+
+    @Override
+    public void removeCallback(ComponentRegisterCallback callback) {
+        this.handlers.remove(callback);
     }
 
     @Override
@@ -63,36 +86,99 @@ public class ReactiveContainer implements Container {
                     })
                     .filter(Objects::nonNull)
                     .filter(clazz -> clazz.isAnnotationPresent(Component.class))
-                    .forEach(component -> {
-                        Component annotation = component.getAnnotation(Component.class);
-                        String qualifier = annotation.value();
-                        BeanKey<?> key = new BeanKey<>(component, qualifier);
-                        this.registerComponent(plugin, key, new LinkedList<>());
-                    });
+                    .forEach(component -> this.registerOwners(plugin, new BeanKey<>(
+                            component,
+                            component.getAnnotation(Component.class).value()
+                    ), new LinkedList<>()));
         }
-        log.info(this.owners.asMap().keySet().stream().map(Objects::toString).collect(Collectors.joining("\n")));
     }
 
-    private void registerComponent(Plugin plugin, BeanKey<?> key, Deque<BeanKey<?>> stacktrace) {
+    public void initialize() {
+        Flux.fromIterable(this.owners.asMap().keySet())
+                .flatMap(this::registerBean)
+                .subscribe();
+    }
+
+    private <T> Mono<T> registerBean(BeanKey<T> key) {
+        Class<T> clazz = key.clazz();
+        String qualifier = key.qualifier();
+        Optional<Mono<T>> optional = this.getBean(clazz, qualifier);
+        if (optional.isPresent()) return optional.get();
+        Constructor<T> constructor = this.findConstructor(clazz);
+        return Flux.fromIterable(this.findParameters(constructor))
+                .flatMap(this::registerBean)
+                .collectList()
+                .mapNotNull(objects -> {
+                    try {
+                        return constructor.newInstance(objects.toArray());
+                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .doOnNext(bean -> {
+                    Class<?> beanClass = bean.getClass();
+                    Method[] declaredMethods = beanClass.getDeclaredMethods();
+                    for (Method method : declaredMethods) {
+                        if (method.isAnnotationPresent(PostConstruct.class)) {
+                            method.setAccessible(true);
+                            if (method.getParameters().length > 0) {
+                                throw new RuntimeException("A method " + method.getName() +
+                                        " annotated with @PostConstruct in class " + beanClass +
+                                        "must not contain parameters.");
+                            }
+                            try {
+                                method.invoke(bean);
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                throw new RuntimeException(e);
+                            }
+                            return;
+                        }
+                    }
+                })
+                .zipWith(Mono.defer(() -> Mono.fromFuture(this.owners.asMap().get(key))))
+                .doOnNext(tuple -> {
+                    T bean = tuple.getT1();
+                    Plugin plugin = tuple.getT2();
+                    this.registerBean(plugin, bean, qualifier);
+                    this.handlers.forEach(callback -> {
+                        try {
+                            callback.handle(bean, qualifier, plugin);
+                        } catch (Throwable throwable) {
+                            throwable.printStackTrace();
+                        }
+                    });
+                })
+                .map(Tuple2::getT1);
+    }
+
+    private <T> void registerOwners(Plugin plugin, BeanKey<T> key, Deque<BeanKey<?>> stacktrace) {
         if (stacktrace.contains(key)) {
-            log.error("A circular dependency was detected for the class: {} with qualifier ({})", key.clazz().getName(), key.qualifier(), new RuntimeException());
-            return;
+            stacktrace.push(key);
+            throw new RuntimeException("A circular dependency was detected for the class " + key.clazz().getName() +
+                    " with qualifier \"" + key.qualifier() + "\": " + stacktrace
+                    .stream()
+                    .map(beanKey -> beanKey.clazz().toString() + " \"" + beanKey.qualifier() + "\"")
+                    .collect(Collectors.joining(" <- "))
+            );
         }
         if (this.owners.asMap().containsKey(key)) return;
         stacktrace.push(key);
         this.owners.put(key, CompletableFuture.completedFuture(plugin));
-        this.registerParameters(plugin, this.findConstructor(key.clazz()), stacktrace);
+        Constructor<T> constructor = this.findConstructor(key.clazz());
+        for (BeanKey<?> beanKey : findParameters(constructor)) {
+            this.registerOwners(plugin, beanKey, stacktrace);
+        }
         stacktrace.pop();
     }
 
-    private void registerParameters(Plugin plugin, Constructor<?> constructor, Deque<BeanKey<?>> stacktrace) {
+    private <T> List<BeanKey<?>> findParameters(Constructor<T> constructor) {
+        List<BeanKey<?>> keys = new ArrayList<>();
         Parameter[] parameters = constructor.getParameters();
         for (Parameter parameter : parameters) {
             Class<?> component = parameter.getType();
-            BeanKey<?> key = getBeanKey(parameter, component);
-            if (this.owners.asMap().containsKey(key)) continue;
-            this.registerComponent(plugin, key, stacktrace);
+            keys.add(this.getBeanKey(parameter, component));
         }
+        return keys;
     }
 
     private BeanKey<?> getBeanKey(Parameter parameter, Class<?> component) {

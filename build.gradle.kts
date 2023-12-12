@@ -45,8 +45,8 @@ dependencies {
 
 tasks {
     shadowJar {
-        relocate("org.reactivestreams", "${rootPackage}.reactivestreams")
-        relocate("reactor", "${rootPackage}.reactor")
+//        relocate("org.reactivestreams", "${rootPackage}.reactivestreams")
+//        relocate("reactor", "${rootPackage}.reactor")
         relocate("com.github.benmanes.caffeine.cache", "${rootPackage}.cache")
         relocate("com.google.errorprone", "${internal}.errorprone")
     }
