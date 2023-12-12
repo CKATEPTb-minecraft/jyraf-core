@@ -9,7 +9,6 @@ import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.example.config.ConfigExample;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;

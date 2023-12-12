@@ -96,6 +96,10 @@ public class Jyraf extends JavaPlugin {
         IoC.scan(this);
     }
 
+    public static Scheduler syncScheduler(Plugin plugin) {
+        return SCHEDULER_CACHE.get(plugin, SyncScheduler::new);
+    }
+
     @Override
     public void onEnable() {
         Bukkit.getScheduler().runTask(this, IoC::initialize);
@@ -103,9 +107,5 @@ public class Jyraf extends JavaPlugin {
 
     public Scheduler syncScheduler() {
         return syncScheduler(this);
-    }
-
-    public static Scheduler syncScheduler(Plugin plugin) {
-        return SCHEDULER_CACHE.get(plugin, SyncScheduler::new);
     }
 }
