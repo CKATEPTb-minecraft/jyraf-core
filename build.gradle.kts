@@ -15,7 +15,7 @@ plugins {
     id("com.github.johnrengelman.shadow").version("7.1.0")
     id("io.github.gradle-nexus.publish-plugin").version("1.1.0")
     // https://github.com/PaperMC/paperweight
-//    id("io.papermc.paperweight.userdev").version("1.5.11")
+    id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
 version = "1.0.0-SNAPSHOT"
@@ -26,18 +26,18 @@ val internal = "${rootPackage}.internal"
 repositories {
     mavenCentral()
 //    maven("https://repo.jyraf.com/repository/maven-snapshots/")
-    maven("https://repo.codemc.io/repository/nms/")
+//    maven("https://repo.codemc.io/repository/nms/")
 }
 
 dependencies {
-//    paperDevBundle("1.20.2-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.17.1-R0.1-SNAPSHOT")
 
     implementation("io.projectreactor:reactor-core:3.6.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8") {
         exclude(module = "checker-qual")
     }
 
-    compileOnly("org.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
+//    compileOnly("org.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
@@ -78,7 +78,8 @@ tasks {
         dependsOn(/*reobfJar,*/ "shrink")
     }
     withType<JavaCompile> {
-        options.encoding = "UTF-8"
+        options.encoding = Charsets.UTF_8.name()
+        options.release.set(16)
     }
     named<Copy>("processResources") {
         filesMatching("plugin.yml") {
