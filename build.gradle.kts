@@ -47,6 +47,8 @@ dependencies {
     // Commands
     implementation("cloud.commandframework:cloud-bukkit:2.0.0-SNAPSHOT")
     implementation("cloud.commandframework:cloud-annotations:2.0.0-SNAPSHOT")
+    // Math
+    implementation("org.apache.commons:commons-math3:3.6.1")
 
 //    compileOnly("org.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
 
