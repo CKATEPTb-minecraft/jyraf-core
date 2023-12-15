@@ -2,6 +2,7 @@ package dev.ckateptb.minecraft.jyraf.container;
 
 import dev.ckateptb.minecraft.jyraf.container.api.AsyncContainer;
 import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
+import dev.ckateptb.minecraft.jyraf.container.callback.ContainerInitializedCallback;
 import dev.ckateptb.minecraft.jyraf.container.reactive.ReactiveContainer;
 import org.bukkit.plugin.Plugin;
 import reactor.core.publisher.Mono;
@@ -10,7 +11,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 public class IoC {
-    private static final AsyncContainer CONTAINER = new ReactiveContainer();
+    private static final AsyncContainer CONTAINER = new ReactiveContainer("GLOBAL");
 
     public static <T> Optional<Mono<T>> getBean(Class<T> beanClass) {
         return CONTAINER.getBean(beanClass);
@@ -44,12 +45,20 @@ public class IoC {
         return CONTAINER.getOwner(beanClass, qualifier);
     }
 
-    public static void addCallback(ComponentRegisterCallback callback) {
-        CONTAINER.addCallback(callback);
+    public static void addComponentRegisterCallback(ComponentRegisterCallback callback) {
+        CONTAINER.addComponentRegisterCallback(callback);
     }
 
-    public static void removeCallback(ComponentRegisterCallback callback) {
-        CONTAINER.removeCallback(callback);
+    public static void removeComponentRegisterCallback(ComponentRegisterCallback callback) {
+        CONTAINER.removeComponentRegisterCallback(callback);
+    }
+
+    public static void addContainerInitializedCallback(ContainerInitializedCallback callback) {
+        CONTAINER.addContainerInitializedCallback(callback);
+    }
+
+    public static void removeContainerInitializedCallback(ContainerInitializedCallback callback) {
+        CONTAINER.removeContainerInitializedCallback(callback);
     }
 
     public static <T> void registerBean(Plugin plugin, T bean, String qualifier) {

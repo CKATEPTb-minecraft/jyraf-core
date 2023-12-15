@@ -9,6 +9,9 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.PostConstruct;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Qualifier;
 import dev.ckateptb.minecraft.jyraf.container.api.AsyncContainer;
 import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
+import dev.ckateptb.minecraft.jyraf.container.callback.ContainerInitializedCallback;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.plugin.Plugin;
@@ -28,10 +31,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 public class ReactiveContainer implements AsyncContainer {
     private final AsyncCache<BeanKey<?>, Object> beans = Caffeine.newBuilder().buildAsync();
     private final AsyncCache<BeanKey<?>, Plugin> owners = Caffeine.newBuilder().buildAsync();
-    private final ConcurrentLinkedQueue<ComponentRegisterCallback> handlers = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<ComponentRegisterCallback> componentRegisterHandlers = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<ContainerInitializedCallback> containerInitializedHandlers = new ConcurrentLinkedQueue<>();
+    @Getter
+    private final String name;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -46,13 +53,23 @@ public class ReactiveContainer implements AsyncContainer {
     }
 
     @Override
-    public void addCallback(ComponentRegisterCallback callback) {
-        this.handlers.add(callback);
+    public void addComponentRegisterCallback(ComponentRegisterCallback callback) {
+        this.componentRegisterHandlers.add(callback);
     }
 
     @Override
-    public void removeCallback(ComponentRegisterCallback callback) {
-        this.handlers.remove(callback);
+    public void removeComponentRegisterCallback(ComponentRegisterCallback callback) {
+        this.componentRegisterHandlers.remove(callback);
+    }
+
+    @Override
+    public void addContainerInitializedCallback(ContainerInitializedCallback callback) {
+        this.containerInitializedHandlers.add(callback);
+    }
+
+    @Override
+    public void removeContainerInitializedCallback(ContainerInitializedCallback callback) {
+        this.containerInitializedHandlers.remove(callback);
     }
 
     @Override
@@ -98,7 +115,8 @@ public class ReactiveContainer implements AsyncContainer {
     public void initialize() {
         Flux.fromIterable(this.owners.asMap().keySet())
                 .flatMap(this::registerBean)
-                .subscribe();
+                .count()
+                .subscribe(count -> containerInitializedHandlers.forEach(handler -> handler.handle(this, count)));
     }
 
     private <T> Mono<T> registerBean(BeanKey<T> key) {
@@ -142,15 +160,19 @@ public class ReactiveContainer implements AsyncContainer {
                     T bean = tuple.getT1();
                     Plugin plugin = tuple.getT2();
                     this.registerBean(plugin, bean, qualifier);
-                    this.handlers.forEach(callback -> {
-                        try {
-                            callback.handle(bean, qualifier, plugin);
-                        } catch (Throwable throwable) {
-                            throwable.printStackTrace();
-                        }
-                    });
+                    this.handleCallbacks(bean, qualifier, plugin);
                 })
                 .map(Tuple2::getT1);
+    }
+
+    private <T> void handleCallbacks(T bean, String qualifier, Plugin plugin) {
+        this.componentRegisterHandlers.forEach(callback -> {
+            try {
+                callback.handle(bean, qualifier, plugin);
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        });
     }
 
     private <T> void registerOwners(Plugin plugin, BeanKey<T> key, Deque<BeanKey<?>> stacktrace) {

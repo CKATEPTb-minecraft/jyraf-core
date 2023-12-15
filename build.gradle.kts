@@ -46,10 +46,15 @@ dependencies {
     // Commands
     implementation("me.lucko:commodore:2.2")
     implementation("cloud.commandframework:cloud-paper:2.0.0-SNAPSHOT")
-    implementation("cloud.commandframework:cloud-minecraft-extras:2.0.0-SNAPSHOT")
+    implementation("cloud.commandframework:cloud-minecraft-extras:2.0.0-SNAPSHOT") {
+        exclude(group = "com.google.code.gson")
+    }
     implementation("cloud.commandframework:cloud-annotations:2.0.0-SNAPSHOT")
     // Math
     implementation("org.apache.commons:commons-math3:3.6.1")
+    // Database
+    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("com.j256.ormlite:ormlite-jdbc:6.0")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
@@ -98,7 +103,7 @@ tasks {
             expand(
                 "projectVersion" to project.version,
                 "projectName" to project.name,
-                "projectMainClass" to "${rootPackage}.${project.name.toLowerCase().split('-')[0]}"
+                "projectMainClass" to "${rootPackage}.${project.name.split('-')[0]}"
             )
         }
         from("LICENSE") {

@@ -1,6 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.container.api;
 
 import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
+import dev.ckateptb.minecraft.jyraf.container.callback.ContainerInitializedCallback;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Optional;
@@ -8,7 +9,7 @@ import java.util.function.Predicate;
 
 import static dev.ckateptb.minecraft.jyraf.container.annotation.Qualifier.DEFAULT_QUALIFIER;
 
-interface Container {
+public interface Container {
 
     default <T> Optional<?> getBean(Class<T> beanClass) {
         return this.getBean(beanClass, DEFAULT_QUALIFIER);
@@ -44,9 +45,15 @@ interface Container {
 
     <T> Optional<?> getOwner(Class<T> beanClass, String qualifier);
 
-    void addCallback(ComponentRegisterCallback callback);
+    void addComponentRegisterCallback(ComponentRegisterCallback callback);
 
-    void removeCallback(ComponentRegisterCallback callback);
+    void removeComponentRegisterCallback(ComponentRegisterCallback callback);
+
+    void addContainerInitializedCallback(ContainerInitializedCallback callback);
+
+    void removeContainerInitializedCallback(ContainerInitializedCallback callback);
 
     void initialize();
+
+    String getName();
 }

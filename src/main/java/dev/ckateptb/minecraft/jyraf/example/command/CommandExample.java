@@ -29,7 +29,7 @@ public class CommandExample implements Command {
     public void help(CommandSender sender) {
         Stream.of(
                         "&7/jyraf reload - reload config file",
-                        "&8Config contains: " + config.getExample(),
+                        "&8Debug: " + config.getDebug(),
                         "&8PaperAPI: " + Environment.PAPER.check(),
                         "&8SpigotAPI: " + Environment.SPIGOT.check(),
                         "&8BukkitAPI: " + Environment.BUKKIT.check()

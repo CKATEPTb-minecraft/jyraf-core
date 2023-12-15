@@ -17,6 +17,7 @@ import java.io.File;
 public class ConfigExample extends HoconConfig {
     @Comment("This configuration file serves as an example for developers on how to use the API. If you are a server administrator, ignore this.")
     private String example = "ignore me!";
+    private Boolean debug = false;
 
     @PostConstruct
     @SneakyThrows
