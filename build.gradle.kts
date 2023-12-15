@@ -26,7 +26,6 @@ val internal = "${rootPackage}.internal"
 repositories {
     mavenCentral()
 //    maven("https://repo.jyraf.com/repository/maven-snapshots/")
-//    maven("https://repo.codemc.io/repository/nms/")
 }
 
 dependencies {
@@ -45,12 +44,12 @@ dependencies {
     implementation("org.spongepowered:configurate-xml:4.1.2")
     implementation("org.spongepowered:configurate-yaml:4.1.2")
     // Commands
-    implementation("cloud.commandframework:cloud-bukkit:2.0.0-SNAPSHOT")
+    implementation("me.lucko:commodore:2.2")
+    implementation("cloud.commandframework:cloud-paper:2.0.0-SNAPSHOT")
+    implementation("cloud.commandframework:cloud-minecraft-extras:2.0.0-SNAPSHOT")
     implementation("cloud.commandframework:cloud-annotations:2.0.0-SNAPSHOT")
     // Math
     implementation("org.apache.commons:commons-math3:3.6.1")
-
-//    compileOnly("org.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
@@ -99,7 +98,7 @@ tasks {
             expand(
                 "projectVersion" to project.version,
                 "projectName" to project.name,
-                "projectMainClass" to "${rootPackage}.Jyraf"
+                "projectMainClass" to "${rootPackage}.${project.name.toLowerCase().split('-')[0]}"
             )
         }
         from("LICENSE") {

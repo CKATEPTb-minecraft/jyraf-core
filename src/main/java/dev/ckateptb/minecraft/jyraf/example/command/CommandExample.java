@@ -7,6 +7,7 @@ import cloud.commandframework.annotations.CommandPermission;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
+import dev.ckateptb.minecraft.jyraf.environment.Environment;
 import dev.ckateptb.minecraft.jyraf.example.config.ConfigExample;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.ChatColor;
@@ -28,7 +29,10 @@ public class CommandExample implements Command {
     public void help(CommandSender sender) {
         Stream.of(
                         "&7/jyraf reload - reload config file",
-                        "&8Config contains: " + config.getExample()
+                        "&8Config contains: " + config.getExample(),
+                        "&8PaperAPI: " + Environment.PAPER.check(),
+                        "&8SpigotAPI: " + Environment.SPIGOT.check(),
+                        "&8BukkitAPI: " + Environment.BUKKIT.check()
                 )
                 .forEach(text -> sender.sendMessage(ChatColor.translateAlternateColorCodes('&', text)));
     }
