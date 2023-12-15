@@ -10,24 +10,12 @@ public enum Environment {
     SPIGOT("org.spigotmc.SpigotConfig"),
     BUKKIT;
 
+    private final static Cache<Environment, Boolean> CACHE = Caffeine.newBuilder().build();
     private final String[] checks;
 
     Environment(String... checks) {
         this.checks = checks;
     }
-
-    public boolean check() {
-        return CACHE.get(this, key -> this.checks.length == 0 || Arrays.stream(this.checks).anyMatch(clazz -> {
-            try {
-                Class.forName(clazz);
-                return true;
-            } catch (ClassNotFoundException e) {
-                return false;
-            }
-        }));
-    }
-
-    private final static Cache<Environment, Boolean> CACHE = Caffeine.newBuilder().build();
 
     public static boolean isPaper() {
         return Environment.PAPER.check();
@@ -39,5 +27,16 @@ public enum Environment {
 
     public static boolean isBukkit() {
         return Environment.BUKKIT.check();
+    }
+
+    public boolean check() {
+        return CACHE.get(this, key -> this.checks.length == 0 || Arrays.stream(this.checks).anyMatch(clazz -> {
+            try {
+                Class.forName(clazz);
+                return true;
+            } catch (ClassNotFoundException e) {
+                return false;
+            }
+        }));
     }
 }
