@@ -8,8 +8,8 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.container.annotation.PostConstruct;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Qualifier;
 import dev.ckateptb.minecraft.jyraf.container.api.AsyncContainer;
-import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
-import dev.ckateptb.minecraft.jyraf.container.callback.ContainerInitializedCallback;
+import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
+import dev.ckateptb.minecraft.jyraf.container.handler.ContainerInitializeHandler;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 public class ReactiveContainer implements AsyncContainer {
     private final AsyncCache<BeanKey<?>, Object> beans = Caffeine.newBuilder().buildAsync();
     private final AsyncCache<BeanKey<?>, Plugin> owners = Caffeine.newBuilder().buildAsync();
-    private final ConcurrentLinkedQueue<ComponentRegisterCallback> componentRegisterHandlers = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<ContainerInitializedCallback> containerInitializedHandlers = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<ComponentRegisterHandler> componentRegisterHandlers = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<ContainerInitializeHandler> containerInitializedHandlers = new ConcurrentLinkedQueue<>();
     @Getter
     private final String name;
 
@@ -51,23 +51,23 @@ public class ReactiveContainer implements AsyncContainer {
     }
 
     @Override
-    public void addComponentRegisterCallback(ComponentRegisterCallback callback) {
-        this.componentRegisterHandlers.add(callback);
+    public void addComponentRegisterHandler(ComponentRegisterHandler handler) {
+        this.componentRegisterHandlers.add(handler);
     }
 
     @Override
-    public void removeComponentRegisterCallback(ComponentRegisterCallback callback) {
-        this.componentRegisterHandlers.remove(callback);
+    public void removeComponentRegisterHandler(ComponentRegisterHandler handler) {
+        this.componentRegisterHandlers.remove(handler);
     }
 
     @Override
-    public void addContainerInitializedCallback(ContainerInitializedCallback callback) {
-        this.containerInitializedHandlers.add(callback);
+    public void addContainerInitializedHandler(ContainerInitializeHandler handler) {
+        this.containerInitializedHandlers.add(handler);
     }
 
     @Override
-    public void removeContainerInitializedCallback(ContainerInitializedCallback callback) {
-        this.containerInitializedHandlers.remove(callback);
+    public void removeContainerInitializedHandler(ContainerInitializeHandler handler) {
+        this.containerInitializedHandlers.remove(handler);
     }
 
     @Override
@@ -158,15 +158,15 @@ public class ReactiveContainer implements AsyncContainer {
                     T bean = tuple.getT1();
                     Plugin plugin = tuple.getT2();
                     this.registerBean(plugin, bean, qualifier);
-                    this.handleCallbacks(bean, qualifier, plugin);
+                    this.handleHandlers(bean, qualifier, plugin);
                 })
                 .map(Tuple2::getT1);
     }
 
-    private <T> void handleCallbacks(T bean, String qualifier, Plugin plugin) {
-        this.componentRegisterHandlers.forEach(callback -> {
+    private <T> void handleHandlers(T bean, String qualifier, Plugin plugin) {
+        this.componentRegisterHandlers.forEach(handler -> {
             try {
-                callback.handle(bean, qualifier, plugin);
+                handler.handle(bean, qualifier, plugin);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

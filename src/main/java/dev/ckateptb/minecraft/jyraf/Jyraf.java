@@ -26,11 +26,11 @@ public class Jyraf extends JavaPlugin {
 
     public Jyraf() {
         Jyraf.plugin = this;
-        IoC.addComponentRegisterCallback(new ListenerInjection());
-        IoC.addComponentRegisterCallback(new ScheduleInjection());
-        IoC.addComponentRegisterCallback(new CommandInjection());
-        IoC.addComponentRegisterCallback(new RepositoryInjection());
-        IoC.addContainerInitializedCallback((container, count) -> {
+        IoC.addComponentRegisterHandler(new ListenerInjection());
+        IoC.addComponentRegisterHandler(new ScheduleInjection());
+        IoC.addComponentRegisterHandler(new CommandInjection());
+        IoC.addComponentRegisterHandler(new RepositoryInjection());
+        IoC.addContainerInitializedHandler((container, count) -> {
                     plugin.getLogger().info("The " + container.getName() + " container has been initialized. Total " + count + " components.");
                     IoC.getBean(ConfigExample.class).orElse(Mono.empty()).subscribe(config -> {
                         if (!config.getDebug()) Logger.setGlobalLogLevel(Level.ERROR);

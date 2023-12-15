@@ -13,13 +13,13 @@ import cloud.commandframework.paper.PaperCommandManager;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ckateptb.minecraft.jyraf.command.Command;
-import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
+import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
 import dev.ckateptb.minecraft.jyraf.environment.Environment;
 import lombok.SneakyThrows;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
-public class CommandInjection implements ComponentRegisterCallback {
+public class CommandInjection implements ComponentRegisterHandler {
     private final static Cache<Plugin, AnnotationParser<CommandSender>> COMMAND_CACHE = Caffeine.newBuilder().build();
 
     @Override

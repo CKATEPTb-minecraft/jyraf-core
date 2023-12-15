@@ -1,8 +1,8 @@
 package dev.ckateptb.minecraft.jyraf.container;
 
 import dev.ckateptb.minecraft.jyraf.container.api.AsyncContainer;
-import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
-import dev.ckateptb.minecraft.jyraf.container.callback.ContainerInitializedCallback;
+import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
+import dev.ckateptb.minecraft.jyraf.container.handler.ContainerInitializeHandler;
 import dev.ckateptb.minecraft.jyraf.container.reactive.ReactiveContainer;
 import org.bukkit.plugin.Plugin;
 import reactor.core.publisher.Mono;
@@ -45,20 +45,20 @@ public class IoC {
         return CONTAINER.getOwner(beanClass, qualifier);
     }
 
-    public static void addComponentRegisterCallback(ComponentRegisterCallback callback) {
-        CONTAINER.addComponentRegisterCallback(callback);
+    public static void addComponentRegisterHandler(ComponentRegisterHandler handler) {
+        CONTAINER.addComponentRegisterHandler(handler);
     }
 
-    public static void removeComponentRegisterCallback(ComponentRegisterCallback callback) {
-        CONTAINER.removeComponentRegisterCallback(callback);
+    public static void removeComponentRegisterHandler(ComponentRegisterHandler handler) {
+        CONTAINER.removeComponentRegisterHandler(handler);
     }
 
-    public static void addContainerInitializedCallback(ContainerInitializedCallback callback) {
-        CONTAINER.addContainerInitializedCallback(callback);
+    public static void addContainerInitializedHandler(ContainerInitializeHandler handler) {
+        CONTAINER.addContainerInitializedHandler(handler);
     }
 
-    public static void removeContainerInitializedCallback(ContainerInitializedCallback callback) {
-        CONTAINER.removeContainerInitializedCallback(callback);
+    public static void removeContainerInitializedHandler(ContainerInitializeHandler handler) {
+        CONTAINER.removeContainerInitializedHandler(handler);
     }
 
     public static <T> void registerBean(Plugin plugin, T bean, String qualifier) {

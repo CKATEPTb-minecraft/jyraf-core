@@ -1,7 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.container.api;
 
-import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
-import dev.ckateptb.minecraft.jyraf.container.callback.ContainerInitializedCallback;
+import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
+import dev.ckateptb.minecraft.jyraf.container.handler.ContainerInitializeHandler;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Optional;
@@ -45,13 +45,13 @@ public interface Container {
 
     <T> Optional<?> getOwner(Class<T> beanClass, String qualifier);
 
-    void addComponentRegisterCallback(ComponentRegisterCallback callback);
+    void addComponentRegisterHandler(ComponentRegisterHandler handler);
 
-    void removeComponentRegisterCallback(ComponentRegisterCallback callback);
+    void removeComponentRegisterHandler(ComponentRegisterHandler handler);
 
-    void addContainerInitializedCallback(ContainerInitializedCallback callback);
+    void addContainerInitializedHandler(ContainerInitializeHandler handler);
 
-    void removeContainerInitializedCallback(ContainerInitializedCallback callback);
+    void removeContainerInitializedHandler(ContainerInitializeHandler handler);
 
     void initialize();
 

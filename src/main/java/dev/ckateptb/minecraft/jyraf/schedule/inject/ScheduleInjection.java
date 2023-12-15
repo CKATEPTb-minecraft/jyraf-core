@@ -1,6 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.schedule.inject;
 
-import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
+import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
 import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
 import lombok.SneakyThrows;
 import org.bukkit.plugin.Plugin;
@@ -8,7 +8,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.Method;
 
-public class ScheduleInjection implements ComponentRegisterCallback {
+public class ScheduleInjection implements ComponentRegisterHandler {
     @Override
     @SneakyThrows
     public void handle(Object component, String qualifier, Plugin owner) {

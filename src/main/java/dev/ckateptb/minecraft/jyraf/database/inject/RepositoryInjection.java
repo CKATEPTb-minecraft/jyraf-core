@@ -1,7 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.database.inject;
 
 import com.google.common.reflect.TypeToken;
-import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
+import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
 import dev.ckateptb.minecraft.jyraf.database.repository.Repository;
 import org.bukkit.plugin.Plugin;
 import reactor.util.function.Tuple2;
@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-public class RepositoryInjection implements ComponentRegisterCallback {
+public class RepositoryInjection implements ComponentRegisterHandler {
     @Override
     @SuppressWarnings("unchecked")
     public void handle(Object object, String qualifier, Plugin owner) {

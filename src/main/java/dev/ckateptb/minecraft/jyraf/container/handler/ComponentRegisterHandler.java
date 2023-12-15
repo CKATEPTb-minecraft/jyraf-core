@@ -1,7 +1,7 @@
-package dev.ckateptb.minecraft.jyraf.container.callback;
+package dev.ckateptb.minecraft.jyraf.container.handler;
 
 import org.bukkit.plugin.Plugin;
 
-public interface ComponentRegisterCallback {
+public interface ComponentRegisterHandler {
     void handle(Object component, String qualifier, Plugin owner);
 }
