@@ -13,7 +13,6 @@ import dev.ckateptb.minecraft.jyraf.container.callback.ContainerInitializedCallb
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.bukkit.plugin.Plugin;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -30,7 +29,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Slf4j
 @RequiredArgsConstructor
 public class ReactiveContainer implements AsyncContainer {
     private final AsyncCache<BeanKey<?>, Object> beans = Caffeine.newBuilder().buildAsync();

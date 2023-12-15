@@ -1,11 +1,6 @@
-import proguard.gradle.ProGuardTask
-
 buildscript {
     repositories {
         mavenCentral()
-    }
-    dependencies {
-        classpath("com.guardsquare:proguard-gradle:7.2.1")
     }
 }
 
@@ -28,15 +23,30 @@ repositories {
 //    maven("https://repo.jyraf.com/repository/maven-snapshots/")
 }
 
+configurations {
+    all {
+        exclude(module = "gson")
+        exclude(module = "error_prone_annotations")
+        exclude(module = "checker-qual")
+        exclude(module = "slf4j-api")
+        exclude(module = "brigadier")
+        exclude(module = "adventure-key")
+        exclude(module = "adventure-text-serializer-gson")
+        exclude(module = "adventure-text-serializer-legacy")
+        exclude(module = "adventure-text-serializer-plain")
+        exclude(module = "examination-api")
+        exclude(module = "examination-string")
+        exclude(module = "snakeyaml")
+    }
+}
+
 dependencies {
     paperweight.paperDevBundle("1.17.1-R0.1-SNAPSHOT")
 
     // Non-blocking threads
     implementation("io.projectreactor:reactor-core:3.6.1")
     // High performance cache
-    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8") {
-        exclude(module = "checker-qual")
-    }
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
     // Configuration
     implementation("org.spongepowered:configurate-gson:4.1.2")
     implementation("org.spongepowered:configurate-hocon:4.1.2")
@@ -46,9 +56,7 @@ dependencies {
     // Commands
     implementation("me.lucko:commodore:2.2")
     implementation("cloud.commandframework:cloud-paper:2.0.0-SNAPSHOT")
-    implementation("cloud.commandframework:cloud-minecraft-extras:2.0.0-SNAPSHOT") {
-        exclude(group = "com.google.code.gson")
-    }
+    implementation("cloud.commandframework:cloud-minecraft-extras:2.0.0-SNAPSHOT")
     implementation("cloud.commandframework:cloud-annotations:2.0.0-SNAPSHOT")
     // Math
     implementation("org.apache.commons:commons-math3:3.6.1")
@@ -62,37 +70,12 @@ dependencies {
 
 tasks {
     shadowJar {
-//        relocate("org.reactivestreams", "${rootPackage}.reactivestreams")
-//        relocate("reactor", "${rootPackage}.reactor")
-//        relocate("com.github.benmanes.caffeine.cache", "${rootPackage}.cache")
-//        relocate("com.google.errorprone", "${internal}.errorprone")
-    }
-    register<ProGuardTask>("shrink") {
-        dependsOn(shadowJar)
-        injars(shadowJar.get().outputs.files)
-        outjars("${project.buildDir}/libs/${project.name}-${project.version}.jar")
-
-        ignorewarnings()
-
-        libraryjars("${System.getProperty("java.home")}/jmods")
-
-        keep(mapOf("includedescriptorclasses" to true), "public class !${internal}.** { *; }")
-        keepattributes("RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations,RuntimeVisibleTypeAnnotations")
-
-        dontobfuscate()
-        dontoptimize()
     }
     build {
-        // Uncomment next line if u need only embed, without shrink
         dependsOn(reobfJar, shadowJar)
-        // Comment next line if u need only embed, without shrink
-//        dependsOn(reobfJar, "shrink")
     }
     publish {
-        // Uncomment next line if u need only embed
         dependsOn(reobfJar, shadowJar)
-        // Comment next line if u need only embed, without shrink
-//        dependsOn(reobfJar, "shrink")
     }
     withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
@@ -101,9 +84,9 @@ tasks {
     named<Copy>("processResources") {
         filesMatching("plugin.yml") {
             expand(
-                "projectVersion" to project.version,
-                "projectName" to project.name,
-                "projectMainClass" to "${rootPackage}.${project.name.split('-')[0]}"
+                    "projectVersion" to project.version,
+                    "projectName" to project.name,
+                    "projectMainClass" to "${rootPackage}.${project.name.split('-')[0]}"
             )
         }
         from("LICENSE") {
@@ -122,7 +105,7 @@ publishing {
     publications {
         publications.create<MavenPublication>("mavenJava") {
             artifacts {
-                artifact(tasks.getByName("shrink").outputs.files.singleFile)
+                artifact(tasks.getByName("shadowJar").outputs.files.singleFile)
             }
         }
     }

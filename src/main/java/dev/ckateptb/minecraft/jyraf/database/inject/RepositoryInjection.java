@@ -1,6 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.database.inject;
 
-import com.google.gson.reflect.TypeToken;
+import com.google.common.reflect.TypeToken;
 import dev.ckateptb.minecraft.jyraf.container.callback.ComponentRegisterCallback;
 import dev.ckateptb.minecraft.jyraf.database.repository.Repository;
 import org.bukkit.plugin.Plugin;
@@ -41,7 +41,7 @@ public class RepositoryInjection implements ComponentRegisterCallback {
         list.add(repositoryClass.getGenericSuperclass());
         list.addAll(Arrays.asList(repositoryClass.getGenericInterfaces()));
         return list.stream()
-                .map(TypeToken::get)
+                .map(TypeToken::of)
                 .filter(typeToken -> Repository.class.isAssignableFrom(typeToken.getRawType()))
                 .map(TypeToken::getType)
                 .flatMap(type -> {

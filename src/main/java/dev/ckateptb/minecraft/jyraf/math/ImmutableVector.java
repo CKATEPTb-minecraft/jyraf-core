@@ -2,13 +2,13 @@ package dev.ckateptb.minecraft.jyraf.math;
 
 import com.google.common.primitives.Doubles;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import lombok.NonNull;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
 
 public class ImmutableVector extends Vector {
     public static final ImmutableVector ZERO = new ImmutableVector(0, 0, 0);
@@ -88,90 +88,90 @@ public class ImmutableVector extends Vector {
     }
 
     @Override
-    public @NotNull ImmutableVector add(@NotNull Vector other) {
+    public @NonNull ImmutableVector add(@NonNull Vector other) {
         return this.add(other.getX(), other.getY(), other.getZ());
     }
 
-    public @NotNull ImmutableVector add(double x, double y, double z) {
+    public @NonNull ImmutableVector add(double x, double y, double z) {
         return new ImmutableVector(this.x + x, this.y + y, this.z + z);
     }
 
     @Override
-    public @NotNull ImmutableVector subtract(@NotNull Vector other) {
+    public @NonNull ImmutableVector subtract(@NonNull Vector other) {
         return new ImmutableVector(x - other.getX(), y - other.getY(), z - other.getZ());
     }
 
     @Override
-    public @NotNull ImmutableVector multiply(@NotNull Vector other) {
+    public @NonNull ImmutableVector multiply(@NonNull Vector other) {
         return new ImmutableVector(x * other.getX(), y * other.getY(), z * other.getZ());
     }
 
     @Override
-    public @NotNull ImmutableVector divide(@NotNull Vector other) {
+    public @NonNull ImmutableVector divide(@NonNull Vector other) {
         return new ImmutableVector(x / other.getX(), y / other.getY(), z / other.getZ());
     }
 
     @Override
-    public @NotNull ImmutableVector copy(@NotNull Vector other) {
+    public @NonNull ImmutableVector copy(@NonNull Vector other) {
         return ImmutableVector.of(other);
     }
 
     @Override
-    public float angle(@NotNull Vector other) {
+    public float angle(@NonNull Vector other) {
         double dot = Doubles.constrainToRange(dot(other) / (length() * other.length()), -1.0, 1.0);
 
         return (float) FastMath.acos(dot);
     }
 
     @Override
-    public @NotNull ImmutableVector midpoint(@NotNull Vector other) {
+    public @NonNull ImmutableVector midpoint(@NonNull Vector other) {
         return this.getMidpoint(other);
     }
 
     @Override
-    public @NotNull ImmutableVector getMidpoint(@NotNull Vector other) {
+    public @NonNull ImmutableVector getMidpoint(@NonNull Vector other) {
         return new ImmutableVector((x + other.getX()) / 2, (y + other.getY()) / 2, (z + other.getZ()) / 2);
     }
 
     @Override
-    public @NotNull ImmutableVector multiply(int m) {
+    public @NonNull ImmutableVector multiply(int m) {
         return new ImmutableVector(x * m, y * m, z * m);
     }
 
     @Override
-    public @NotNull ImmutableVector multiply(double m) {
+    public @NonNull ImmutableVector multiply(double m) {
         return new ImmutableVector(x * m, y * m, z * m);
     }
 
     @Override
-    public @NotNull ImmutableVector multiply(float m) {
+    public @NonNull ImmutableVector multiply(float m) {
         return new ImmutableVector(x * m, y * m, z * m);
     }
 
     @Override
-    public @NotNull ImmutableVector crossProduct(@NotNull Vector other) {
+    public @NonNull ImmutableVector crossProduct(@NonNull Vector other) {
         return this.getCrossProduct(other);
     }
 
     @Override
-    public @NotNull ImmutableVector getCrossProduct(@NotNull Vector other) {
+    public @NonNull ImmutableVector getCrossProduct(@NonNull Vector other) {
         return new ImmutableVector(y * other.getZ() - other.getY() * z, z * other.getX() - other.getZ() * x, x * other.getY() - other.getX() * y);
     }
 
     @Override
-    public @NotNull ImmutableVector normalize() {
+    public @NonNull ImmutableVector normalize() {
         double length = length();
         return new ImmutableVector(x / length, y / length, z / length);
     }
 
-    public @NotNull ImmutableVector normalize(ImmutableVector defaultVector) {
+    public @NonNull ImmutableVector normalize(ImmutableVector defaultVector) {
         if (lengthSquared() == 0) return defaultVector;
         double length = length();
         return new ImmutableVector(x / length, y / length, z / length);
     }
 
     @Override
-    public @NotNull ImmutableVector zero() {
+    public @NonNull ImmutableVector zero() {
         return ZERO;
     }
 
@@ -180,56 +180,56 @@ public class ImmutableVector extends Vector {
         return FastMath.abs(this.lengthSquared() - 1) < getEpsilon();
     }
 
-    public @NotNull ImmutableVector rotate(EulerAngle eulerAngle) {
+    public @NonNull ImmutableVector rotate(EulerAngle eulerAngle) {
         return rotatePitch(eulerAngle.getX()).rotateYaw(eulerAngle.getY()).rotateRoll(eulerAngle.getZ());
     }
 
-    public @NotNull ImmutableVector rotatePitch(double angle) {
+    public @NonNull ImmutableVector rotatePitch(double angle) {
         double angleCos = FastMath.cos(angle);
         double angleSin = FastMath.sin(angle);
         return new ImmutableVector(x, angleCos * y - angleSin * z, angleSin * y + angleCos * z);
     }
 
-    public @NotNull ImmutableVector rotateYaw(double angle) {
+    public @NonNull ImmutableVector rotateYaw(double angle) {
         double angleCos = FastMath.cos(angle);
         double angleSin = FastMath.sin(angle);
         return new ImmutableVector(angleCos * x - angleSin * z, y, angleSin * x + angleCos * z);
     }
 
-    public @NotNull ImmutableVector rotateRoll(double angle) {
+    public @NonNull ImmutableVector rotateRoll(double angle) {
         double angleCos = FastMath.cos(angle);
         double angleSin = FastMath.sin(angle);
         return new ImmutableVector(angleCos * x + angleSin * y, angleSin * -x + angleCos * y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector rotateAroundX(double angle) {
+    public @NonNull ImmutableVector rotateAroundX(double angle) {
         double angleCos = FastMath.cos(angle);
         double angleSin = FastMath.sin(angle);
         return new ImmutableVector(x, angleCos * y - angleSin * z, angleSin * y + angleCos * z);
     }
 
     @Override
-    public @NotNull ImmutableVector rotateAroundY(double angle) {
+    public @NonNull ImmutableVector rotateAroundY(double angle) {
         double angleCos = FastMath.cos(angle);
         double angleSin = FastMath.sin(angle);
         return new ImmutableVector(angleCos * x + angleSin * z, y, -angleSin * x + angleCos * z);
     }
 
     @Override
-    public @NotNull ImmutableVector rotateAroundZ(double angle) {
+    public @NonNull ImmutableVector rotateAroundZ(double angle) {
         double angleCos = FastMath.cos(angle);
         double angleSin = FastMath.sin(angle);
         return new ImmutableVector(angleCos * x - angleSin * y, angleSin * x + angleCos * y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector rotateAroundAxis(@NotNull Vector axis, double angle) throws IllegalArgumentException {
+    public @NonNull ImmutableVector rotateAroundAxis(@NonNull Vector axis, double angle) throws IllegalArgumentException {
         return this.rotateAroundNonUnitAxis(axis.isNormalized() ? axis : axis.normalize(), angle);
     }
 
     @Override
-    public @NotNull ImmutableVector rotateAroundNonUnitAxis(@NotNull Vector axis, double angle) throws IllegalArgumentException {
+    public @NonNull ImmutableVector rotateAroundNonUnitAxis(@NonNull Vector axis, double angle) throws IllegalArgumentException {
         double x2 = axis.getX(), y2 = axis.getY(), z2 = axis.getZ();
         double cosTheta = FastMath.cos(angle);
         double sinTheta = FastMath.sin(angle);
@@ -264,52 +264,52 @@ public class ImmutableVector extends Vector {
     }
 
     @Override
-    public @NotNull ImmutableVector setX(int x) {
+    public @NonNull ImmutableVector setX(int x) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector setX(double x) {
+    public @NonNull ImmutableVector setX(double x) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector setX(float x) {
+    public @NonNull ImmutableVector setX(float x) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector setY(int y) {
+    public @NonNull ImmutableVector setY(int y) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector setY(double y) {
+    public @NonNull ImmutableVector setY(double y) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector setY(float y) {
+    public @NonNull ImmutableVector setY(float y) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector setZ(int z) {
+    public @NonNull ImmutableVector setZ(int z) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector setZ(double z) {
+    public @NonNull ImmutableVector setZ(double z) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector setZ(float z) {
+    public @NonNull ImmutableVector setZ(float z) {
         return new ImmutableVector(x, y, z);
     }
 
     @Override
-    public @NotNull ImmutableVector clone() {
+    public @NonNull ImmutableVector clone() {
         return ImmutableVector.of(super.clone());
     }
 

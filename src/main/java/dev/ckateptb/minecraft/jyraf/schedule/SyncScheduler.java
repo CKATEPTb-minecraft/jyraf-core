@@ -1,10 +1,10 @@
 package dev.ckateptb.minecraft.jyraf.schedule;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.jetbrains.annotations.NotNull;
 import reactor.core.Disposable;
 import reactor.core.scheduler.Scheduler;
 
@@ -13,7 +13,7 @@ public class SyncScheduler implements Scheduler {
     private final Plugin plugin;
 
     @Override
-    public @NotNull Disposable schedule(@NotNull Runnable task) {
+    public @NonNull Disposable schedule(@NonNull Runnable task) {
         BukkitRunnable runnable = new BukkitRunnable() {
             @Override
             public void run() {
@@ -37,10 +37,10 @@ public class SyncScheduler implements Scheduler {
     }
 
     @Override
-    public @NotNull Worker createWorker() {
+    public @NonNull Worker createWorker() {
         return new Worker() {
             @Override
-            public @NotNull Disposable schedule(@NotNull Runnable task) {
+            public @NonNull Disposable schedule(@NonNull Runnable task) {
                 return SyncScheduler.this.schedule(task);
             }
 
