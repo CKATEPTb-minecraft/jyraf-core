@@ -33,6 +33,7 @@ public interface Collider {
 
     ImmutableVector getCenter();
 
+    @SuppressWarnings("unchecked")
     default <T extends Collider> T at(Location location) {
         return (T) this.at(ImmutableVector.of(location));
     }
