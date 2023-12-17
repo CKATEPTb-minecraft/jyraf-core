@@ -18,7 +18,7 @@ public class SQLiteRepository<Entity, Id> extends AbstractRepository<Entity, Id>
     @SneakyThrows
     protected HikariDataSource createDatasource() {
         Path path = this.path;
-        FileUtils.forceMkdir(path.getParent().toFile());
+        FileUtils.forceMkdirParent(path.toFile());
         HikariConfig config = new HikariConfig();
         config.setDriverClassName(SQLDialect.SQLITE.getDriver());
         config.setJdbcUrl(SQLDialect.SQLITE.getProtocol() + path);

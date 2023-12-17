@@ -21,24 +21,24 @@ val internal = "${rootPackage}.internal"
 repositories {
     mavenCentral()
 //    maven("https://repo.jyraf.com/repository/maven-snapshots/")
+    maven("https://repo.glowing.ink/snapshots")
 }
 
-configurations {
-    all {
-        exclude(module = "gson")
-        exclude(module = "error_prone_annotations")
-        exclude(module = "checker-qual")
-        exclude(module = "slf4j-api")
-        exclude(module = "brigadier")
-        exclude(module = "adventure-key")
-        exclude(module = "adventure-text-serializer-gson")
-        exclude(module = "adventure-text-serializer-legacy")
-        exclude(module = "adventure-text-serializer-plain")
-        exclude(module = "examination-api")
-        exclude(module = "examination-string")
-        exclude(module = "snakeyaml")
-    }
-}
+//configurations {
+//    all {
+//        exclude(module = "gson")
+//        exclude(module = "error_prone_annotations")
+//        exclude(module = "checker-qual")
+//        exclude(module = "slf4j-api")
+//        exclude(module = "brigadier")
+//        exclude(module = "adventure-key")
+//        exclude(module = "adventure-text-serializer-gson")
+//        exclude(module = "adventure-text-serializer-legacy")
+//        exclude(module = "adventure-text-serializer-plain")
+//        exclude(module = "examination-string")
+//        exclude(module = "snakeyaml")
+//    }
+//}
 
 dependencies {
     paperweight.paperDevBundle("1.17.1-R0.1-SNAPSHOT")
@@ -55,14 +55,18 @@ dependencies {
     implementation("org.spongepowered:configurate-yaml:4.1.2")
     // Commands
     implementation("me.lucko:commodore:2.2")
-    implementation("cloud.commandframework:cloud-paper:2.0.0-SNAPSHOT")
-    implementation("cloud.commandframework:cloud-minecraft-extras:2.0.0-SNAPSHOT")
-    implementation("cloud.commandframework:cloud-annotations:2.0.0-SNAPSHOT")
-    // Math
+    implementation("cloud.commandframework:cloud-paper:1.8.4")
+    implementation("cloud.commandframework:cloud-minecraft-extras:1.8.4")
+    implementation("cloud.commandframework:cloud-annotations:1.8.4")
+    // Commons
     implementation("org.apache.commons:commons-math3:3.6.1")
+    implementation("org.apache.commons:commons-lang3:3.14.0")
+    implementation("commons-io:commons-io:2.15.1")
     // Database
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("com.j256.ormlite:ormlite-jdbc:6.0")
+    // Text Components
+    implementation("ink.glowing:inkymessage:0.12.0-SNAPSHOT")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")

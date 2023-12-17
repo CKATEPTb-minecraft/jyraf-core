@@ -38,10 +38,7 @@ public class CommandInjection implements ComponentRegisterHandler {
                 }
             }
             new MinecraftExceptionHandler<CommandSender>()
-                    .withInvalidSyntaxHandler()
-                    .withInvalidSenderHandler()
-                    .withNoPermissionHandler()
-                    .withArgumentParsingHandler()
+                    .withDefaultHandlers()
                     .apply(manager, (sender) -> sender);
             return new AnnotationParser<>(
                     manager,
