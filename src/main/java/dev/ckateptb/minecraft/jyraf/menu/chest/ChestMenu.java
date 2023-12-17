@@ -1,6 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.menu.chest;
 
-import dev.ckateptb.minecraft.jyraf.component.Component;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.menu.AbstractMenu;
 import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
 import lombok.Getter;
@@ -20,7 +20,7 @@ public class ChestMenu extends AbstractMenu {
         Validate.notBlank(title, "Title can't be null");
         Validate.inclusiveBetween(1, 6, rows, "Rows must be from 1 to 6! ");
         int size = rows * 9;
-        this.inventory = Bukkit.createInventory(this, size, Component.of(title));
+        this.inventory = Bukkit.createInventory(this, size, Text.of(title));
         this.frames = new Frame[size];
     }
 

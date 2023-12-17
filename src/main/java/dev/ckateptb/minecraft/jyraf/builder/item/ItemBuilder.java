@@ -1,7 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.builder.item;
 
 import dev.ckateptb.minecraft.jyraf.builder.Builder;
-import dev.ckateptb.minecraft.jyraf.component.Component;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -26,7 +26,7 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder name(String name) {
-        this.meta.displayName(Component.of(name));
+        this.meta.displayName(Text.of(name));
         return this;
     }
 
@@ -40,7 +40,7 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder lore(List<String> lore) {
-        this.meta.lore(lore.stream().map(Component::of).toList());
+        this.meta.lore(lore.stream().map(Text::of).toList());
         return this;
     }
 

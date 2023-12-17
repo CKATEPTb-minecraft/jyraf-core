@@ -2,7 +2,7 @@ package dev.ckateptb.minecraft.jyraf.component;
 
 import org.apache.commons.lang3.Validate;
 
-public class Component {
+public class Text {
     private final static boolean legacy = Runtime.version().version().get(0) < 17;
 
     public static net.kyori.adventure.text.Component of(String string, String... replacements) {

@@ -22,22 +22,26 @@ repositories {
     mavenCentral()
 //    maven("https://repo.jyraf.com/repository/maven-snapshots/")
     maven("https://repo.glowing.ink/snapshots")
-    maven("https://repo.codemc.io/repository/nms/")
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.20.2-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.17.1-R0.1-SNAPSHOT")
 
     // Non-blocking threads
     implementation("io.projectreactor:reactor-core:3.6.1")
     // High performance cache
-    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8") {
+        exclude(module = "checker-qual")
+        exclude(module = "error_prone_annotations")
+    }
     // Configuration
     implementation("org.spongepowered:configurate-gson:4.1.2")
     implementation("org.spongepowered:configurate-hocon:4.1.2")
     implementation("org.spongepowered:configurate-jackson:4.1.2")
     implementation("org.spongepowered:configurate-xml:4.1.2")
-    implementation("org.spongepowered:configurate-yaml:4.1.2")
+    implementation("org.spongepowered:configurate-yaml:4.1.2") {
+        exclude(module = "snakeyaml")
+    }
     // Commands
     implementation("cloud.commandframework:cloud-paper:1.8.4")
     implementation("cloud.commandframework:cloud-minecraft-extras:1.8.4")
@@ -47,7 +51,9 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.14.0")
     implementation("commons-io:commons-io:2.15.1")
     // Database
-    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("com.zaxxer:HikariCP:5.1.0") {
+        exclude(module = "slf4j-api")
+    }
     implementation("com.j256.ormlite:ormlite-jdbc:6.0")
     // Text Components
     implementation("ink.glowing:inkymessage:0.12.0-SNAPSHOT")
@@ -58,6 +64,17 @@ dependencies {
 
 tasks {
     shadowJar {
+        relocate("org.apache.commons", "${internal}.commons")
+        relocate("com.github.benmanes.caffeine.cache", "${internal}.cache")
+        relocate("com.j256.ormlite", "${internal}.cache")
+        relocate("com.zaxxer.hikari", "${internal}.hikari")
+        relocate("ink.glowing.text", "${internal}.ink")
+        relocate("org.spongepowered.configurate", "${internal}.configurate")
+        relocate("cloud.commandframework", "${internal}.commands")
+        relocate("io.leangen.geantyref", "${internal}.geantyref")
+        relocate("com.fasterxml.jackson.core", "${internal}.jackson")
+        relocate("com.google.gson", "${internal}.gson")
+        relocate("com.typesafe.config", "${internal}.typesafe")
     }
     build {
         dependsOn(reobfJar, shadowJar)
@@ -67,7 +84,7 @@ tasks {
     }
     withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
-        options.release.set(17)
+        options.release.set(16)
     }
     named<Copy>("processResources") {
         filesMatching("plugin.yml") {
@@ -85,7 +102,7 @@ tasks {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(16))
     }
 }
 

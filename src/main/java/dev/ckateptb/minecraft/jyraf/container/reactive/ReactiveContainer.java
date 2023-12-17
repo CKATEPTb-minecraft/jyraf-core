@@ -10,6 +10,7 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Qualifier;
 import dev.ckateptb.minecraft.jyraf.container.api.AsyncContainer;
 import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
 import dev.ckateptb.minecraft.jyraf.container.handler.ContainerInitializeHandler;
+import dev.ckateptb.minecraft.jyraf.listener.PluginEnableListener;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -164,13 +165,18 @@ public class ReactiveContainer implements AsyncContainer {
     }
 
     private <T> void handleHandlers(T bean, String qualifier, Plugin plugin) {
-        this.componentRegisterHandlers.forEach(handler -> {
+        this.componentRegisterHandlers.forEach(handler -> this.executeWhenEnable(plugin, () -> {
             try {
                 handler.handle(bean, qualifier, plugin);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
-        });
+        }));
+    }
+
+    private void executeWhenEnable(Plugin plugin, Runnable runnable) {
+        if (plugin.isEnabled()) runnable.run();
+        else PluginEnableListener.getExecuteOnEnable().computeIfAbsent(plugin, key -> new HashSet<>()).add(runnable);
     }
 
     private <T> void registerOwners(Plugin plugin, BeanKey<T> key, Deque<BeanKey<?>> stacktrace) {

@@ -14,7 +14,9 @@ import cloud.commandframework.paper.PaperCommandManager;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ckateptb.minecraft.jyraf.command.Command;
+import dev.ckateptb.minecraft.jyraf.container.api.Container;
 import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
+import dev.ckateptb.minecraft.jyraf.container.handler.ContainerInitializeHandler;
 import dev.ckateptb.minecraft.jyraf.environment.Environment;
 import lombok.SneakyThrows;
 import net.kyori.adventure.text.Component;
@@ -22,11 +24,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
-import java.util.function.Function;
-
-public class CommandInjection implements ComponentRegisterHandler {
+public class CommandInjection implements ComponentRegisterHandler, ContainerInitializeHandler {
     private final static Cache<Plugin, AnnotationParser<CommandSender>> COMMAND_CACHE = Caffeine.newBuilder().build();
-    private final Function<CommandSender, CommandSender> mapperFunction = Function.identity();
 
     @SneakyThrows
     @Override
@@ -36,9 +35,6 @@ public class CommandInjection implements ComponentRegisterHandler {
             BukkitCommandManager<CommandSender> manager = Environment.isPaper() ?
                     this.paperCommandManager(plugin) :
                     this.bukkitCommandManager(plugin);
-            manager.commandSuggestionProcessor(new FilteringCommandSuggestionProcessor<>(
-                    FilteringCommandSuggestionProcessor.Filter.<CommandSender>contains(true).andTrimBeforeLastSpace()
-            ));
             if (manager instanceof PaperCommandManager<CommandSender> paperManager) {
                 if (paperManager.hasCapability(CloudBukkitCapabilities.BRIGADIER)) {
                     paperManager.registerBrigadier();
@@ -47,6 +43,9 @@ public class CommandInjection implements ComponentRegisterHandler {
                     paperManager.registerAsynchronousCompletions();
                 }
             }
+            manager.commandSuggestionProcessor(new FilteringCommandSuggestionProcessor<>(
+                    FilteringCommandSuggestionProcessor.Filter.<CommandSender>contains(true).andTrimBeforeLastSpace()
+            ));
             new MinecraftExceptionHandler<CommandSender>()
                     .withDefaultHandlers()
                     .withDecorator(value -> Component.text()
@@ -70,13 +69,17 @@ public class CommandInjection implements ComponentRegisterHandler {
         parser.parseContainers();
     }
 
+    @Override
+    public void handle(Container container, Long count) {
+    }
+
     @SneakyThrows
     private BukkitCommandManager<CommandSender> bukkitCommandManager(Plugin plugin) {
-        return new BukkitCommandManager<>(plugin, CommandExecutionCoordinator.SimpleCoordinator.simpleCoordinator(), this.mapperFunction, this.mapperFunction);
+        return BukkitCommandManager.createNative(plugin, CommandExecutionCoordinator.SimpleCoordinator.simpleCoordinator());
     }
 
     @SneakyThrows
     private PaperCommandManager<CommandSender> paperCommandManager(Plugin plugin) {
-        return new PaperCommandManager<>(plugin, AsynchronousCommandExecutionCoordinator.<CommandSender>builder().build(), this.mapperFunction, this.mapperFunction);
+        return PaperCommandManager.createNative(plugin, AsynchronousCommandExecutionCoordinator.<CommandSender>builder().build());
     }
 }

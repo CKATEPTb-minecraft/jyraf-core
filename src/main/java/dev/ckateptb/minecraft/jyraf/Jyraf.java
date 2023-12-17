@@ -9,6 +9,7 @@ import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
 import dev.ckateptb.minecraft.jyraf.example.config.ConfigExample;
 import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
+import dev.ckateptb.minecraft.jyraf.listener.PluginEnableListener;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import lombok.Getter;
@@ -28,7 +29,9 @@ public class Jyraf extends JavaPlugin {
         Jyraf.plugin = this;
         IoC.addComponentRegisterHandler(new ListenerInjection());
         IoC.addComponentRegisterHandler(new ScheduleInjection());
-        IoC.addComponentRegisterHandler(new CommandInjection());
+        CommandInjection commandInjection = new CommandInjection();
+        IoC.addComponentRegisterHandler(commandInjection);
+        IoC.addContainerInitializedHandler(commandInjection);
         IoC.addComponentRegisterHandler(new RepositoryInjection());
         IoC.addContainerInitializedHandler((container, count) -> {
                     plugin.getLogger().info("The " + container.getName() + " container has been initialized. Total " + count + " components.");
@@ -37,7 +40,7 @@ public class Jyraf extends JavaPlugin {
                     });
                 }
         );
-        IoC.scan(this);
+        IoC.scan(this, string -> !string.startsWith(Jyraf.class.getPackageName() + ".internal"));
     }
 
     public static Scheduler syncScheduler(Plugin plugin) {
@@ -46,7 +49,8 @@ public class Jyraf extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        Bukkit.getScheduler().runTask(this, IoC::initialize);
+        Bukkit.getPluginManager().registerEvents(new PluginEnableListener(), this);
+        IoC.initialize();
     }
 
     public Scheduler syncScheduler() {

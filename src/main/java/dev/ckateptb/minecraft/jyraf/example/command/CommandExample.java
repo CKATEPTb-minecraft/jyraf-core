@@ -5,11 +5,11 @@ import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.CommandPermission;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.command.Command;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.environment.Environment;
 import dev.ckateptb.minecraft.jyraf.example.config.ConfigExample;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 import java.util.stream.Stream;
@@ -31,15 +31,15 @@ public class CommandExample implements Command {
                         "&8SpigotAPI: " + Environment.SPIGOT.check(),
                         "&8BukkitAPI: " + Environment.BUKKIT.check()
                 )
-                .forEach(text -> sender.sendMessage(ChatColor.translateAlternateColorCodes('&', text)));
+                .forEach(text -> sender.sendMessage(Text.of(text)));
     }
 
     @CommandMethod("jyraf reload|r")
     @CommandDescription("Reload configuration file")
     @CommandPermission("jyraf.command.reload")
-    public void reaload(CommandSender sender) {
+    public void reload(CommandSender sender) {
         config.load();
         String text = String.format("&7%s - &6%s", plugin.getName(), plugin.getDescription().getVersion());
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', text));
+        sender.sendMessage(Text.of(text));
     }
 }
