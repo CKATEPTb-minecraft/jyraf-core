@@ -1,5 +1,8 @@
 package dev.ckateptb.minecraft.jyraf.builder.item;
 
+import com.destroystokyo.paper.profile.CraftPlayerProfile;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import dev.ckateptb.minecraft.jyraf.builder.Builder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import org.bukkit.Material;
@@ -8,9 +11,11 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 public class ItemBuilder implements Builder<ItemStack> {
     private final ItemStack item;
@@ -40,7 +45,9 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder lore(List<String> lore) {
-        this.meta.lore(lore.stream().map(Text::of).toList());
+        if(lore != null) {
+            this.meta.lore(lore.stream().map(Text::of).toList());
+        }
         return this;
     }
 
@@ -56,19 +63,28 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder enchant(Enchantment enchantment, int level) {
-        this.item.addUnsafeEnchantment(enchantment, level);
+        this.meta.addEnchant(enchantment, level, true);
         return this;
     }
 
     public ItemBuilder unenchant(Enchantment... enchantments) {
         for (Enchantment enchantment : enchantments) {
-            this.item.removeEnchantment(enchantment);
+            this.meta.removeEnchant(enchantment);
         }
         return this;
     }
 
     public ItemBuilder flag(ItemFlag... flag) {
         this.meta.addItemFlags(flag);
+        return this;
+    }
+
+    public ItemBuilder skull(String texture) {
+        if (this.meta instanceof SkullMeta skullMeta) {
+            GameProfile profile = new GameProfile(UUID.randomUUID(), null);
+            profile.getProperties().put("textures", new Property("textures", texture));
+            skullMeta.setPlayerProfile(new CraftPlayerProfile(profile));
+        }
         return this;
     }
 

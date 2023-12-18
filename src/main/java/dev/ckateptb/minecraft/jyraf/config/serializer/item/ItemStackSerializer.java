@@ -5,6 +5,7 @@ import com.destroystokyo.paper.profile.PlayerProfile;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
+import dev.ckateptb.minecraft.jyraf.builder.item.ItemBuilder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -21,7 +22,10 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ItemStackSerializer implements TypeSerializer<ItemStack> {
@@ -29,12 +33,10 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
     @Override
     public ItemStack deserialize(Type token, ConfigurationNode node) throws SerializationException {
-        ItemStack itemStack = new ItemStack(Material.valueOf(node.node("type").getString()));
-        itemStack.setAmount(node.node("amount").getInt());
-        ItemMeta meta = itemStack.getItemMeta();
-        meta.displayName(Text.of(node.node("name").getString()));
-        meta.lore(Optional.ofNullable(node.node("lore").getList(String.class))
-                .orElse(Collections.emptyList()).stream().map(Text::of).toList());
+        ItemBuilder builder = new ItemBuilder(Material.valueOf(node.node("type").getString()))
+                .amount(node.node("amount").getInt())
+                .name(node.node("name").getString())
+                .lore(node.node("lore").getList(String.class));
         ConfigurationNode enchantsNode = node.node("enchants");
         if (enchantsNode.isMap()) {
             Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
@@ -42,23 +44,19 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                 Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft((String) key));
                 if (enchantment != null) {
                     int level = configurationNode.getInt();
-                    meta.addEnchant(enchantment, level, true);
+                    builder.enchant(enchantment, level);
                 }
             });
         }
-        meta.addItemFlags(Optional.ofNullable(node.node("flags").getList(String.class))
+        builder.flag(Optional.ofNullable(node.node("flags").getList(String.class))
                 .orElse(Collections.emptyList()).stream().map(ItemFlag::valueOf).toArray(ItemFlag[]::new));
-        if (node.hasChild("data") && meta instanceof Damageable damageable) {
-            damageable.setDamage(node.node("data").getInt());
+        if (node.hasChild("data")) {
+            builder.durability((short) node.node("data").getInt());
         }
-        if (node.hasChild("skull") && meta instanceof SkullMeta skullMeta) {
-            String textures = node.node("skull").getString();
-            GameProfile profile = new GameProfile(UUID.randomUUID(), null);
-            profile.getProperties().put("textures", new Property("textures", textures));
-            skullMeta.setPlayerProfile(new CraftPlayerProfile(profile));
+        if (node.hasChild("skull")) {
+            builder.skull(node.node("skull").getString());
         }
-        itemStack.setItemMeta(meta);
-        return itemStack;
+        return builder.build();
     }
 
     @Override
