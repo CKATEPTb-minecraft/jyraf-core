@@ -25,6 +25,7 @@ public class MenuListener implements Listener {
             if (!menu.isEditable()) {
                 event.setCancelled(true);
             }
+            menu.onClick(event);
         });
     }
 

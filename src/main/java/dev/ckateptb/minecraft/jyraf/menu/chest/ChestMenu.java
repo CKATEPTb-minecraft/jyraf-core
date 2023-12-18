@@ -9,6 +9,7 @@ import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
+import org.jetbrains.annotations.Nullable;
 
 @Setter
 @Getter
@@ -36,9 +37,16 @@ public class ChestMenu extends AbstractMenu {
         }
     }
 
-    public void setFrame(int slot, Frame frame) {
+    @Override
+    public void invalidate() {
+        for (int i = 0; i < frames.length; i++) {
+            this.setFrame(i, frames[i]);
+        }
+    }
+
+    public void setFrame(int slot, @Nullable Frame frame) {
         this.frames[slot] = frame;
-        this.inventory.setItem(slot, frame.render(this, slot));
+        this.inventory.setItem(slot, frame == null ? null : frame.render(this, slot));
     }
 
     public void clear() {

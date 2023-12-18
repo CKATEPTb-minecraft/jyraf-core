@@ -1,5 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.menu;
 
+import dev.ckateptb.minecraft.jyraf.menu.builder.MenuBuilder;
+import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -34,4 +36,12 @@ public interface Menu extends InventoryHolder {
     interface ClickHandler {
         void handle(InventoryClickEvent event);
     }
+
+    static MenuBuilder builder() {
+        return new MenuBuilder();
+    }
+
+    Frame[] getFrames();
+
+    void invalidate();
 }

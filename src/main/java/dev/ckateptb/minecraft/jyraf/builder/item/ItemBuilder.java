@@ -44,6 +44,10 @@ public class ItemBuilder implements Builder<ItemStack> {
         return this;
     }
 
+    public ItemBuilder color(Color color) {
+        return this.durability(color.data());
+    }
+
     public ItemBuilder durability(short durability) {
         if (this.meta instanceof Damageable damageable) {
             damageable.setDamage(durability);
@@ -76,5 +80,28 @@ public class ItemBuilder implements Builder<ItemStack> {
     public ItemStack build() {
         this.item.setItemMeta(this.meta);
         return this.item;
+    }
+
+    public enum Color {
+        WHITE,
+        ORANGE,
+        MAGENTA,
+        LIGHT_BLUE,
+        YELLOW,
+        LIME,
+        PINK,
+        GRAY,
+        LIGHT_GRAY,
+        CYAN,
+        PURPLE,
+        BLUE,
+        BROWN,
+        GREEN,
+        RED,
+        BLACK;
+
+        short data() {
+            return (short) this.ordinal();
+        }
     }
 }

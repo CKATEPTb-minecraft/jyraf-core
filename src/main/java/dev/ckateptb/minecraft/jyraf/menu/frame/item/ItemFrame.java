@@ -10,9 +10,11 @@ import org.bukkit.inventory.ItemStack;
 @Setter
 public class ItemFrame implements Frame {
     protected ItemStack item;
+    private Menu menu;
 
     @Override
     public ItemStack render(Menu menu, int slot) {
+        this.menu = menu;
         return this.item;
     }
 

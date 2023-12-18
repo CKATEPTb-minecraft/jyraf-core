@@ -18,7 +18,7 @@ public class ButtonFrame extends ItemFrame implements Frame.Clickable {
 
     @Override
     public void onClick(InventoryClickEvent event) {
-        this.handler.handle(event);
+        if (this.handler != null) this.handler.handle(event);
     }
 
     public static class Builder extends ItemFrame.Builder {
@@ -29,12 +29,12 @@ public class ButtonFrame extends ItemFrame implements Frame.Clickable {
             return (Builder) super.item(itemStack);
         }
 
-        public Builder withClickHandler(Menu.ClickHandler handler) {
+        public Builder addClickHandler(Menu.ClickHandler handler) {
             this.handlers.add(handler);
             return this;
         }
 
-        public Builder withoutClickHandler(Menu.ClickHandler handler) {
+        public Builder removeClickHandler(Menu.ClickHandler handler) {
             this.handlers.remove(handler);
             return this;
         }
