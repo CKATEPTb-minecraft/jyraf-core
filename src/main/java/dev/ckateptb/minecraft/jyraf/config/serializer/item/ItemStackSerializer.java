@@ -16,20 +16,22 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ItemStackSerializer implements TypeSerializer<ItemStack> {
-    private final ItemStack EMPTY = new ItemStack(Material.AIR);
+    private final ItemStack empty = new ItemStack(Material.AIR);
+    private final String allowedEnchantments = Arrays.stream(Enchantment.values())
+            .map(enchantment -> enchantment.getKey().getKey()).collect(Collectors.joining(", "));
+    private final String allowedFlags = Arrays.stream(ItemFlag.values())
+            .map(ItemFlag::name).collect(Collectors.joining(", "));
 
     @Override
     public ItemStack deserialize(Type token, ConfigurationNode node) throws SerializationException {
@@ -61,13 +63,16 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
     @Override
     public void serialize(Type type, @Nullable ItemStack item, ConfigurationNode node) throws SerializationException {
-        if (item == null) item = this.EMPTY;
+        if (item == null) item = this.empty;
         node.node("type").set(item.getType().toString());
         node.node("amount").set(item.getAmount());
         ItemMeta meta = item.getItemMeta();
         node.node("name").set(Text.of(meta.displayName()));
         node.node("lore").setList(String.class, Optional.ofNullable(meta.lore()).orElse(Collections.emptyList()).stream().map(Text::of).toList());
         ConfigurationNode enchants = node.node("enchants");
+        if (enchants instanceof CommentedConfigurationNode commented) {
+            commented.comment("Allowed options " + this.allowedEnchantments);
+        }
         meta.getEnchants()
                 .forEach((key, value) -> {
                     try {
@@ -76,7 +81,11 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                         throw new RuntimeException(e);
                     }
                 });
-        node.node("flags").setList(String.class, meta.getItemFlags().stream().map(ItemFlag::name).collect(Collectors.toList()));
+        ConfigurationNode flags = node.node("flags");
+        if (flags instanceof CommentedConfigurationNode commented) {
+            commented.comment("Allowed options " + this.allowedFlags);
+        }
+        flags.setList(String.class, meta.getItemFlags().stream().map(ItemFlag::name).collect(Collectors.toList()));
         if (meta instanceof Damageable damageable) {
             node.node("data").set(damageable.getDamage());
         }
@@ -98,6 +107,6 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
     @Override
     public @Nullable ItemStack emptyValue(Type specificType, ConfigurationOptions options) {
-        return this.EMPTY.clone();
+        return this.empty.clone();
     }
 }
