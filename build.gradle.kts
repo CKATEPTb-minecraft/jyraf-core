@@ -64,6 +64,7 @@ dependencies {
 
 tasks {
     shadowJar {
+        archiveClassifier.set("")
         relocate("org.apache.commons", "${internal}.commons")
         relocate("com.github.benmanes.caffeine.cache", "${internal}.cache")
         relocate("com.j256.ormlite", "${internal}.cache")
@@ -98,20 +99,27 @@ tasks {
             rename { "${project.name.toUpperCase()}_${it}" }
         }
     }
+    register<Jar>("sourceJar") {
+        dependsOn(reobfJar, shadowJar)
+        archiveClassifier.set("sources")
+        val sourceSets = project.extensions.getByType<SourceSetContainer>()
+        from(sourceSets.named("main").get().allSource)
+
+    }
 }
 
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(16))
     }
+    withSourcesJar()
 }
 
 publishing {
     publications {
-        publications.create<MavenPublication>("mavenJava") {
-            artifacts {
-                artifact(tasks.getByName("shadowJar").outputs.files.singleFile)
-            }
+        create<MavenPublication>("mavenJava") {
+            artifact(tasks.getByName("sourceJar"))
+            artifact(tasks.getByName("shadowJar").outputs.files.singleFile)
         }
     }
 }
