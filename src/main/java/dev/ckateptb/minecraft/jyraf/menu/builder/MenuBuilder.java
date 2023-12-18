@@ -103,7 +103,7 @@ public class MenuBuilder {
         }
     }
 
-    public class ChestBuilder {
+    public static class ChestBuilder {
         public String title;
         private final int rows;
         private boolean editable = false;

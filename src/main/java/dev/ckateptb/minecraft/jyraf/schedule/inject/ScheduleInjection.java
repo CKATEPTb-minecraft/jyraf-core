@@ -7,13 +7,18 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ScheduleInjection implements ComponentRegisterHandler {
     @Override
     @SneakyThrows
     public void handle(Object component, String qualifier, Plugin owner) {
         Class<?> clazz = component.getClass();
-        for (Method method : clazz.getDeclaredMethods()) {
+        Set<Method> methods = new HashSet<>();
+        methods.addAll(Set.of(clazz.getMethods()));
+        methods.addAll(Set.of(clazz.getDeclaredMethods()));
+        for (Method method : methods) {
             if (!method.isAnnotationPresent(Schedule.class)) continue;
             method.setAccessible(true);
             Schedule annotation = method.getAnnotation(Schedule.class);
