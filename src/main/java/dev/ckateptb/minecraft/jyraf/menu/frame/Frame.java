@@ -6,7 +6,10 @@ import org.bukkit.inventory.ItemStack;
 
 public interface Frame {
     ItemStack render(Menu menu, int slot);
+
     Menu getMenu();
+
+    void setMenu(Menu menu);
 
     interface Clickable {
         void onClick(InventoryClickEvent event);

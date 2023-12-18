@@ -24,57 +24,6 @@ public class MenuBuilder {
         return new ChestBuilder(title, rows);
     }
 
-    public class ChestBuilder {
-        public String title;
-        private int rows;
-        private boolean editable = false;
-        private boolean closable = true;
-        private List<Menu.CloseHandler> closeHandlers = new ArrayList<>();
-        private Frame[] frames;
-
-        public ChestBuilder(String title, int rows) {
-            this.title = title;
-            this.rows = rows;
-            this.frames = new Frame[rows * 9];
-        }
-
-        public ChestBuilder editable(boolean editable) {
-            this.editable = editable;
-            return this;
-        }
-
-        public ChestBuilder closable(boolean closable) {
-            this.closable = closable;
-            return this;
-        }
-
-        public ChestBuilder addCloseHandler(Menu.CloseHandler handler) {
-            this.closeHandlers.add(handler);
-            return this;
-        }
-
-        public ChestBuilder removeCloseHandler(Menu.CloseHandler handler) {
-            closeHandlers.remove(handler);
-            return this;
-        }
-
-        public ChestBuilder updateContext(Consumer<Context> supplier) {
-            supplier.accept((slot, frame) -> this.frames[slot] = frame);
-            return this;
-        }
-
-        public ChestMenu build() {
-            ChestMenu chestMenu = new ChestMenu(this.title, this.rows);
-            chestMenu.setEditable(this.editable);
-            chestMenu.setClosable(this.closable);
-            for (int slot = 0; slot < frames.length; slot++) {
-                chestMenu.setFrame(slot, frames[slot]);
-            }
-            chestMenu.setCloseHandler(event -> this.closeHandlers.forEach(handler -> handler.handle(event)));
-            return chestMenu;
-        }
-    }
-
     public interface Context {
         void set(int slot, Frame frame);
 
@@ -151,6 +100,57 @@ public class MenuBuilder {
         default ConditionalFrame conditional(Supplier<Boolean> condition, Frame success, Frame failed) {
             ConditionalFrame.Builder builder = new ConditionalFrame.Builder(condition, success, failed);
             return builder.build();
+        }
+    }
+
+    public class ChestBuilder {
+        public String title;
+        private final int rows;
+        private boolean editable = false;
+        private boolean closable = true;
+        private final List<Menu.CloseHandler> closeHandlers = new ArrayList<>();
+        private final Frame[] frames;
+
+        public ChestBuilder(String title, int rows) {
+            this.title = title;
+            this.rows = rows;
+            this.frames = new Frame[rows * 9];
+        }
+
+        public ChestBuilder editable(boolean editable) {
+            this.editable = editable;
+            return this;
+        }
+
+        public ChestBuilder closable(boolean closable) {
+            this.closable = closable;
+            return this;
+        }
+
+        public ChestBuilder addCloseHandler(Menu.CloseHandler handler) {
+            this.closeHandlers.add(handler);
+            return this;
+        }
+
+        public ChestBuilder removeCloseHandler(Menu.CloseHandler handler) {
+            closeHandlers.remove(handler);
+            return this;
+        }
+
+        public ChestBuilder updateContext(Consumer<Context> supplier) {
+            supplier.accept((slot, frame) -> this.frames[slot] = frame);
+            return this;
+        }
+
+        public ChestMenu build() {
+            ChestMenu chestMenu = new ChestMenu(this.title, this.rows);
+            chestMenu.setEditable(this.editable);
+            chestMenu.setClosable(this.closable);
+            for (int slot = 0; slot < frames.length; slot++) {
+                chestMenu.setFrame(slot, frames[slot]);
+            }
+            chestMenu.setCloseHandler(event -> this.closeHandlers.forEach(handler -> handler.handle(event)));
+            return chestMenu;
         }
     }
 }

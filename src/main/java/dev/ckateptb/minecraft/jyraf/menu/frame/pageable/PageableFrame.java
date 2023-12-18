@@ -17,8 +17,8 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 public class PageableFrame implements Frame, Frame.Clickable {
-    private int offset;
     private final int[] slots;
+    private int offset;
     private List<Frame> frames = new ArrayList<>();
     private Menu menu;
 
@@ -82,8 +82,8 @@ public class PageableFrame implements Frame, Frame.Clickable {
     }
 
     public static class Builder implements dev.ckateptb.minecraft.jyraf.builder.Builder<PageableFrame> {
-        private final List<Frame> frames = new ArrayList<>();
         public final int[] slots;
+        private final List<Frame> frames = new ArrayList<>();
         public int offset;
 
         public Builder(int[] slots) {

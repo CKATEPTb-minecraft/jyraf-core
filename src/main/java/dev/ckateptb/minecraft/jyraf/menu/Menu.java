@@ -9,11 +9,15 @@ import org.bukkit.inventory.InventoryHolder;
 import org.jetbrains.annotations.Nullable;
 
 public interface Menu extends InventoryHolder {
+    static MenuBuilder builder() {
+        return new MenuBuilder();
+    }
+
     boolean isClosable();
 
-    boolean isEditable();
-
     void setClosable(boolean closable);
+
+    boolean isEditable();
 
     void setEditable(boolean editable);
 
@@ -23,11 +27,15 @@ public interface Menu extends InventoryHolder {
 
     int getSize();
 
-    void setCloseHandler(CloseHandler handler);
-
     void onClick(InventoryClickEvent event);
 
     @Nullable CloseHandler getCloseHandler();
+
+    void setCloseHandler(CloseHandler handler);
+
+    Frame[] getFrames();
+
+    void invalidate();
 
     interface CloseHandler {
         void handle(InventoryCloseEvent event);
@@ -36,12 +44,4 @@ public interface Menu extends InventoryHolder {
     interface ClickHandler {
         void handle(InventoryClickEvent event);
     }
-
-    static MenuBuilder builder() {
-        return new MenuBuilder();
-    }
-
-    Frame[] getFrames();
-
-    void invalidate();
 }
