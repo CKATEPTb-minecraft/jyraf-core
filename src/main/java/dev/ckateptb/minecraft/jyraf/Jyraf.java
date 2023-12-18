@@ -7,7 +7,6 @@ import com.j256.ormlite.logger.Logger;
 import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
-import dev.ckateptb.minecraft.jyraf.example.config.ConfigExample;
 import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
 import dev.ckateptb.minecraft.jyraf.listener.PluginEnableListener;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
@@ -27,18 +26,14 @@ public class Jyraf extends JavaPlugin {
 
     public Jyraf() {
         Jyraf.plugin = this;
+        Logger.setGlobalLogLevel(Level.ERROR);
         IoC.addComponentRegisterHandler(new ListenerInjection());
         IoC.addComponentRegisterHandler(new ScheduleInjection());
         CommandInjection commandInjection = new CommandInjection();
         IoC.addComponentRegisterHandler(commandInjection);
         IoC.addContainerInitializedHandler(commandInjection);
         IoC.addComponentRegisterHandler(new RepositoryInjection());
-        IoC.addContainerInitializedHandler((container, count) -> {
-                    plugin.getLogger().info("The " + container.getName() + " container has been initialized. Total " + count + " components.");
-                    IoC.getBean(ConfigExample.class).orElse(Mono.empty()).subscribe(config -> {
-                        if (!config.getDebug()) Logger.setGlobalLogLevel(Level.ERROR);
-                    });
-                }
+        IoC.addContainerInitializedHandler((container, count) -> plugin.getLogger().info("The " + container.getName() + " container has been initialized. Total " + count + " components.")
         );
         IoC.scan(this, string -> !string.startsWith(Jyraf.class.getPackageName() + ".internal"));
     }
