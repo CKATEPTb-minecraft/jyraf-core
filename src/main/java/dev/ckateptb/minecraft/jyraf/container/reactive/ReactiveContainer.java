@@ -136,8 +136,10 @@ public class ReactiveContainer implements AsyncContainer {
                 })
                 .doOnNext(bean -> {
                     Class<?> beanClass = bean.getClass();
-                    Method[] declaredMethods = beanClass.getDeclaredMethods();
-                    for (Method method : declaredMethods) {
+                    Set<Method> methods = new HashSet<>();
+                    methods.addAll(Set.of(beanClass.getMethods()));
+                    methods.addAll(Set.of(beanClass.getDeclaredMethods()));
+                    for (Method method : methods) {
                         if (method.isAnnotationPresent(PostConstruct.class)) {
                             method.setAccessible(true);
                             if (method.getParameters().length > 0) {

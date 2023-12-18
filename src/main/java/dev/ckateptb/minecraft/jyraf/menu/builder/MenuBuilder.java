@@ -103,13 +103,13 @@ public class MenuBuilder {
         }
     }
 
-    public class ChestBuilder {
-        public String title;
+    public static class ChestBuilder {
         private final int rows;
-        private boolean editable = false;
-        private boolean closable = true;
         private final List<Menu.CloseHandler> closeHandlers = new ArrayList<>();
         private final Frame[] frames;
+        public String title;
+        private boolean editable = false;
+        private boolean closable = true;
 
         public ChestBuilder(String title, int rows) {
             this.title = title;

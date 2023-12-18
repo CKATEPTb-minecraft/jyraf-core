@@ -1,5 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.component;
 
+import net.kyori.adventure.text.Component;
 import org.apache.commons.lang3.Validate;
 
 public class Text {
@@ -19,5 +20,11 @@ public class Text {
             });
         }
         return deserialize;
+    }
+
+    public static String of(Component component) {
+        return legacy ?
+                LegacyComponent.serialize(component) :
+                InkyComponent.serialize(component);
     }
 }
