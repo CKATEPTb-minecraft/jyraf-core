@@ -34,17 +34,25 @@ public class PageableFrame implements Frame, Frame.Clickable {
     }
 
     public void setOffset(int offset) {
+        this.setOffset(offset, true);
+    }
+
+    public void setOffset(int offset, boolean invalidate) {
         int size = frames.size();
         Validate.isTrue(offset >= 0 && (size == 0 || offset < size));
         this.offset = offset;
-        if (this.menu != null) this.menu.invalidate();
+        if (invalidate && this.menu != null) this.menu.invalidate();
     }
 
     public void addOffset(int offset) {
+        this.addOffset(offset, true);
+    }
+
+    public void addOffset(int offset, boolean invalidate) {
         this.setOffset((int) FastMath.min(
                         FastMath.max(this.offset + offset, 0),
                         (offset * FastMath.ceil((double) frames.size() / offset)) - slots.length
-                )
+                ), invalidate
         );
     }
 
