@@ -28,39 +28,65 @@ public interface Frame {
 
     interface Builder {
         default ItemFrame item(Material material, Consumer<ItemBuilder> consumer) {
+            return this.item(material, consumer, (BiConsumer<Menu, Integer>) null);
+        }
+
+        default ItemFrame item(Material material, Consumer<ItemBuilder> consumer, BiConsumer<Menu, Integer> invalidate) {
             ItemBuilder builder = new ItemBuilder(material);
             consumer.accept(builder);
-            return this.item(builder.build());
+            return this.item(builder.build(), invalidate);
         }
 
         default ItemFrame item(ItemStack stack, Consumer<ItemBuilder> consumer) {
+            return this.item(stack, consumer, (BiConsumer<Menu, Integer>) null);
+        }
+
+        default ItemFrame item(ItemStack stack, Consumer<ItemBuilder> consumer, BiConsumer<Menu, Integer> invalidate) {
             ItemBuilder builder = new ItemBuilder(stack);
             consumer.accept(builder);
-            return this.item(builder.build());
+            return this.item(builder.build(), invalidate);
         }
 
         default ItemFrame item(ItemStack stack) {
+            return this.item(stack, (BiConsumer<Menu, Integer>) null);
+        }
+
+        default ItemFrame item(ItemStack stack, BiConsumer<Menu, Integer> invalidate) {
             ItemFrame.Builder builder = new ItemFrame.Builder();
             builder.item(stack);
+            builder.invalidate(invalidate);
             return builder.build();
         }
 
-        default ButtonFrame item(Material material, Consumer<ItemBuilder> consumer, Menu.ClickHandler handler) {
+        default ButtonFrame item(Material material, Consumer<ItemBuilder> consumer, Menu.ClickHandler handler, BiConsumer<Menu, Integer> invalidate) {
             ItemBuilder builder = new ItemBuilder(material);
             consumer.accept(builder);
-            return this.item(builder.build(), handler);
+            return this.item(builder.build(), handler, invalidate);
+        }
+
+        default ButtonFrame item(Material material, Consumer<ItemBuilder> consumer, Menu.ClickHandler handler) {
+            return this.item(material, consumer, handler, null);
+        }
+
+        default ButtonFrame item(ItemStack stack, Consumer<ItemBuilder> consumer, Menu.ClickHandler handler, BiConsumer<Menu, Integer> invalidate) {
+            ItemBuilder builder = new ItemBuilder(stack);
+            consumer.accept(builder);
+            return this.item(builder.build(), handler, invalidate);
         }
 
         default ButtonFrame item(ItemStack stack, Consumer<ItemBuilder> consumer, Menu.ClickHandler handler) {
-            ItemBuilder builder = new ItemBuilder(stack);
-            consumer.accept(builder);
-            return this.item(builder.build(), handler);
+            return this.item(stack, consumer, handler, null);
         }
 
         default ButtonFrame item(ItemStack stack, Menu.ClickHandler handler) {
+            return this.item(stack, handler, null);
+        }
+
+        default ButtonFrame item(ItemStack stack, Menu.ClickHandler handler, BiConsumer<Menu, Integer> invalidate) {
             ButtonFrame.Builder builder = new ButtonFrame.Builder();
             builder.item(stack);
             builder.addClickHandler(handler);
+            builder.invalidate(invalidate);
             return builder.build();
         }
 

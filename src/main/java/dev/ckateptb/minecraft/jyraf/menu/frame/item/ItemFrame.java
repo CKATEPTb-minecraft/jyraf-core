@@ -36,9 +36,15 @@ public class ItemFrame implements Frame, Frame.Invalidable {
 
     public static class Builder implements dev.ckateptb.minecraft.jyraf.builder.Builder<ItemFrame> {
         protected ItemStack itemStack;
+        protected BiConsumer<Menu, Integer> invalidate;
 
         public Builder item(ItemStack itemStack) {
             this.itemStack = itemStack;
+            return this;
+        }
+
+        public Builder invalidate(BiConsumer<Menu, Integer> invalidate) {
+            this.invalidate = invalidate;
             return this;
         }
 
