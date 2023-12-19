@@ -2,7 +2,9 @@ package dev.ckateptb.minecraft.jyraf.menu.chest;
 
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.menu.AbstractMenu;
+import dev.ckateptb.minecraft.jyraf.menu.Menu;
 import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
+import dev.ckateptb.minecraft.jyraf.menu.frame.invalidate.InvalidateFrame;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.Validate;
@@ -10,6 +12,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.BiFunction;
 
 @Setter
 @Getter
@@ -40,7 +44,14 @@ public class ChestMenu extends AbstractMenu {
     @Override
     public void invalidate() {
         for (int i = 0; i < frames.length; i++) {
-            this.setFrame(i, frames[i]);
+            Frame frame = frames[i];
+            this.setFrame(i, frame);
+            if(frame instanceof InvalidateFrame invalidateFrame) {
+                BiFunction<Menu, Integer, ? extends Frame> invalidate = invalidateFrame.getInvalidate();
+                if(invalidate != null) {
+                    invalidate.apply(this, i);
+                }
+            }
         }
     }
 
