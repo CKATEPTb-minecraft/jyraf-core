@@ -11,6 +11,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -77,5 +78,11 @@ public interface Frame {
         default ConditionalFrame conditional(@Nullable Frame first, Frame second) {
             return this.conditional(null, first, second);
         }
+    }
+
+    interface Invalidable {
+        void invalidate(Menu menu, int slot);
+
+        Invalidable invalidate(BiConsumer<Menu, Integer> invalidate);
     }
 }
