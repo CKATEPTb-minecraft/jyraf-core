@@ -22,12 +22,23 @@ public class ConditionalFrame implements Frame, Frame.Clickable {
     @Override
     public ItemStack render(Menu menu, int slot) {
         this.menu = menu;
+        if (condition == null) {
+            ItemStack first = success.render(menu, slot);
+            return first == null || first.getType().isEmpty() ? failed.render(menu, slot) : first;
+        }
         return condition.get() ? success.render(menu, slot) : failed.render(menu, slot);
     }
 
     @Override
     public void onClick(InventoryClickEvent event) {
-        Frame frame = condition.get() ? success : failed;
+        Frame frame;
+        if (condition == null) {
+            int slot = event.getSlot();
+            ItemStack first = success.render(menu, slot);
+            frame = first == null || first.getType().isEmpty() ? failed : success;
+        } else {
+            frame = condition.get() ? success : failed;
+        }
         if (frame instanceof Frame.Clickable clickable) {
             clickable.onClick(event);
         }

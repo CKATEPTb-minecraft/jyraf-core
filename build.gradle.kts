@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.1.2-SNAPSHOT"
+version = "1.1.4-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -99,26 +99,17 @@ tasks {
             rename { "${project.name.toUpperCase()}_${it}" }
         }
     }
-    register<Jar>("sourceJar") {
-        dependsOn(reobfJar, shadowJar)
-        archiveClassifier.set("sources")
-        val sourceSets = project.extensions.getByType<SourceSetContainer>()
-        from(sourceSets.named("main").get().allSource)
-
-    }
 }
 
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(16))
     }
-    withSourcesJar()
 }
 
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            artifact(tasks.getByName("sourceJar"))
             artifact(tasks.getByName("shadowJar").outputs.files.singleFile)
         }
     }
