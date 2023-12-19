@@ -99,26 +99,17 @@ tasks {
             rename { "${project.name.toUpperCase()}_${it}" }
         }
     }
-    register<Jar>("sourceJar") {
-        dependsOn(reobfJar, shadowJar)
-        archiveClassifier.set("sources")
-        val sourceSets = project.extensions.getByType<SourceSetContainer>()
-        from(sourceSets.named("main").get().allSource)
-
-    }
 }
 
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(16))
     }
-    withSourcesJar()
 }
 
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            artifact(tasks.getByName("sourceJar"))
             artifact(tasks.getByName("shadowJar").outputs.files.singleFile)
         }
     }
