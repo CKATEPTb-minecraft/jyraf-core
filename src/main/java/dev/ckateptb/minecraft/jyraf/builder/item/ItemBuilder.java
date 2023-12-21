@@ -45,7 +45,7 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder lore(List<String> lore) {
-        if(lore != null) {
+        if (lore != null) {
             this.meta.lore(lore.stream().map(Text::of).toList());
         }
         return this;

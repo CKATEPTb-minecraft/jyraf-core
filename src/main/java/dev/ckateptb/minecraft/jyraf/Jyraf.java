@@ -6,11 +6,16 @@ import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
 import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
 import dev.ckateptb.minecraft.jyraf.config.serializer.BukkitSerializers;
+import dev.ckateptb.minecraft.jyraf.config.serializer.enums.EnumSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.item.ItemStackSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.menu.MenuSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.menu.frame.FrameSerializer;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
 import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
 import dev.ckateptb.minecraft.jyraf.listener.PluginEnableListener;
+import dev.ckateptb.minecraft.jyraf.menu.Menu;
+import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import lombok.Getter;
@@ -28,6 +33,10 @@ public class Jyraf extends JavaPlugin {
 
     public Jyraf() {
         Jyraf.plugin = this;
+        //noinspection unchecked
+        BukkitSerializers.registerSerializer((Class<Enum<?>>) (Object) Enum.class, new EnumSerializer());
+        BukkitSerializers.registerSerializer(Frame.class, new FrameSerializer());
+        BukkitSerializers.registerSerializer(Menu.class, new MenuSerializer());
         BukkitSerializers.registerSerializer(ItemStack.class, new ItemStackSerializer());
         Logger.setGlobalLogLevel(Level.ERROR);
         IoC.addComponentRegisterHandler(new ListenerInjection());

@@ -9,26 +9,20 @@ import org.apache.commons.math3.util.FastMath;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.*;
 
 @Getter
 @Setter
 public class PageableFrame implements Frame, Frame.Clickable {
-    private final int[] slots;
+    private Set<Integer> slots = new HashSet<>();
     private int offset;
     private List<Frame> frames = new ArrayList<>();
     private Menu menu;
 
-    public PageableFrame(int[] slots) {
-        this.slots = slots;
-    }
-
     @Override
     public ItemStack render(Menu menu, int slot) {
         this.menu = menu;
+        this.slots.add(slot);
         Frame frame = this.getFrameAt(slot);
         return frame == null ? null : frame.render(menu, slot);
     }
@@ -51,21 +45,21 @@ public class PageableFrame implements Frame, Frame.Clickable {
     public void addOffset(int offset, boolean invalidate) {
         this.setOffset((int) FastMath.min(
                         FastMath.max(this.offset + offset, 0),
-                        (offset * FastMath.ceil((double) frames.size() / offset)) - slots.length
+                        (offset * FastMath.ceil((double) frames.size() / offset)) - slots.size()
                 ), invalidate
         );
     }
 
     public int getSlots() {
-        return this.slots.length;
+        return this.slots.size();
     }
 
     public int[] getAllowedSlots() {
-        return this.slots;
+        return this.slots.stream().mapToInt(value -> value).toArray();
     }
 
     public boolean hasNext() {
-        int rendered = this.slots.length + this.offset;
+        int rendered = this.slots.size() + this.offset;
         return rendered < this.frames.size();
     }
 
@@ -74,8 +68,8 @@ public class PageableFrame implements Frame, Frame.Clickable {
     }
 
     public Frame getFrameAt(int slot) {
-        Frame[] frames = this.frames.stream().skip(this.offset).limit(this.slots.length).toArray(Frame[]::new);
-        int index = Stream.of(this.slots).flatMapToInt(Arrays::stream).mapToObj(String::valueOf).toList().indexOf(String.valueOf(slot));
+        Frame[] frames = this.frames.stream().skip(this.offset).limit(this.slots.size()).toArray(Frame[]::new);
+        int index = this.slots.stream().map(String::valueOf).toList().indexOf(String.valueOf(slot));
         if (index >= frames.length) return null;
         return frames[index];
     }
@@ -90,12 +84,10 @@ public class PageableFrame implements Frame, Frame.Clickable {
     }
 
     public static class Builder implements dev.ckateptb.minecraft.jyraf.builder.Builder<PageableFrame> {
-        public final int[] slots;
         private final List<Frame> frames = new ArrayList<>();
         public int offset;
 
-        public Builder(int[] slots) {
-            this.slots = slots;
+        public Builder() {
         }
 
         public Builder offset(int offset) {
@@ -115,7 +107,7 @@ public class PageableFrame implements Frame, Frame.Clickable {
         }
 
         public PageableFrame build() {
-            PageableFrame frame = new PageableFrame(this.slots);
+            PageableFrame frame = new PageableFrame();
             frame.setOffset(this.offset);
             frame.setFrames(this.frames);
             return frame;

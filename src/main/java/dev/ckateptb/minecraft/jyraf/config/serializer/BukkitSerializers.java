@@ -2,6 +2,10 @@ package dev.ckateptb.minecraft.jyraf.config.serializer;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.SneakyThrows;
+import org.spongepowered.configurate.BasicConfigurationNode;
+import org.spongepowered.configurate.ConfigurationOptions;
+import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
@@ -30,5 +34,20 @@ public class BukkitSerializers {
             builder.register(clazz, serializer);
         });
         return builder.build();
+    }
+
+    @SneakyThrows
+    public static <T> T deepCopy(Class<T> clazz, T object) {
+        BasicConfigurationNode root = BasicConfigurationNode.root(ConfigurationOptions.defaults()
+                .shouldCopyDefaults(true)
+                .implicitInitialization(true)
+                .serializers(TypeSerializerCollection.builder()
+                        .registerAll(TypeSerializerCollection.defaults())
+                        .registerAll(BukkitSerializers.getSerializers())
+                        .register((type) -> true, ObjectMapper.factory().asTypeSerializer())
+                        .build()
+                ));
+        root.set(object);
+        return root.get(clazz);
     }
 }

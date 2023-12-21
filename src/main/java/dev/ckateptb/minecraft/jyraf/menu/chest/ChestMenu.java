@@ -2,9 +2,7 @@ package dev.ckateptb.minecraft.jyraf.menu.chest;
 
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.menu.AbstractMenu;
-import dev.ckateptb.minecraft.jyraf.menu.Menu;
 import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
-import dev.ckateptb.minecraft.jyraf.menu.frame.invalidate.InvalidateFrame;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.Validate;
@@ -13,18 +11,18 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiFunction;
-
 @Setter
 @Getter
 public class ChestMenu extends AbstractMenu {
     private final Inventory inventory;
     private final Frame[] frames;
+    private final String title;
 
     public ChestMenu(String title, int rows) {
         Validate.notBlank(title, "Title can't be null");
         Validate.inclusiveBetween(1, 6, rows, "Rows must be from 1 to 6! ");
         int size = rows * 9;
+        this.title = title;
         this.inventory = Bukkit.createInventory(this, size, Text.of(title));
         this.frames = new Frame[size];
     }
@@ -46,11 +44,8 @@ public class ChestMenu extends AbstractMenu {
         for (int i = 0; i < frames.length; i++) {
             Frame frame = frames[i];
             this.setFrame(i, frame);
-            if(frame instanceof InvalidateFrame invalidateFrame) {
-                BiFunction<Menu, Integer, ? extends Frame> invalidate = invalidateFrame.getInvalidate();
-                if(invalidate != null) {
-                    invalidate.apply(this, i);
-                }
+            if (frame instanceof Frame.Invalidable invalidable) {
+                invalidable.invalidate(this, i);
             }
         }
     }

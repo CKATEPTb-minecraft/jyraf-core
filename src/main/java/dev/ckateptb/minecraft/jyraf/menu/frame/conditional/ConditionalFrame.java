@@ -8,12 +8,13 @@ import lombok.Setter;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 @Getter
 @Setter
 @RequiredArgsConstructor
-public class ConditionalFrame implements Frame, Frame.Clickable {
+public class ConditionalFrame implements Frame, Frame.Clickable, Frame.Invalidable {
     private final Supplier<Boolean> condition;
     private final Frame success;
     private final Frame failed;
@@ -42,6 +43,21 @@ public class ConditionalFrame implements Frame, Frame.Clickable {
         if (frame instanceof Frame.Clickable clickable) {
             clickable.onClick(event);
         }
+    }
+
+    @Override
+    public void invalidate(Menu menu, int slot) {
+        if (success instanceof Frame.Invalidable invalidable) {
+            invalidable.invalidate(menu, slot);
+        }
+        if (failed instanceof Frame.Invalidable invalidable) {
+            invalidable.invalidate(menu, slot);
+        }
+    }
+
+    @Override
+    public Invalidable invalidate(BiConsumer<Menu, Integer> invalidate) {
+        return this;
     }
 
     @RequiredArgsConstructor
