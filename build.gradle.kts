@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.2.1-SNAPSHOT"
+version = "1.3.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -57,6 +57,8 @@ dependencies {
     implementation("com.j256.ormlite:ormlite-jdbc:6.0")
     // Text Components
     implementation("ink.glowing:inkymessage:0.12.0-SNAPSHOT")
+    // Reflection
+    implementation("org.jooq:joor:0.9.15")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
@@ -76,6 +78,7 @@ tasks {
         relocate("com.fasterxml.jackson.core", "${internal}.jackson")
         relocate("com.google.gson", "${internal}.gson")
         relocate("com.typesafe.config", "${internal}.typesafe")
+        relocate("org.joor", "${internal}.reflection")
     }
     build {
         dependsOn(reobfJar, shadowJar)

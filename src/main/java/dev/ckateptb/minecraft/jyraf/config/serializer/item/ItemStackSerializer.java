@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.joor.Reflect;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
@@ -98,7 +99,9 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                     Iterator<Property> iterator = properties.get("textures").iterator();
                     if (iterator.hasNext()) {
                         Property property = iterator.next();
-                        node.node("skull").set(property.getValue());
+                        node.node("skull").set(Reflect.on(property)
+                                .as(PropertyProxy.class)
+                                .value());
                     }
                 }
             }
@@ -108,5 +111,14 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
     @Override
     public @Nullable ItemStack emptyValue(Type specificType, ConfigurationOptions options) {
         return this.empty.clone();
+    }
+
+    // Necessary to support older versions of authlib, which are implemented without record
+    public interface PropertyProxy {
+        String getValue();
+
+        default String value() {
+            return this.getValue();
+        }
     }
 }
