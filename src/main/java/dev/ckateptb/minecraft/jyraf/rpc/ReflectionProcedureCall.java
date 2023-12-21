@@ -12,26 +12,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public interface ReflectionProcedureCall {
-    Method getMethod();
-
-    String[] getParams();
-
-    @SneakyThrows
-    default Object call(Object instance) {
-        return this.getMethod().invoke(instance, Arrays.stream(this.getParams()).map(string -> {
-            string = string.trim();
-            if (string.equalsIgnoreCase("{}")) return null;
-            if (string.startsWith("class-")) {
-                try {
-                    return Class.forName(string.substring(6));
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            return RPC.getVariable(string);
-        }).toArray(Object[]::new));
-    }
-
     @SneakyThrows
     static ReflectionProcedureCall deserialize(String string) {
         Pattern pattern = Pattern.compile("(.+)\\.(.+)\\(|(?:(.+?):.(.+?))(?:,.|\\))|[)]*:.(.+)", Pattern.MULTILINE);
@@ -74,6 +54,26 @@ public interface ReflectionProcedureCall {
                 return paramVars;
             }
         };
+    }
+
+    Method getMethod();
+
+    String[] getParams();
+
+    @SneakyThrows
+    default Object call(Object instance) {
+        return this.getMethod().invoke(instance, Arrays.stream(this.getParams()).map(string -> {
+            string = string.trim();
+            if (string.equalsIgnoreCase("{}")) return null;
+            if (string.startsWith("class-")) {
+                try {
+                    return Class.forName(string.substring(6));
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return RPC.getVariable(string);
+        }).toArray(Object[]::new));
     }
 
     default String serialize() {
