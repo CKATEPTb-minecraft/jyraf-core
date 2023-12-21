@@ -16,11 +16,13 @@ import org.jetbrains.annotations.Nullable;
 public class ChestMenu extends AbstractMenu {
     private final Inventory inventory;
     private final Frame[] frames;
+    private final String title;
 
     public ChestMenu(String title, int rows) {
         Validate.notBlank(title, "Title can't be null");
         Validate.inclusiveBetween(1, 6, rows, "Rows must be from 1 to 6! ");
         int size = rows * 9;
+        this.title = title;
         this.inventory = Bukkit.createInventory(this, size, Text.of(title));
         this.frames = new Frame[size];
     }

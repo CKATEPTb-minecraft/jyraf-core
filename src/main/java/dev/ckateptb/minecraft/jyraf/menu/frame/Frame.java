@@ -90,8 +90,8 @@ public interface Frame {
             return builder.build();
         }
 
-        default PageableFrame pagination(int[] slots, Consumer<PageableFrame.Builder> consumer) {
-            PageableFrame.Builder builder = new PageableFrame.Builder(slots);
+        default PageableFrame pagination(Consumer<PageableFrame.Builder> consumer) {
+            PageableFrame.Builder builder = new PageableFrame.Builder();
             consumer.accept(builder);
             return builder.build();
         }
