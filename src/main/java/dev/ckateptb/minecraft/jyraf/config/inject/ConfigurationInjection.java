@@ -16,4 +16,9 @@ public class ConfigurationInjection implements ComponentRegisterHandler {
             config.save();
         }
     }
+
+    @Override
+    public boolean onEnable() {
+        return false;
+    }
 }
