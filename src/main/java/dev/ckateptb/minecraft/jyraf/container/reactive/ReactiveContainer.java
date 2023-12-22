@@ -10,7 +10,7 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Qualifier;
 import dev.ckateptb.minecraft.jyraf.container.api.AsyncContainer;
 import dev.ckateptb.minecraft.jyraf.container.handler.ComponentRegisterHandler;
 import dev.ckateptb.minecraft.jyraf.container.handler.ContainerInitializeHandler;
-import dev.ckateptb.minecraft.jyraf.listener.PluginEnableListener;
+import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -178,7 +179,7 @@ public class ReactiveContainer implements AsyncContainer {
 
     private void executeWhenEnable(Plugin plugin, Runnable runnable) {
         if (plugin.isEnabled()) runnable.run();
-        else PluginEnableListener.getExecuteOnEnable().computeIfAbsent(plugin, key -> new HashSet<>()).add(runnable);
+        else PluginStatusChangeListener.getExecuteOnEnable().computeIfAbsent(plugin, key -> ConcurrentHashMap.newKeySet()).add(runnable);
     }
 
     private <T> void registerOwners(Plugin plugin, BeanKey<T> key, Deque<BeanKey<?>> stacktrace) {

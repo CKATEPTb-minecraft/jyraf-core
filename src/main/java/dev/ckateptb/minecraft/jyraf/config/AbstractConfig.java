@@ -1,6 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.config;
 
 import dev.ckateptb.minecraft.jyraf.config.serializer.BukkitSerializers;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -14,11 +15,15 @@ import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import java.io.File;
 import java.lang.reflect.Field;
 
+@NoArgsConstructor
 public abstract class AbstractConfig<N extends ScopedConfigurationNode<N>> implements Config {
-    private final transient ConfigurationLoader<N> configurationLoader;
+    private transient boolean initialized;
+    private transient ConfigurationLoader<N> configurationLoader;
     private transient ConfigurationNode configurationNode;
 
-    public AbstractConfig() {
+    public void initialize() {
+        if (this.initialized) return;
+        this.initialized = true;
         File file = getFile();
         File parent = file.getParentFile();
         String path = file.getAbsolutePath();

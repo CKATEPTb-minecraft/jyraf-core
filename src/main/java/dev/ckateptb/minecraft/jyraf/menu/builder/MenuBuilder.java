@@ -1,8 +1,12 @@
 package dev.ckateptb.minecraft.jyraf.menu.builder;
 
+import dev.ckateptb.minecraft.jyraf.builder.item.ItemBuilder;
 import dev.ckateptb.minecraft.jyraf.menu.Menu;
 import dev.ckateptb.minecraft.jyraf.menu.chest.ChestMenu;
 import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
+import net.wesjd.anvilgui.AnvilGUI;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +18,18 @@ import java.util.stream.Stream;
 public class MenuBuilder {
     public ChestBuilder chest(String title, int rows) {
         return new ChestBuilder(title, rows);
+    }
+
+    public AnvilGUI.Builder anvil() {
+        return new AnvilGUI.Builder();
+    }
+
+    public ItemBuilder item(Material material) {
+        return new ItemBuilder(material);
+    }
+
+    public ItemBuilder item(ItemStack itemStack) {
+        return new ItemBuilder(itemStack);
     }
 
     public Frame.Builder frame() {

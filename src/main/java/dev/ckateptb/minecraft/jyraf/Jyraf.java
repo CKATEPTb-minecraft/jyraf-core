@@ -4,18 +4,17 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
+import dev.ckateptb.minecraft.jyraf.closable.inject.ClosableInjection;
 import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
+import dev.ckateptb.minecraft.jyraf.config.inject.ConfigurationInjection;
 import dev.ckateptb.minecraft.jyraf.config.serializer.BukkitSerializers;
 import dev.ckateptb.minecraft.jyraf.config.serializer.enums.EnumSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.item.ItemStackSerializer;
-import dev.ckateptb.minecraft.jyraf.config.serializer.menu.MenuSerializer;
-import dev.ckateptb.minecraft.jyraf.config.serializer.menu.frame.FrameSerializer;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
+import dev.ckateptb.minecraft.jyraf.database.types.inject.PersisterInjection;
 import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
-import dev.ckateptb.minecraft.jyraf.listener.PluginEnableListener;
-import dev.ckateptb.minecraft.jyraf.menu.Menu;
-import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
+import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import lombok.Getter;
@@ -35,16 +34,17 @@ public class Jyraf extends JavaPlugin {
         Jyraf.plugin = this;
         //noinspection unchecked
         BukkitSerializers.registerSerializer((Class<Enum<?>>) (Object) Enum.class, new EnumSerializer());
-        BukkitSerializers.registerSerializer(Frame.class, new FrameSerializer());
-        BukkitSerializers.registerSerializer(Menu.class, new MenuSerializer());
         BukkitSerializers.registerSerializer(ItemStack.class, new ItemStackSerializer());
         Logger.setGlobalLogLevel(Level.ERROR);
         IoC.addComponentRegisterHandler(new ListenerInjection());
         IoC.addComponentRegisterHandler(new ScheduleInjection());
+        IoC.addComponentRegisterHandler(new PersisterInjection());
+        IoC.addComponentRegisterHandler(new ClosableInjection());
+        IoC.addComponentRegisterHandler(new ConfigurationInjection());
+        IoC.addComponentRegisterHandler(new RepositoryInjection());
         CommandInjection commandInjection = new CommandInjection();
         IoC.addComponentRegisterHandler(commandInjection);
         IoC.addContainerInitializedHandler(commandInjection);
-        IoC.addComponentRegisterHandler(new RepositoryInjection());
         IoC.addContainerInitializedHandler((container, count) -> plugin.getLogger().info("The " + container.getName() + " container has been initialized. Total " + count + " components.")
         );
         IoC.scan(this, string -> !string.startsWith(Jyraf.class.getPackageName() + ".internal"));
@@ -56,7 +56,7 @@ public class Jyraf extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        Bukkit.getPluginManager().registerEvents(new PluginEnableListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PluginStatusChangeListener(), this);
         IoC.initialize();
     }
 

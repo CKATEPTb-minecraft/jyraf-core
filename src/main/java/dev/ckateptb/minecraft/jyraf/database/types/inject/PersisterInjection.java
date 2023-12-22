@@ -7,7 +7,6 @@ import org.bukkit.plugin.Plugin;
 
 public class PersisterInjection implements ComponentRegisterHandler {
     @Override
-    @SuppressWarnings("unchecked")
     public void handle(Object object, String qualifier, Plugin owner) {
         if (!(object instanceof DataPersister persister)) return;
         DataPersisterManager.registerDataPersisters(persister);
