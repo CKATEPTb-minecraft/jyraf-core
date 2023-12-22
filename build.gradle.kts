@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.4.0-SNAPSHOT"
+version = "1.5.1-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -71,7 +71,7 @@ tasks {
         archiveClassifier.set("")
         relocate("org.apache.commons", "${internal}.commons")
         relocate("com.github.benmanes.caffeine.cache", "${internal}.cache")
-        relocate("com.j256.ormlite", "${internal}.cache")
+        relocate("com.j256.ormlite", "${internal}.ormlite")
         relocate("com.zaxxer.hikari", "${internal}.hikari")
         relocate("ink.glowing.text", "${internal}.ink")
         relocate("org.spongepowered.configurate", "${internal}.configurate")
