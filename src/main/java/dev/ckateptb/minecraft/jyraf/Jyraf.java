@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
+import dev.ckateptb.minecraft.jyraf.closable.inject.ClosableInjection;
 import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
 import dev.ckateptb.minecraft.jyraf.config.serializer.BukkitSerializers;
 import dev.ckateptb.minecraft.jyraf.config.serializer.enums.EnumSerializer;
@@ -12,9 +13,7 @@ import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
 import dev.ckateptb.minecraft.jyraf.database.types.inject.PersisterInjection;
 import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
-import dev.ckateptb.minecraft.jyraf.listener.PluginEnableListener;
-import dev.ckateptb.minecraft.jyraf.menu.Menu;
-import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
+import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import lombok.Getter;
@@ -39,6 +38,7 @@ public class Jyraf extends JavaPlugin {
         IoC.addComponentRegisterHandler(new ListenerInjection());
         IoC.addComponentRegisterHandler(new ScheduleInjection());
         IoC.addComponentRegisterHandler(new PersisterInjection());
+        IoC.addComponentRegisterHandler(new ClosableInjection());
         CommandInjection commandInjection = new CommandInjection();
         IoC.addComponentRegisterHandler(commandInjection);
         IoC.addContainerInitializedHandler(commandInjection);
@@ -54,7 +54,7 @@ public class Jyraf extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        Bukkit.getPluginManager().registerEvents(new PluginEnableListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PluginStatusChangeListener(), this);
         IoC.initialize();
     }
 
