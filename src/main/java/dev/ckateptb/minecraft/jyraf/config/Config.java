@@ -7,10 +7,16 @@ import java.io.File;
 
 @ConfigSerializable
 public interface Config {
+    void initialize();
+
     void load();
 
     void save() throws ConfigurateException;
 
     File getFile();
+
+    interface Autoloader {
+
+    }
 
 }

@@ -6,6 +6,7 @@ import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
 import dev.ckateptb.minecraft.jyraf.closable.inject.ClosableInjection;
 import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
+import dev.ckateptb.minecraft.jyraf.config.inject.ConfigurationInjection;
 import dev.ckateptb.minecraft.jyraf.config.serializer.BukkitSerializers;
 import dev.ckateptb.minecraft.jyraf.config.serializer.enums.EnumSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.item.ItemStackSerializer;
@@ -39,10 +40,11 @@ public class Jyraf extends JavaPlugin {
         IoC.addComponentRegisterHandler(new ScheduleInjection());
         IoC.addComponentRegisterHandler(new PersisterInjection());
         IoC.addComponentRegisterHandler(new ClosableInjection());
+        IoC.addComponentRegisterHandler(new ConfigurationInjection());
+        IoC.addComponentRegisterHandler(new RepositoryInjection());
         CommandInjection commandInjection = new CommandInjection();
         IoC.addComponentRegisterHandler(commandInjection);
         IoC.addContainerInitializedHandler(commandInjection);
-        IoC.addComponentRegisterHandler(new RepositoryInjection());
         IoC.addContainerInitializedHandler((container, count) -> plugin.getLogger().info("The " + container.getName() + " container has been initialized. Total " + count + " components.")
         );
         IoC.scan(this, string -> !string.startsWith(Jyraf.class.getPackageName() + ".internal"));
