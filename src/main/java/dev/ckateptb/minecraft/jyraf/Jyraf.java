@@ -8,8 +8,6 @@ import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
 import dev.ckateptb.minecraft.jyraf.config.serializer.BukkitSerializers;
 import dev.ckateptb.minecraft.jyraf.config.serializer.enums.EnumSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.item.ItemStackSerializer;
-import dev.ckateptb.minecraft.jyraf.config.serializer.menu.MenuSerializer;
-import dev.ckateptb.minecraft.jyraf.config.serializer.menu.frame.FrameSerializer;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
 import dev.ckateptb.minecraft.jyraf.database.types.inject.PersisterInjection;
@@ -36,8 +34,6 @@ public class Jyraf extends JavaPlugin {
         Jyraf.plugin = this;
         //noinspection unchecked
         BukkitSerializers.registerSerializer((Class<Enum<?>>) (Object) Enum.class, new EnumSerializer());
-        BukkitSerializers.registerSerializer(Frame.class, new FrameSerializer()); // TODO Rework
-        BukkitSerializers.registerSerializer(Menu.class, new MenuSerializer()); // TODO Rework
         BukkitSerializers.registerSerializer(ItemStack.class, new ItemStackSerializer());
         Logger.setGlobalLogLevel(Level.ERROR);
         IoC.addComponentRegisterHandler(new ListenerInjection());

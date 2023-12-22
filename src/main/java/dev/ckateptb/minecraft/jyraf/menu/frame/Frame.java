@@ -111,8 +111,4 @@ public interface Frame {
 
         Invalidable invalidate(BiConsumer<Menu, Integer> invalidate);
     }
-
-    interface RPC {
-        String[] getRPC();
-    }
 }
