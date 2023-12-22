@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.3.0-SNAPSHOT"
+version = "1.4.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -59,6 +59,8 @@ dependencies {
     implementation("ink.glowing:inkymessage:0.12.0-SNAPSHOT")
     // Reflection
     implementation("org.jooq:joor:0.9.15")
+    // additional date-time
+    implementation("org.threeten:threeten-extra:1.7.2")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
@@ -79,6 +81,7 @@ tasks {
         relocate("com.google.gson", "${internal}.gson")
         relocate("com.typesafe.config", "${internal}.typesafe")
         relocate("org.joor", "${internal}.reflection")
+        relocate("org.threeten.extra", "${internal}.time")
     }
     build {
         dependsOn(reobfJar, shadowJar)
