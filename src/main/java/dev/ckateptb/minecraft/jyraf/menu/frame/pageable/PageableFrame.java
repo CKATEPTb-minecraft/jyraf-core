@@ -9,12 +9,14 @@ import org.apache.commons.math3.util.FastMath;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.IntStream;
 
 @Getter
 @Setter
 public class PageableFrame implements Frame, Frame.Clickable {
-    private Set<Integer> slots = new HashSet<>();
     private int offset;
     private List<Frame> frames = new ArrayList<>();
     private Menu menu;
@@ -22,9 +24,16 @@ public class PageableFrame implements Frame, Frame.Clickable {
     @Override
     public ItemStack render(Menu menu, int slot) {
         this.menu = menu;
-        this.slots.add(slot);
         Frame frame = this.getFrameAt(slot);
         return frame == null ? null : frame.render(menu, slot);
+    }
+
+    public int[] getAllowedSlots() {
+        Validate.isTrue(this.menu != null);
+        Frame[] frames = this.menu.getFrames();
+        return IntStream.range(0, frames.length)
+                .filter(slot -> frames[slot] == this)
+                .toArray();
     }
 
     public void setOffset(int offset) {
@@ -45,21 +54,17 @@ public class PageableFrame implements Frame, Frame.Clickable {
     public void addOffset(int offset, boolean invalidate) {
         this.setOffset((int) FastMath.min(
                         FastMath.max(this.offset + offset, 0),
-                        (offset * FastMath.ceil((double) frames.size() / offset)) - slots.size()
+                        (offset * FastMath.ceil((double) frames.size() / offset)) - getAllowedSlots().length
                 ), invalidate
         );
     }
 
     public int getSlots() {
-        return this.slots.size();
-    }
-
-    public int[] getAllowedSlots() {
-        return this.slots.stream().mapToInt(value -> value).toArray();
+        return this.getAllowedSlots().length;
     }
 
     public boolean hasNext() {
-        int rendered = this.slots.size() + this.offset;
+        int rendered = this.getAllowedSlots().length + this.offset;
         return rendered < this.frames.size();
     }
 
@@ -68,8 +73,9 @@ public class PageableFrame implements Frame, Frame.Clickable {
     }
 
     public Frame getFrameAt(int slot) {
-        Frame[] frames = this.frames.stream().skip(this.offset).limit(this.slots.size()).toArray(Frame[]::new);
-        int index = this.slots.stream().map(String::valueOf).toList().indexOf(String.valueOf(slot));
+        int[] allowedSlots = this.getAllowedSlots();
+        Frame[] frames = this.frames.stream().skip(this.offset).limit(allowedSlots.length).toArray(Frame[]::new);
+        int index = Arrays.stream(allowedSlots).mapToObj(String::valueOf).toList().indexOf(String.valueOf(slot));
         if (index >= frames.length) return null;
         return frames[index];
     }

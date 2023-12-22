@@ -81,7 +81,8 @@ public class ItemBuilder implements Builder<ItemStack> {
 
     public ItemBuilder skull(String texture) {
         if (this.meta instanceof SkullMeta skullMeta) {
-            GameProfile profile = new GameProfile(UUID.randomUUID(), null);
+            UUID uuid = UUID.randomUUID();
+            GameProfile profile = new GameProfile(uuid, uuid.toString());
             profile.getProperties().put("textures", new Property("textures", texture));
             skullMeta.setPlayerProfile(new CraftPlayerProfile(profile));
         }
