@@ -31,7 +31,9 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder name(String name) {
-        this.meta.displayName(Text.of(name));
+        if (this.meta != null) {
+            this.meta.displayName(Text.of(name));
+        }
         return this;
     }
 
@@ -45,7 +47,7 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder lore(List<String> lore) {
-        if (lore != null) {
+        if (lore != null && this.meta != null) {
             this.meta.lore(lore.stream().map(Text::of).toList());
         }
         return this;
@@ -63,19 +65,25 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder enchant(Enchantment enchantment, int level) {
-        this.meta.addEnchant(enchantment, level, true);
+        if (this.meta != null) {
+            this.meta.addEnchant(enchantment, level, true);
+        }
         return this;
     }
 
     public ItemBuilder unenchant(Enchantment... enchantments) {
-        for (Enchantment enchantment : enchantments) {
-            this.meta.removeEnchant(enchantment);
+        if (this.meta != null) {
+            for (Enchantment enchantment : enchantments) {
+                this.meta.removeEnchant(enchantment);
+            }
         }
         return this;
     }
 
     public ItemBuilder flag(ItemFlag... flag) {
-        this.meta.addItemFlags(flag);
+        if (this.meta != null) {
+            this.meta.addItemFlags(flag);
+        }
         return this;
     }
 
@@ -90,12 +98,16 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder deflag(ItemFlag... flag) {
-        this.meta.removeItemFlags(flag);
+        if (this.meta != null) {
+            this.meta.removeItemFlags(flag);
+        }
         return this;
     }
 
     public ItemStack build() {
-        this.item.setItemMeta(this.meta);
+        if (this.meta != null) {
+            this.item.setItemMeta(this.meta);
+        }
         return this.item;
     }
 
