@@ -37,22 +37,30 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
     @Override
     public ItemStack deserialize(Type token, ConfigurationNode node) throws SerializationException {
         ItemBuilder builder = new ItemBuilder(Material.valueOf(node.node("type").getString()))
-                .amount(node.node("amount").getInt())
-                .name(node.node("name").getString())
-                .lore(node.node("lore").getList(String.class));
-        ConfigurationNode enchantsNode = node.node("enchants");
-        if (enchantsNode.isMap()) {
-            Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
-            map.forEach((key, configurationNode) -> {
-                Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft((String) key));
-                if (enchantment != null) {
-                    int level = configurationNode.getInt();
-                    builder.enchant(enchantment, level);
-                }
-            });
+                .amount(node.node("amount").getInt());
+        if (node.hasChild("name")) {
+            builder.name(node.node("name").getString());
         }
-        builder.flag(Optional.ofNullable(node.node("flags").getList(String.class))
-                .orElse(Collections.emptyList()).stream().map(ItemFlag::valueOf).toArray(ItemFlag[]::new));
+        if (node.hasChild("lore")) {
+            builder.lore(node.node("lore").getList(String.class));
+        }
+        if (node.hasChild("enchants")) {
+            ConfigurationNode enchantsNode = node.node("enchants");
+            if (enchantsNode.isMap()) {
+                Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
+                map.forEach((key, configurationNode) -> {
+                    Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft((String) key));
+                    if (enchantment != null) {
+                        int level = configurationNode.getInt();
+                        builder.enchant(enchantment, level);
+                    }
+                });
+            }
+        }
+        if (node.hasChild("flags")) {
+            builder.flag(Optional.ofNullable(node.node("flags").getList(String.class))
+                    .orElse(Collections.emptyList()).stream().map(ItemFlag::valueOf).toArray(ItemFlag[]::new));
+        }
         if (node.hasChild("data")) {
             builder.durability((short) node.node("data").getInt());
         }
@@ -68,40 +76,42 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
         node.node("type").set(item.getType().toString());
         node.node("amount").set(item.getAmount());
         ItemMeta meta = item.getItemMeta();
-        node.node("name").set(Text.of(meta.displayName()));
-        node.node("lore").setList(String.class, Optional.ofNullable(meta.lore()).orElse(Collections.emptyList()).stream().map(Text::of).toList());
-        ConfigurationNode enchants = node.node("enchants");
-        if (enchants instanceof CommentedConfigurationNode commented) {
-            commented.comment("Allowed options " + this.allowedEnchantments);
-        }
-        meta.getEnchants()
-                .forEach((key, value) -> {
-                    try {
-                        enchants.node(key.getKey().getKey()).set(value);
-                    } catch (SerializationException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-        ConfigurationNode flags = node.node("flags");
-        if (flags instanceof CommentedConfigurationNode commented) {
-            commented.comment("Allowed options " + this.allowedFlags);
-        }
-        flags.setList(String.class, meta.getItemFlags().stream().map(ItemFlag::name).collect(Collectors.toList()));
-        if (meta instanceof Damageable damageable) {
-            node.node("data").set(damageable.getDamage());
-        }
-        if (meta instanceof SkullMeta skullMeta && skullMeta.hasOwner()) {
-            PlayerProfile playerProfile = skullMeta.getPlayerProfile();
-            if (playerProfile instanceof CraftPlayerProfile craftProfile) {
-                GameProfile profile = craftProfile.getGameProfile();
-                PropertyMap properties = profile.getProperties();
-                if (properties.containsKey("textures")) {
-                    Iterator<Property> iterator = properties.get("textures").iterator();
-                    if (iterator.hasNext()) {
-                        Property property = iterator.next();
-                        node.node("skull").set(Reflect.on(property)
-                                .as(PropertyProxy.class)
-                                .value());
+        if (meta != null) {
+            node.node("name").set(Text.of(meta.displayName()));
+            node.node("lore").setList(String.class, Optional.ofNullable(meta.lore()).orElse(Collections.emptyList()).stream().map(Text::of).toList());
+            ConfigurationNode enchants = node.node("enchants");
+            if (enchants instanceof CommentedConfigurationNode commented) {
+                commented.comment("Allowed options " + this.allowedEnchantments);
+            }
+            meta.getEnchants()
+                    .forEach((key, value) -> {
+                        try {
+                            enchants.node(key.getKey().getKey()).set(value);
+                        } catch (SerializationException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+            ConfigurationNode flags = node.node("flags");
+            if (flags instanceof CommentedConfigurationNode commented) {
+                commented.comment("Allowed options " + this.allowedFlags);
+            }
+            flags.setList(String.class, meta.getItemFlags().stream().map(ItemFlag::name).collect(Collectors.toList()));
+            if (meta instanceof Damageable damageable) {
+                node.node("data").set(damageable.getDamage());
+            }
+            if (meta instanceof SkullMeta skullMeta && skullMeta.hasOwner()) {
+                PlayerProfile playerProfile = skullMeta.getPlayerProfile();
+                if (playerProfile instanceof CraftPlayerProfile craftProfile) {
+                    GameProfile profile = craftProfile.getGameProfile();
+                    PropertyMap properties = profile.getProperties();
+                    if (properties.containsKey("textures")) {
+                        Iterator<Property> iterator = properties.get("textures").iterator();
+                        if (iterator.hasNext()) {
+                            Property property = iterator.next();
+                            node.node("skull").set(Reflect.on(property)
+                                    .as(PropertyProxy.class)
+                                    .value());
+                        }
                     }
                 }
             }
