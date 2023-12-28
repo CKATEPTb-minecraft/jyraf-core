@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.7.0-SNAPSHOT"
+version = "1.7.1-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -62,7 +62,7 @@ dependencies {
     implementation("org.jooq:joor:0.9.15")
     // Additional date-time
     implementation("org.threeten:threeten-extra:1.7.2")
-
+    // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
 
     compileOnly("org.projectlombok:lombok:+")

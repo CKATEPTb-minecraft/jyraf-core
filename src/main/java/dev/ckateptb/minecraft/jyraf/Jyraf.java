@@ -23,6 +23,7 @@ import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -45,6 +46,9 @@ public class Jyraf extends JavaPlugin {
         ConfigurationSerializers.registerSerializer(World.class, new WorldSerializer());
         ConfigurationSerializers.registerSerializer(Location.class, new LocationSerializer());
         Logger.setGlobalLogLevel(Level.ERROR);
+        Server server = Bukkit.getServer();
+        IoC.registerBean(this, server);
+        IoC.registerBean(this, server.getPluginManager());
         IoC.addComponentRegisterHandler(new ListenerInjection());
         IoC.addComponentRegisterHandler(new ScheduleInjection());
         IoC.addComponentRegisterHandler(new PersisterInjection());
