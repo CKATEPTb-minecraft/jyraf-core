@@ -29,13 +29,13 @@ public class LocationSerializer implements TypeSerializer<Location> {
     @Override
     public void serialize(Type type, @Nullable Location location, ConfigurationNode node) throws SerializationException {
         if (location == null) return;
-        node.node("world", location.getWorld());
-        node.node("x", location.getX());
-        node.node("y", location.getY());
-        node.node("z", location.getZ());
+        node.node("world").set(location.getWorld());
+        node.node("x").set(location.getX());
+        node.node("y").set(location.getY());
+        node.node("z").set(location.getZ());
         float yaw = location.getYaw();
-        if (yaw > 0) node.node("yaw", yaw);
+        if (yaw > 0) node.node("yaw").set(yaw);
         float pitch = location.getPitch();
-        if (pitch > 0) node.node("pitch", pitch);
+        if (pitch > 0) node.node("pitch").set(pitch);
     }
 }

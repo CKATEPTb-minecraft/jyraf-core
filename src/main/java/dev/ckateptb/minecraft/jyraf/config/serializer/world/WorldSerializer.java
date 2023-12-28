@@ -11,7 +11,7 @@ import java.lang.reflect.Type;
 
 public class WorldSerializer implements TypeSerializer<World> {
     @Override
-    public World deserialize(Type type, ConfigurationNode node) throws SerializationException {
+    public World deserialize(Type type, ConfigurationNode node) {
         String string = node.getString();
         if (string == null || string.isBlank()) {
             return null;
