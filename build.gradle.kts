@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.7.4-SNAPSHOT"
+version = "1.8.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -23,6 +23,7 @@ repositories {
 //    maven("https://repo.jyraf.com/repository/maven-snapshots/")
     maven("https://repo.glowing.ink/snapshots")
     maven("https://repo.codemc.io/repository/maven-snapshots/")
+    maven("https://repo.dmulloy2.net/repository/public/")
 }
 
 dependencies {
@@ -67,6 +68,8 @@ dependencies {
     implementation("org.threeten:threeten-extra:1.7.2")
     // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
+    // Protocol
+    compileOnly("com.comphenix.protocol:ProtocolLib:5.2.0-SNAPSHOT")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
