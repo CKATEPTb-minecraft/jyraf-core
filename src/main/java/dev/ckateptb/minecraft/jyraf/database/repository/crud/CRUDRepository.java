@@ -1,5 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.database.repository.crud;
 
+import com.j256.ormlite.dao.Dao;
 import dev.ckateptb.minecraft.jyraf.database.repository.Repository;
 import lombok.SneakyThrows;
 import reactor.core.publisher.Flux;
@@ -96,4 +97,6 @@ public interface CRUDRepository<Entity, Id> extends Repository<Entity, Id> {
                 })
                 .publishOn(Schedulers.boundedElastic());
     }
+
+    Dao<Entity, Id> dao();
 }

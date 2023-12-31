@@ -56,6 +56,9 @@ dependencies {
         exclude(module = "slf4j-api")
     }
     implementation("com.j256.ormlite:ormlite-jdbc:6.0")
+    implementation("redis.clients:jedis:5.2.0-SNAPSHOT")
+    implementation("org.apache.commons:commons-pool2:2.12.0")
+    implementation("org.mongodb:mongodb-driver-reactivestreams:4.11.1")
     // Text Components
     implementation("ink.glowing:inkymessage:0.12.0-SNAPSHOT")
     // Reflection
@@ -86,6 +89,10 @@ tasks {
         relocate("org.joor", "${internal}.reflection")
         relocate("org.threeten.extra", "${internal}.time")
         relocate("net.wesjd.anvilgui", "${internal}.anvil")
+        relocate("redis.clients.jedis", "${internal}.redis")
+        relocate("com.mongodb", "${internal}.mongo")
+        relocate("org.bson", "${internal}.bson")
+        relocate("org.json", "${internal}.json")
     }
     build {
         dependsOn(reobfJar, shadowJar)

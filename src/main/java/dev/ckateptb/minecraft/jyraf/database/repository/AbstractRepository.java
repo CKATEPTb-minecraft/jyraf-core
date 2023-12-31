@@ -32,6 +32,7 @@ public abstract class AbstractRepository<Entity, Id> implements CRUDRepository<E
 
     @Override
     public void close() throws Exception {
-        this.connection.close();
+        if (this.connection != null)
+            this.connection.close();
     }
 }
