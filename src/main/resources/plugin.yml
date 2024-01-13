@@ -4,3 +4,4 @@ main: '${projectMainClass}'
 api-version: 1.13
 authors: [ CKATEPTb ]
 description: "Speed up plugin development with pre-built tools. Spring-like dependency injection; automatic registration of listeners, commands, schedulers, configuration files (yaml, hocon, jackson, gson, xml), repositories for sql (mysql, h2, postgresql, mariadb, sqlite); non-traditional collision system for minecraft (aabb, obb, sphere, ray, disc, etc.); inventory user interface creation tool; reactive programming patterns for better performance (reactor-core); Serialization and deserialization of kyori components with legacy color support; high-performance caching system; safe work with threads; excellent implementation of temporary objects (blocks, effects, etc.); optimization of work with vectors; apache-commons(math3, lang3, io); as well as much more."
+softdepend: [ "PlaceholderAPI" ]
