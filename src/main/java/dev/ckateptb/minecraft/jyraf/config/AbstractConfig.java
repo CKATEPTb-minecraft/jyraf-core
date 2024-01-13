@@ -1,6 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.config;
 
-import dev.ckateptb.minecraft.jyraf.config.serializer.BukkitSerializers;
+import dev.ckateptb.minecraft.jyraf.config.serializer.ConfigurationSerializers;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.spongepowered.configurate.ConfigurateException;
@@ -37,7 +37,7 @@ public abstract class AbstractConfig<N extends ScopedConfigurationNode<N>> imple
                         .implicitInitialization(true)
                         .serializers(TypeSerializerCollection.builder()
                                 .registerAll(TypeSerializerCollection.defaults())
-                                .registerAll(BukkitSerializers.getSerializers())
+                                .registerAll(ConfigurationSerializers.getSerializers())
                                 .register((type) -> true, ObjectMapper.factory().asTypeSerializer())
                                 .build()
                         )

@@ -22,7 +22,5 @@ public interface Repository<Entity, Id> extends AutoCloseable {
 
     Mono<Boolean> exists(Id id);
 
-    Dao<Entity, Id> dao();
-
     void connect(Plugin owner, Class<Entity> entityClass, Class<Id> idClass);
 }

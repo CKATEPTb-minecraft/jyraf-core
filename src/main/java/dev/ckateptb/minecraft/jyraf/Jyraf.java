@@ -7,9 +7,14 @@ import com.j256.ormlite.logger.Logger;
 import dev.ckateptb.minecraft.jyraf.closable.inject.ClosableInjection;
 import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
 import dev.ckateptb.minecraft.jyraf.config.inject.ConfigurationInjection;
-import dev.ckateptb.minecraft.jyraf.config.serializer.BukkitSerializers;
+import dev.ckateptb.minecraft.jyraf.config.serializer.ConfigurationSerializers;
+import dev.ckateptb.minecraft.jyraf.config.serializer.UUIDSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.duration.DurationSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.enums.EnumSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.item.ItemStackSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.location.LocationSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.objectid.ObjectIdSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.world.WorldSerializer;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
 import dev.ckateptb.minecraft.jyraf.database.types.inject.PersisterInjection;
@@ -18,11 +23,18 @@ import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import lombok.Getter;
+import org.bson.types.ObjectId;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.threeten.extra.PeriodDuration;
 import reactor.core.scheduler.Scheduler;
+
+import java.util.UUID;
 
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
@@ -33,9 +45,17 @@ public class Jyraf extends JavaPlugin {
     public Jyraf() {
         Jyraf.plugin = this;
         //noinspection unchecked
-        BukkitSerializers.registerSerializer((Class<Enum<?>>) (Object) Enum.class, new EnumSerializer());
-        BukkitSerializers.registerSerializer(ItemStack.class, new ItemStackSerializer());
+        ConfigurationSerializers.registerSerializer((Class<Enum<?>>) (Object) Enum.class, new EnumSerializer());
+        ConfigurationSerializers.registerSerializer(ItemStack.class, new ItemStackSerializer());
+        ConfigurationSerializers.registerSerializer(PeriodDuration.class, new DurationSerializer());
+        ConfigurationSerializers.registerSerializer(World.class, new WorldSerializer());
+        ConfigurationSerializers.registerSerializer(Location.class, new LocationSerializer());
+        ConfigurationSerializers.registerSerializer(ObjectId.class, new ObjectIdSerializer());
+        ConfigurationSerializers.registerSerializer(UUID.class, new UUIDSerializer());
         Logger.setGlobalLogLevel(Level.ERROR);
+        Server server = Bukkit.getServer();
+        IoC.registerBean(this, server);
+        IoC.registerBean(this, server.getPluginManager());
         IoC.addComponentRegisterHandler(new ListenerInjection());
         IoC.addComponentRegisterHandler(new ScheduleInjection());
         IoC.addComponentRegisterHandler(new PersisterInjection());

@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.6.0-SNAPSHOT"
+version = "1.8.2-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -23,6 +23,8 @@ repositories {
 //    maven("https://repo.jyraf.com/repository/maven-snapshots/")
     maven("https://repo.glowing.ink/snapshots")
     maven("https://repo.codemc.io/repository/maven-snapshots/")
+    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+    maven("https://repo.minebench.de/")
 }
 
 dependencies {
@@ -56,14 +58,19 @@ dependencies {
         exclude(module = "slf4j-api")
     }
     implementation("com.j256.ormlite:ormlite-jdbc:6.0")
+    implementation("org.apache.commons:commons-pool2:2.12.0")
+    implementation("org.mongodb:mongodb-driver-reactivestreams:4.11.1")
     // Text Components
     implementation("ink.glowing:inkymessage:0.12.0-SNAPSHOT")
+    implementation("de.themoep:minedown-adventure:1.7.1-SNAPSHOT")
     // Reflection
     implementation("org.jooq:joor:0.9.15")
     // Additional date-time
     implementation("org.threeten:threeten-extra:1.7.2")
-
+    // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
+    // PlaceholderAPI
+    compileOnly("me.clip:placeholderapi:2.11.5")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
@@ -86,6 +93,10 @@ tasks {
         relocate("org.joor", "${internal}.reflection")
         relocate("org.threeten.extra", "${internal}.time")
         relocate("net.wesjd.anvilgui", "${internal}.anvil")
+        relocate("com.mongodb", "${internal}.mongo")
+        relocate("org.bson", "${internal}.bson")
+        relocate("org.json", "${internal}.json")
+        relocate("de.themoep.minedown.adventure", "${internal}.minedown")
     }
     build {
         dependsOn(reobfJar, shadowJar)

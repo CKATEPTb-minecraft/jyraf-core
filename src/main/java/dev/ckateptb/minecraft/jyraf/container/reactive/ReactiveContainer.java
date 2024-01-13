@@ -168,18 +168,23 @@ public class ReactiveContainer implements AsyncContainer {
     }
 
     private <T> void handleHandlers(T bean, String qualifier, Plugin plugin) {
-        this.componentRegisterHandlers.forEach(handler -> this.executeWhenEnable(plugin, () -> {
-            try {
-                handler.handle(bean, qualifier, plugin);
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        }));
+        this.componentRegisterHandlers.forEach(handler -> {
+            Runnable runnable = () -> {
+                try {
+                    handler.handle(bean, qualifier, plugin);
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            };
+            if (handler.onEnable()) this.executeWhenEnable(plugin, runnable);
+            else runnable.run();
+        });
     }
 
     private void executeWhenEnable(Plugin plugin, Runnable runnable) {
         if (plugin.isEnabled()) runnable.run();
-        else PluginStatusChangeListener.getExecuteOnEnable().computeIfAbsent(plugin, key -> ConcurrentHashMap.newKeySet()).add(runnable);
+        else
+            PluginStatusChangeListener.getExecuteOnEnable().computeIfAbsent(plugin, key -> ConcurrentHashMap.newKeySet()).add(runnable);
     }
 
     private <T> void registerOwners(Plugin plugin, BeanKey<T> key, Deque<BeanKey<?>> stacktrace) {

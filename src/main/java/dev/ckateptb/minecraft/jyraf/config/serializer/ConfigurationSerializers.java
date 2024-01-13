@@ -9,7 +9,7 @@ import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
-public class BukkitSerializers {
+public class ConfigurationSerializers {
     private static final Cache<Class<?>, TypeSerializer<?>> CACHE = Caffeine.newBuilder().build();
 
     public static <T> boolean hasSerializer(Class<T> clazz) {
@@ -43,7 +43,7 @@ public class BukkitSerializers {
                 .implicitInitialization(true)
                 .serializers(TypeSerializerCollection.builder()
                         .registerAll(TypeSerializerCollection.defaults())
-                        .registerAll(BukkitSerializers.getSerializers())
+                        .registerAll(ConfigurationSerializers.getSerializers())
                         .register((type) -> true, ObjectMapper.factory().asTypeSerializer())
                         .build()
                 ));
