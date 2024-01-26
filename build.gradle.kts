@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.8.2-SNAPSHOT"
+version = "1.9.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -23,6 +23,7 @@ repositories {
 //    maven("https://repo.jyraf.com/repository/maven-snapshots/")
     maven("https://repo.glowing.ink/snapshots")
     maven("https://repo.codemc.io/repository/maven-snapshots/")
+    maven("https://repo.codemc.io/repository/maven-releases/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.minebench.de/")
 }
@@ -69,6 +70,8 @@ dependencies {
     implementation("org.threeten:threeten-extra:1.7.2")
     // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
+    // Packets
+    implementation("com.github.retrooper.packetevents:spigot:2.2.0")
     // PlaceholderAPI
     compileOnly("me.clip:placeholderapi:2.11.5")
 
@@ -97,6 +100,8 @@ tasks {
         relocate("org.bson", "${internal}.bson")
         relocate("org.json", "${internal}.json")
         relocate("de.themoep.minedown.adventure", "${internal}.minedown")
+        relocate("com.github.retrooper.packetevents", "${internal}.packetevents.api")
+        relocate("io.github.retrooper.packetevents", "${internal}.packetevents.impl")
     }
     build {
         dependsOn(reobfJar, shadowJar)
