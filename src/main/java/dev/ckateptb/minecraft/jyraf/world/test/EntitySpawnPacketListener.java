@@ -1,0 +1,39 @@
+package dev.ckateptb.minecraft.jyraf.world.test;
+
+import com.github.retrooper.packetevents.event.PacketListenerAbstract;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
+import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
+import dev.ckateptb.minecraft.jyraf.world.WorldService;
+import lombok.RequiredArgsConstructor;
+import org.bukkit.World;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+
+@Component
+@RequiredArgsConstructor
+public class EntitySpawnPacketListener extends PacketListenerAbstract {
+    private final WorldService worldService;
+
+    @Override
+    public void onPacketSend(PacketSendEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) return;
+        PacketTypeCommon packetType = event.getPacketType();
+        if (packetType == PacketType.Play.Server.SPAWN_ENTITY) {
+            WrapperPlayServerSpawnEntity entityPacket = new WrapperPlayServerSpawnEntity(event);
+            int entityId = entityPacket.getEntityId();
+            System.out.println(entityId);
+            World world = player.getWorld();
+            this.worldService.getEntityById(world, entityId)
+                    .subscribe(entity -> {
+                        System.out.println(entity);
+                        System.out.println(Thread.currentThread());
+                        if (entity == null || entity instanceof LivingEntity) return;
+                        entity.setGlowing(true);
+                        entity.setVelocity(player.getEyeLocation().getDirection().normalize().multiply(5));
+                    });
+        }
+    }
+}

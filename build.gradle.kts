@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.17.1-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.20.2-R0.1-SNAPSHOT")
 
     // Non-blocking threads
     implementation("io.projectreactor:reactor-core:3.6.1")
@@ -91,7 +91,7 @@ tasks {
         relocate("cloud.commandframework", "${internal}.commands")
         relocate("io.leangen.geantyref", "${internal}.geantyref")
         relocate("com.fasterxml.jackson.core", "${internal}.jackson")
-        relocate("com.google.gson", "${internal}.gson")
+//        relocate("com.google.gson", "${internal}.gson")
         relocate("com.typesafe.config", "${internal}.typesafe")
         relocate("org.joor", "${internal}.reflection")
         relocate("org.threeten.extra", "${internal}.time")
@@ -111,7 +111,7 @@ tasks {
     }
     withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
-        options.release.set(16)
+        options.release.set(17)
     }
     named<Copy>("processResources") {
         filesMatching("plugin.yml") {
@@ -129,7 +129,7 @@ tasks {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(16))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
