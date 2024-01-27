@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.20.2-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.17.1-R0.1-SNAPSHOT")
 
     // Non-blocking threads
     implementation("io.projectreactor:reactor-core:3.6.1")
@@ -111,7 +111,7 @@ tasks {
     }
     withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
-        options.release.set(17)
+        options.release.set(16)
     }
     named<Copy>("processResources") {
         filesMatching("plugin.yml") {
@@ -129,7 +129,7 @@ tasks {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(16))
     }
 }
 
