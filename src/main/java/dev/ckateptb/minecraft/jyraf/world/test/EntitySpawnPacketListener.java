@@ -12,6 +12,8 @@ import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
+import java.util.Objects;
+
 @Component
 @RequiredArgsConstructor
 public class EntitySpawnPacketListener extends PacketListenerAbstract {
@@ -24,13 +26,11 @@ public class EntitySpawnPacketListener extends PacketListenerAbstract {
         if (packetType == PacketType.Play.Server.SPAWN_ENTITY) {
             WrapperPlayServerSpawnEntity entityPacket = new WrapperPlayServerSpawnEntity(event);
             int entityId = entityPacket.getEntityId();
-            System.out.println(entityId);
             World world = player.getWorld();
             this.worldService.getEntityById(world, entityId)
+                    .filter(Objects::nonNull)
+                    .filter(entity -> !(entity instanceof LivingEntity))
                     .subscribe(entity -> {
-                        System.out.println(entity);
-                        System.out.println(Thread.currentThread());
-                        if (entity == null || entity instanceof LivingEntity) return;
                         entity.setGlowing(true);
                         entity.setVelocity(player.getEyeLocation().getDirection().normalize().multiply(5));
                     });
