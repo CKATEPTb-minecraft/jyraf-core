@@ -1,4 +1,4 @@
-package dev.ckateptb.minecraft.jyraf.world.test;
+package dev.ckateptb.minecraft.jyraf.world.listener;
 
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
@@ -9,7 +9,6 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.world.WorldService;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.World;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import java.util.Objects;
@@ -29,11 +28,7 @@ public class EntitySpawnPacketListener extends PacketListenerAbstract {
             World world = player.getWorld();
             this.worldService.getEntityById(world, entityId)
                     .filter(Objects::nonNull)
-                    .filter(entity -> !(entity instanceof LivingEntity))
-                    .subscribe(entity -> {
-                        entity.setGlowing(true);
-                        entity.setVelocity(player.getEyeLocation().getDirection().normalize().multiply(5));
-                    });
+                    .subscribe(this.worldService::storeOrUpdate);
         }
     }
 }

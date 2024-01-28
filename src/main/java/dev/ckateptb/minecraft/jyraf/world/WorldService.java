@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
+import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.joor.Reflect;
@@ -20,8 +21,13 @@ import java.util.function.Supplier;
 
 @Component
 public class WorldService {
+    // TODO Убирать запись если в мире не осталось чанков
     private final AsyncCache<World, WorldRepository> worlds = Caffeine.newBuilder().buildAsync();
+    // TODO Убирать запись если entity Пропадает
     private final AsyncCache<Integer, Entity> entityIdCache = Caffeine.newBuilder().buildAsync();
+    // TODO Убирать запись если entity пропадает
+    private final AsyncCache<Integer, Long> entityIdChunkKeyCache = Caffeine.newBuilder().buildAsync();
+
     private final AsyncCache<World, Supplier<Iterable<?>>> worldEntityIteratorCache = Caffeine.newBuilder().buildAsync();
     private static final CachedReference<Boolean> IS_PAPER_ENTITY_LOOKUP = new CachedReference<>(() -> {
         try {
@@ -31,6 +37,21 @@ public class WorldService {
         }
         return true;
     });
+
+    public void storeOrUpdate(Entity entity) {
+        World world = entity.getWorld();
+        Mono.fromFuture(this.worlds.get(world, key -> new WorldRepository(key, this)))
+                .subscribe(worldRepository -> worldRepository.addOrUpdate(entity));
+    }
+
+    public Mono<Long> cacheChunkAndGetPreviousIfPresentOrElseCurrent(Entity entity) {
+        int entityId = entity.getEntityId();
+        CompletableFuture<Long> chunkKey = CompletableFuture.completedFuture(Chunk.getChunkKey(entity.getLocation()));
+        CompletableFuture<Long> previous = this.entityIdChunkKeyCache.getIfPresent(entityId);
+        if (previous == null) previous = chunkKey;
+        this.entityIdChunkKeyCache.put(entityId, chunkKey);
+        return Mono.fromFuture(previous);
+    }
 
     public Mono<Entity> getEntityById(World world, int entityId) {
         return Optional.ofNullable(this.entityIdCache.getIfPresent(entityId))
