@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 @Component
 @RequiredArgsConstructor
 public class EntityRemoveFromWorldListener implements Listener {
-    WorldService worldService;
+    private final WorldService worldService;
 
     @EventHandler
     public void on(@NotNull EntityRemoveFromWorldEvent event) {

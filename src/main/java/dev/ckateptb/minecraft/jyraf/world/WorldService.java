@@ -38,7 +38,7 @@ public class WorldService {
     public void removeEntity(Entity entity) {
         World world = entity.getWorld();
         Optional.ofNullable(worlds.getIfPresent(world)).map(Mono::fromFuture)
-                .orElse(Mono.empty()).flatMap(chunkRepository -> chunkRepository.removeEntityFromWorld(entity)
+                .orElse(Mono.empty()).flatMap(chunkRepository -> chunkRepository.removeEntityFromWorldAndCheckEmpty(entity)
                 ).subscribe(empty -> {
                     if (empty) {
                         worlds.asMap().remove(world);
@@ -46,6 +46,12 @@ public class WorldService {
                     entityIdCache.asMap().remove(entity.getEntityId());
                     entityIdChunkKeyCache.asMap().remove(entity.getEntityId());
                 });
+    }
+
+    public void storeOrUpdateWithNewChunk(Entity entity, Long newChunkKey) {
+        World world = entity.getWorld();
+        Mono.fromFuture(this.worlds.get(world, key -> new WorldRepository(key, this)))
+                .subscribe(worldRepository -> worldRepository.addOrUpdate(entity, newChunkKey));
     }
 
     public void storeOrUpdate(Entity entity) {

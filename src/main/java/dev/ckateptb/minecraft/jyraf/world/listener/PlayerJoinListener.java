@@ -13,7 +13,7 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 public class PlayerJoinListener implements Listener {
-    WorldService worldService;
+    private final WorldService worldService;
 
     @EventHandler
     public void on(@NotNull PlayerJoinEvent event) {

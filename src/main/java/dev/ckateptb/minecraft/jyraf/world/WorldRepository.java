@@ -21,14 +21,12 @@ public class WorldRepository {
     private final World world;
     private final WorldService worldService;
 
-    public Mono<Boolean> removeEntityFromWorld(Entity entity) {
+    public Mono<Boolean> removeEntityFromWorldAndCheckEmpty(Entity entity) {
         long chunkKey = Chunk.getChunkKey(entity.getLocation());
         return Optional.ofNullable(chunks.getIfPresent(chunkKey)).map(Mono::fromFuture)
                 .orElse(Mono.empty()).flatMap(chunkRepository -> chunkRepository.removeAndCheckEmpty(entity)
                 ).flatMap(empty -> {
-                    if (empty) {
-                         chunks.asMap().remove(chunkKey);
-                    }
+                    if (empty) chunks.asMap().remove(chunkKey);
                     return Mono.just(isEmpty());
                 });
     }
@@ -41,6 +39,27 @@ public class WorldRepository {
                             Mono.fromFuture(this.chunks.get(chunkKey, key ->
                                     new ChunkRepository(this, key))));
                     if (previousChunkKey != chunkKey) {
+                        CompletableFuture<ChunkRepository> previous = this.chunks.getIfPresent(previousChunkKey);
+                        if (previous != null) {
+                            System.out.println("change chunk");
+                            return Mono.fromFuture(previous)
+                                    .flatMap(chunkRepository -> chunkRepository.removeEntity(entity))
+                                    .flatMap(value -> chunk);
+                        }
+                    }
+                    return chunk;
+                })
+                .flatMap(chunkRepository -> chunkRepository.addEntity(entity))
+                .subscribe();
+    }
+
+    public void addOrUpdate(Entity entity, Long newChunkKey) {
+        this.worldService.cacheChunkAndGetPreviousIfPresentOrElseCurrent(entity)
+                .flatMap(previousChunkKey -> {
+                    Mono<ChunkRepository> chunk = Mono.defer(() ->
+                            Mono.fromFuture(this.chunks.get(newChunkKey, key ->
+                                    new ChunkRepository(this, key))));
+                    if (previousChunkKey.longValue() != newChunkKey) {
                         CompletableFuture<ChunkRepository> previous = this.chunks.getIfPresent(previousChunkKey);
                         if (previous != null) {
                             System.out.println("change chunk");
