@@ -21,11 +21,8 @@ import java.util.function.Supplier;
 
 @Component
 public class WorldService {
-    // TODO Убирать запись если в мире не осталось чанков
     private final AsyncCache<World, WorldRepository> worlds = Caffeine.newBuilder().buildAsync();
-    // TODO Убирать запись если entity Пропадает
     private final AsyncCache<Integer, Entity> entityIdCache = Caffeine.newBuilder().buildAsync();
-    // TODO Убирать запись если entity пропадает
     private final AsyncCache<Integer, Long> entityIdChunkKeyCache = Caffeine.newBuilder().buildAsync();
 
     private final AsyncCache<World, Supplier<Iterable<?>>> worldEntityIteratorCache = Caffeine.newBuilder().buildAsync();
@@ -37,6 +34,25 @@ public class WorldService {
         }
         return true;
     });
+
+    public void removeEntity(Entity entity) {
+        World world = entity.getWorld();
+        Optional.ofNullable(worlds.getIfPresent(world)).map(Mono::fromFuture)
+                .orElse(Mono.empty()).flatMap(chunkRepository -> chunkRepository.removeEntityFromWorldAndCheckEmpty(entity)
+                ).subscribe(empty -> {
+                    if (empty) {
+                        worlds.asMap().remove(world);
+                    }
+                    entityIdCache.asMap().remove(entity.getEntityId());
+                    entityIdChunkKeyCache.asMap().remove(entity.getEntityId());
+                });
+    }
+
+    public void storeOrUpdateWithNewChunk(Entity entity, Long newChunkKey) {
+        World world = entity.getWorld();
+        Mono.fromFuture(this.worlds.get(world, key -> new WorldRepository(key, this)))
+                .subscribe(worldRepository -> worldRepository.addOrUpdate(entity, newChunkKey));
+    }
 
     public void storeOrUpdate(Entity entity) {
         World world = entity.getWorld();
@@ -57,7 +73,7 @@ public class WorldService {
         return Optional.ofNullable(this.entityIdCache.getIfPresent(entityId))
                 .map(Mono::fromFuture)
                 .orElse(Mono.empty())
-                .switchIfEmpty(Mono.defer(() -> Mono.fromFuture(this.worldEntityIteratorCache.get(world, (key) ->
+                .switchIfEmpty(Mono.defer(() -> Mono.fromFuture(this.worldEntityIteratorCache.get(world, key ->
                                 this.getEntityIterable(world)))
                         .<Iterable<?>>handle((supplier, sink) -> {
                             try {

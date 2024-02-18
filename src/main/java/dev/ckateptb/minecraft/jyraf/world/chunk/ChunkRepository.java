@@ -13,7 +13,6 @@ import reactor.core.publisher.Mono;
 import java.util.Optional;
 
 public class ChunkRepository {
-    // TODO Убирать запись если entity пропадает
     private final AsyncCache<Integer, Entity> entities = Caffeine.newBuilder().buildAsync();
     @Getter
     private final WorldRepository world;
@@ -38,8 +37,12 @@ public class ChunkRepository {
                 .orElse(Mono.empty());
     }
 
+    public Mono<Boolean> removeAndCheckEmpty(Entity entity) {
+        return removeEntity(entity).thenReturn(entities.asMap().isEmpty());
+    }
+
     public Mono<Entity> addEntity(Entity entity) {
-        return Mono.fromFuture(this.entities.get(entity.getEntityId(), (key) -> entity));
+        return Mono.fromFuture(this.entities.get(entity.getEntityId(), key -> entity));
     }
 
     public Chunk getChunk() {

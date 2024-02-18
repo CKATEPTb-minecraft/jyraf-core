@@ -11,15 +11,25 @@ import org.bukkit.entity.Entity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 public class WorldRepository {
-    // TODO Убирать запись если в чанке не осталось entity, packetentity и block (пакетные entity и блоки еще не реализованы)
     private final AsyncCache<Long, ChunkRepository> chunks = Caffeine.newBuilder().buildAsync();
     @Getter
     private final World world;
     private final WorldService worldService;
+
+    public Mono<Boolean> removeEntityFromWorldAndCheckEmpty(Entity entity) {
+        long chunkKey = Chunk.getChunkKey(entity.getLocation());
+        return Optional.ofNullable(chunks.getIfPresent(chunkKey)).map(Mono::fromFuture)
+                .orElse(Mono.empty()).flatMap(chunkRepository -> chunkRepository.removeAndCheckEmpty(entity)
+                ).flatMap(empty -> {
+                    if (empty) chunks.asMap().remove(chunkKey);
+                    return Mono.just(isEmpty());
+                });
+    }
 
     public void addOrUpdate(Entity entity) {
         this.worldService.cacheChunkAndGetPreviousIfPresentOrElseCurrent(entity)
@@ -41,6 +51,31 @@ public class WorldRepository {
                 })
                 .flatMap(chunkRepository -> chunkRepository.addEntity(entity))
                 .subscribe();
+    }
+
+    public void addOrUpdate(Entity entity, Long newChunkKey) {
+        this.worldService.cacheChunkAndGetPreviousIfPresentOrElseCurrent(entity)
+                .flatMap(previousChunkKey -> {
+                    Mono<ChunkRepository> chunk = Mono.defer(() ->
+                            Mono.fromFuture(this.chunks.get(newChunkKey, key ->
+                                    new ChunkRepository(this, key))));
+                    if (previousChunkKey.longValue() != newChunkKey) {
+                        CompletableFuture<ChunkRepository> previous = this.chunks.getIfPresent(previousChunkKey);
+                        if (previous != null) {
+                            System.out.println("change chunk");
+                            return Mono.fromFuture(previous)
+                                    .flatMap(chunkRepository -> chunkRepository.removeEntity(entity))
+                                    .flatMap(value -> chunk);
+                        }
+                    }
+                    return chunk;
+                })
+                .flatMap(chunkRepository -> chunkRepository.addEntity(entity))
+                .subscribe();
+    }
+
+    public boolean isEmpty() {
+        return chunks.asMap().isEmpty();
     }
 
     public Flux<Entity> getEntities() {
