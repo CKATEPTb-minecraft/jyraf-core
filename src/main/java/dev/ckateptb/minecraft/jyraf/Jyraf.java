@@ -23,7 +23,6 @@ import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
 import dev.ckateptb.minecraft.jyraf.database.types.inject.PersisterInjection;
 import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
 import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
-import dev.ckateptb.minecraft.jyraf.packet.inject.PacketListenerInject;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
@@ -41,6 +40,7 @@ import reactor.core.scheduler.Scheduler;
 
 import java.util.UUID;
 
+// TODO Реализовать потокобезопасную альтернативу для getNearbyEntities и применить ее в Collider'ах.
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
 
@@ -69,7 +69,6 @@ public class Jyraf extends JavaPlugin {
         IoC.registerBean(this, server);
         IoC.registerBean(this, server.getPluginManager());
         IoC.addComponentRegisterHandler(new ListenerInjection());
-        IoC.addComponentRegisterHandler(new PacketListenerInject());
         IoC.addComponentRegisterHandler(new ScheduleInjection());
         IoC.addComponentRegisterHandler(new PersisterInjection());
         IoC.addComponentRegisterHandler(new ClosableInjection());
