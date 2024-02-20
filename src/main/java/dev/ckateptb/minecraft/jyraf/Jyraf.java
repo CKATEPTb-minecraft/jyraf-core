@@ -2,8 +2,11 @@ package dev.ckateptb.minecraft.jyraf;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
+import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.closable.inject.ClosableInjection;
 import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
 import dev.ckateptb.minecraft.jyraf.config.inject.ConfigurationInjection;
@@ -22,6 +25,7 @@ import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
 import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
 import org.bson.types.ObjectId;
 import org.bukkit.Bukkit;
@@ -36,11 +40,19 @@ import reactor.core.scheduler.Scheduler;
 
 import java.util.UUID;
 
+// TODO Реализовать потокобезопасную альтернативу для getNearbyEntities и применить ее в Collider'ах.
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
 
     @Getter
     private static Jyraf plugin;
+    private CachedReference<PacketEventsAPI<Plugin>> packetAPI = new CachedReference<>(() -> {
+        PacketEventsAPI<Plugin> packetAPI = SpigotPacketEventsBuilder.build(this);
+        packetAPI.getSettings()
+                .bStats(false)
+                .checkForUpdates(false);
+        return packetAPI;
+    });
 
     public Jyraf() {
         Jyraf.plugin = this;
@@ -75,12 +87,27 @@ public class Jyraf extends JavaPlugin {
     }
 
     @Override
+    public void onLoad() {
+        this.packetAPI.get().ifPresent(PacketEvents::setAPI);
+    }
+
+    @Override
     public void onEnable() {
+        this.packetAPI.get().ifPresent(PacketEventsAPI::init);
         Bukkit.getPluginManager().registerEvents(new PluginStatusChangeListener(), this);
         IoC.initialize();
     }
 
+    @Override
+    public void onDisable() {
+        this.packetAPI.get().ifPresent(PacketEventsAPI::terminate);
+    }
+
     public Scheduler syncScheduler() {
         return syncScheduler(this);
+    }
+
+    public PacketEventsAPI<Plugin> getPacketApi() {
+        return this.packetAPI.getIfPresent();
     }
 }
