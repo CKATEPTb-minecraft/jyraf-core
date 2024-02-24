@@ -1,6 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.colider.geometry;
 
-import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.colider.Collider;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
@@ -15,12 +14,10 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.*;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -45,12 +42,13 @@ public class RayTraceCollider implements Collider {
 
     @Override
     public RayTraceCollider at(Vector center) {
-        return new RayTraceCollider(world, ImmutableVector.of(center), direction, distance, size);
+        return new RayTraceCollider(this.world, ImmutableVector.of(center), this.direction, this.distance, this.size);
     }
 
     @Override
     public RayTraceCollider grow(Vector vector) {
-        return new RayTraceCollider(world, center, direction, distance + vector.getZ(), size + FastMath.max(vector.getX(), vector.getY()));
+        return new RayTraceCollider(this.world, this.center, this.direction, this.distance + vector.getZ(),
+                this.size + FastMath.max(vector.getX(), vector.getY()));
     }
 
     @Override
@@ -92,41 +90,50 @@ public class RayTraceCollider implements Collider {
     }
 
     private OrientedBoundingBoxCollider toOrientedBoundingBox() {
-        ImmutableVector immutableVector = new ImmutableVector(size, size, distance);
-        final double _2PI = 2 * Math.PI;
-        final double x = direction.getX();
-        final double z = direction.getZ();
+        ImmutableVector immutableVector = new ImmutableVector(this.size, this.size, this.distance);
+        final double _2PI = 2 * FastMath.PI;
+        final double x = this.direction.getX();
+        final double z = this.direction.getZ();
         float pitch, yaw;
         if (x == 0 && z == 0) {
-            pitch = direction.getY() > 0 ? -90 : 90;
+            pitch = this.direction.getY() > 0 ? -90 : 90;
             yaw = 0;
         } else {
-            double theta = Math.atan2(-x, z);
-            yaw = (float) Math.toDegrees((theta + _2PI) % _2PI);
+            double theta = FastMath.atan2(-x, z);
+            yaw = (float) FastMath.toDegrees((theta + _2PI) % _2PI);
             double x2 = NumberConversions.square(x);
             double z2 = NumberConversions.square(z);
-            double xz = Math.sqrt(x2 + z2);
-            pitch = (float) Math.toDegrees(Math.atan(-direction.getY() / xz));
+            double xz = FastMath.sqrt(x2 + z2);
+            pitch = (float) FastMath.toDegrees(FastMath.atan(-this.direction.getY() / xz));
         }
         float roll = 0;
         EulerAngle eulerAngle = new ImmutableVector(pitch, yaw, roll).radians().toEulerAngle();
-        return Colliders.obb(world, center.add(direction.multiply(distance)), immutableVector, eulerAngle);
+        return Colliders.obb(this.world, this.center.add(this.direction.multiply(this.distance)),
+                immutableVector, eulerAngle);
     }
 
-    public Optional<Map.Entry<Block, BlockFace>> getFirstBlock(boolean ignoreLiquids, boolean ignorePassable) {
-        RayTraceResult traceResult = world.rayTraceBlocks(center.toLocation(world), direction, distance, ignoreLiquids ? FluidCollisionMode.NEVER : FluidCollisionMode.ALWAYS, ignorePassable);
+    public Mono<Map.Entry<Block, BlockFace>> getFirstBlock(boolean ignoreLiquids, boolean ignorePassable) {
+        return this.getFirstBlockOptional(ignoreLiquids, ignorePassable)
+                .map(Mono::just)
+                .orElseGet(Mono::empty);
+    }
+    public Optional<Map.Entry<Block, BlockFace>> getFirstBlockOptional(boolean ignoreLiquids, boolean ignorePassable) {
+        RayTraceResult traceResult = this.world.rayTraceBlocks(this.center.toLocation(this.world), this.direction,
+                this.distance, ignoreLiquids ? FluidCollisionMode.NEVER : FluidCollisionMode.ALWAYS, ignorePassable);
         if (traceResult == null) return Optional.empty();
         Block block = traceResult.getHitBlock();
         BlockFace blockFace = traceResult.getHitBlockFace();
         return block == null || blockFace == null ? Optional.empty() : Optional.of(Map.entry(block, blockFace));
     }
 
-    public Optional<Block> getBlock(boolean ignoreLiquids, boolean ignorePassable, Predicate<Block> filter) {
+    public Mono<Block> getBlock(boolean ignoreLiquids, boolean ignorePassable, Predicate<Block> filter) {
         return this.getBlock(ignoreLiquids, ignorePassable, true, filter);
     }
 
-    public Optional<Block> getBlock(boolean ignoreLiquids, boolean ignorePassable, boolean ignoreObstacles, Predicate<Block> filter) {
-        BlockIterator it = new BlockIterator(world, center, direction, size, Math.min(100, (int) Math.ceil(distance)));
+    public Mono<Block> getBlock(boolean ignoreLiquids, boolean ignorePassable,
+                                boolean ignoreObstacles, Predicate<Block> filter) {
+        int maxDistance = FastMath.min(100, (int) FastMath.ceil(this.distance));
+        BlockIterator it = new BlockIterator(this.world, this.center, this.direction, this.size, maxDistance);
         while (it.hasNext()) {
             Block block = it.next();
             boolean passable = block.isPassable();
@@ -140,78 +147,77 @@ public class RayTraceCollider implements Collider {
                 }
             }
             if (filter.test(block)) {
-                return Optional.of(block);
+                return Mono.just(block);
             }
             if (!ignoreObstacles && !passable) {
                 break;
             }
         }
-        return Optional.empty();
+        return Mono.empty();
     }
 
-    public Optional<Entity> getEntity(Predicate<Entity> filter) {
+    public Mono<Entity> getEntity(Predicate<Entity> filter) {
         return this.getEntity(filter, this.distance);
     }
 
     @SneakyThrows
-    public Optional<Entity> getEntity(Predicate<Entity> filter, double distance) {
-        Vector startPos = center.toBukkitVector();
-        Vector dir = direction.clone().normalize().multiply(distance);
-        BoundingBox aabb = BoundingBox.of(startPos, startPos).expandDirectional(dir).expand(size);
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        AtomicReference<Collection<Entity>> reference = new AtomicReference<>();
-        Jyraf.getPlugin().syncScheduler().schedule(() -> {
-            reference.set(startPos.toLocation(world).getNearbyEntities(aabb.getMaxX(), aabb.getMaxY(), aabb.getMaxZ()));
-            countDownLatch.countDown();
-        });
-        countDownLatch.await(); // TODO We shouldn't block thread
-        Collection<Entity> entities = reference.get();
+    public Mono<Entity> getEntity(Predicate<Entity> filter, double distance) {
+        Vector startPos = this.center.toBukkitVector();
+        Vector dir = this.direction.clone().normalize().multiply(distance);
+        BoundingBox aabb = BoundingBox.of(startPos, startPos).expandDirectional(dir).expand(this.size);
+        return AxisAlignedBoundingBoxCollider.WORLD_SERVICE_CACHED_REFERENCE.get().orElseGet(Mono::empty)
+                .flatMap(worldService -> worldService.getWorld(this.world.getUID()))
+                .flatMapMany(worldRepository -> {
+                    Location location = startPos.toLocation(this.world);
+                    double radius = ImmutableVector.of(aabb.getMax()).maxComponent();
+                    return worldRepository.getNearbyEntities(location, radius);
+                })
+                .collectList()
+                .mapNotNull(entities -> {
+                    Entity nearestHitEntity = null;
+                    RayTraceResult nearestHitResult = null;
+                    double nearestDistanceSq = Double.MAX_VALUE;
 
-        Entity nearestHitEntity = null;
-        RayTraceResult nearestHitResult = null;
-        double nearestDistanceSq = Double.MAX_VALUE;
-
-        for (Entity entity : entities) {
-            if (!filter.test(entity)) continue;
-            BoundingBox boundingBox = entity.getBoundingBox().expand(size);
-            RayTraceResult hitResult = boundingBox.rayTrace(startPos, direction, distance);
-            if (hitResult != null) {
-                double distanceSq = startPos.distanceSquared(hitResult.getHitPosition());
-                if (distanceSq < nearestDistanceSq) {
-                    nearestHitEntity = entity;
-                    nearestHitResult = hitResult;
-                    nearestDistanceSq = distanceSq;
-                }
-            }
-        }
-        RayTraceResult traceResult = (nearestHitEntity == null) ? null : new RayTraceResult(nearestHitResult.getHitPosition(), nearestHitEntity, nearestHitResult.getHitBlockFace());
-        if (traceResult == null) return Optional.empty();
-        return Optional.ofNullable(traceResult.getHitEntity());
+                    for (Entity entity : entities) {
+                        if (!filter.test(entity)) continue;
+                        BoundingBox boundingBox = entity.getBoundingBox().expand(this.size);
+                        RayTraceResult hitResult = boundingBox.rayTrace(startPos, this.direction, this.distance);
+                        if (hitResult != null) {
+                            double distanceSq = startPos.distanceSquared(hitResult.getHitPosition());
+                            if (distanceSq < nearestDistanceSq) {
+                                nearestHitEntity = entity;
+                                nearestHitResult = hitResult;
+                                nearestDistanceSq = distanceSq;
+                            }
+                        }
+                    }
+                    if (nearestHitEntity == null) return null;
+                    Vector hitPosition = nearestHitResult.getHitPosition();
+                    BlockFace hitBlockFace = nearestHitResult.getHitBlockFace();
+                    RayTraceResult rayTraceResult = new RayTraceResult(hitPosition, nearestHitEntity, hitBlockFace);
+                    return rayTraceResult.getHitEntity();
+                });
     }
 
-    public Optional<Vector> getPosition(boolean ignoreEntity, boolean ignoreBlock, boolean ignoreLiquid, boolean ignorePassable, Predicate<Entity> entityFilter, Predicate<Block> blockFilter) {
-        double distance = this.distance;
-        Vector blockPosition = null;
-        Vector entityPosition = null;
-        Vector position = center.add(direction.normalize().multiply(distance));
-
+    public Mono<ImmutableVector> getPosition(boolean ignoreEntity, boolean ignoreBlock,
+                                             boolean ignoreLiquid, boolean ignorePassable,
+                                             Predicate<Entity> entityFilter, Predicate<Block> blockFilter) {
+        Mono<ImmutableVector> destination = Mono.empty();
+        ImmutableVector position = this.center.add(this.direction.normalize().multiply(this.distance));
         if (!ignoreBlock) {
-            Optional<Block> optional = getBlock(ignoreLiquid, ignorePassable, true, blockFilter);
-            if (optional.isPresent()) {
-                Block block = optional.get();
-                ImmutableVector immutableVector = ImmutableVector.of(block.getLocation().toCenterLocation());
-                blockPosition = center.add(direction.normalize().multiply(center.distance(immutableVector) - 0.5));
-                distance = center.distance(blockPosition);
-            }
+            destination = this.getBlock(ignoreLiquid, ignorePassable, true, blockFilter)
+                    .mapNotNull(block -> this.center.add(this.direction.normalize()
+                            .multiply(this.center
+                                    .distance(ImmutableVector.of(block.getLocation().toCenterLocation())) - 0.5)));
         }
-
         if (!ignoreEntity) {
-            Optional<Entity> optional = getEntity(entityFilter, distance);
-            if (optional.isPresent()) {
-                Entity entity = optional.get();
-                entityPosition = ImmutableVector.of(entity.getLocation()).add(new ImmutableVector(0, entity.getHeight() / 2, 0));
-            }
+            destination = destination
+                    .switchIfEmpty(Mono.just(this.center))
+                    .map(this.center::distance)
+                    .flatMap(distance -> this.getEntity(entityFilter, distance))
+                    .mapNotNull(entity -> ImmutableVector.of(entity.getLocation())
+                            .add(new ImmutableVector(0, entity.getHeight() / 2, 0)));
         }
-        return Optional.of(ImmutableVector.of(entityPosition == null ? blockPosition == null ? position : blockPosition : entityPosition));
+        return destination.switchIfEmpty(Mono.just(position));
     }
 }
