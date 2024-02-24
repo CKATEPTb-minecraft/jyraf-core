@@ -1,12 +1,12 @@
 package dev.ckateptb.minecraft.jyraf.colider.geometry;
 
 import com.google.common.base.Objects;
+import dev.ckateptb.minecraft.jyraf.async.tracker.entity.EntityTrackerService;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.colider.Collider;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
-import dev.ckateptb.minecraft.jyraf.async.tracker.entity.EntityTrackerService;
 import lombok.Getter;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;

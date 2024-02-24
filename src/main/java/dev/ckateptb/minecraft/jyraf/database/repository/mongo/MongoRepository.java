@@ -36,13 +36,6 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
-    protected final String url;
-    protected final String database;
-    private MongoClient client;
-    private MongoCollection<Document> collection;
-    private CachedReference<MongoCollection<Entity>> dao;
-    private String idField;
-    private Class<Entity> entityClass;
     private static final CachedReference<GsonConfigurationLoader> MAPPER = new CachedReference<>(() ->
             GsonConfigurationLoader.builder().defaultOptions(ConfigurationOptions.defaults()
                     .shouldCopyDefaults(true)
@@ -54,6 +47,13 @@ public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
                             .build()
                     )
             ).build());
+    protected final String url;
+    protected final String database;
+    private MongoClient client;
+    private MongoCollection<Document> collection;
+    private CachedReference<MongoCollection<Entity>> dao;
+    private String idField;
+    private Class<Entity> entityClass;
 
     @Override
     public void connect(Plugin owner, Class<Entity> entityClass, Class<Id> idClass) {

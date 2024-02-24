@@ -117,6 +117,7 @@ public class RayTraceCollider implements Collider {
                 .map(Mono::just)
                 .orElseGet(Mono::empty);
     }
+
     public Optional<Map.Entry<Block, BlockFace>> getFirstBlockOptional(boolean ignoreLiquids, boolean ignorePassable) {
         RayTraceResult traceResult = this.world.rayTraceBlocks(this.center.toLocation(this.world), this.direction,
                 this.distance, ignoreLiquids ? FluidCollisionMode.NEVER : FluidCollisionMode.ALWAYS, ignorePassable);
