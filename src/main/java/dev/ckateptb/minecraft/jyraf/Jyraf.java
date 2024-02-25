@@ -40,13 +40,12 @@ import reactor.core.scheduler.Scheduler;
 
 import java.util.UUID;
 
-// TODO Реализовать потокобезопасную альтернативу для getNearbyEntities и применить ее в Collider'ах.
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
 
     @Getter
     private static Jyraf plugin;
-    private CachedReference<PacketEventsAPI<Plugin>> packetAPI = new CachedReference<>(() -> {
+    private final CachedReference<PacketEventsAPI<Plugin>> packetAPI = new CachedReference<>(() -> {
         PacketEventsAPI<Plugin> packetAPI = SpigotPacketEventsBuilder.build(this);
         packetAPI.getSettings()
                 .bStats(false)

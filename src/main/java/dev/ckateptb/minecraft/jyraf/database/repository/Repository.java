@@ -1,6 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.database.repository;
 
-import com.j256.ormlite.dao.Dao;
 import org.bukkit.plugin.Plugin;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

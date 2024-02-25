@@ -4,8 +4,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public class CachedReference<T> {
-    private T obj;
     private final Supplier<T> supplier;
+    private T obj;
 
 
     public CachedReference() {
