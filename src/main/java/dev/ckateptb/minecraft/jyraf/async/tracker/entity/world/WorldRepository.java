@@ -89,13 +89,11 @@ public class WorldRepository implements EntityLookup {
     public Flux<Entity> getNearbyEntities(Location location, double radius) {
         SphereBoundingBoxCollider sphere = Colliders.sphere(location, radius);
         return this.getNearbyChunks(location, radius, radius)
-                .doFirst(() -> System.out.println("Starting entity search!"))
                 .flatMap(ChunkRepository::getEntities)
                 .filter(entity -> sphere.intersects(Colliders.aabb(entity)));
     }
 
     private Flux<ChunkRepository> getNearbyChunks(Location location, double xRadius, double zRadius) {
-        System.out.println("Looking for chunks on " + location + " with radius " + xRadius);
         World world = location.getWorld();
         double x = location.getX();
         double y = location.getY();
@@ -106,7 +104,6 @@ public class WorldRepository implements EntityLookup {
                 set.add(Chunk.getChunkKey(new Location(world, xx, y, zz)));
             }
         }
-        System.out.println("Chunks founded: " + set.size());
         return Flux.fromIterable(set)
                 .flatMap(chunkKey -> Mono.fromFuture(this.chunks.get(chunkKey, ChunkRepository::new)));
     }
