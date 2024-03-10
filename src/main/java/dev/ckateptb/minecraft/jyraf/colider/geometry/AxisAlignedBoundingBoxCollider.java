@@ -112,19 +112,8 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
         ImmutableVector vector = min.max(max).subtract(center);
         consumer.accept(Mono.defer(() -> Mono.just(center.toLocation(world)))
                 .flatMapMany(location -> WORLD_SERVICE_CACHED_REFERENCE.get().orElseGet(Mono::empty)
-                        .flatMap(entityTrackerService -> entityTrackerService.getWorld(world.getUID())
-                                .doFirst(() -> {
-                                    System.out.println("Looking for world!");
-                                })
-                                .doOnNext(worldRepository -> {
-                                    System.out.println("World found: " + worldRepository.getWorld().getName());
-                                })
-                        )
-                        .flatMapMany(worldRepository -> {
-                            System.out.println("Looking for entities");
-                            return worldRepository.getNearbyEntities(location, vector.maxComponent())
-                                    .doOnNext(entity -> System.out.println("Entity found: " + entity.getEntityId()));
-                        }))
+                        .flatMap(entityTrackerService -> entityTrackerService.getWorld(world.getUID()))
+                        .flatMapMany(worldRepository -> worldRepository.getNearbyEntities(location, vector.maxComponent())))
                 .filter(entity -> this.intersects(Colliders.aabb(entity))));
         return this;
     }

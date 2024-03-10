@@ -5,6 +5,7 @@ import dev.ckateptb.minecraft.jyraf.menu.AbstractMenu;
 import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
 import lombok.Getter;
 import lombok.Setter;
+import net.kyori.adventure.text.Component;
 import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -16,14 +17,19 @@ import org.jetbrains.annotations.Nullable;
 public class ChestMenu extends AbstractMenu {
     private final Inventory inventory;
     private final Frame[] frames;
-    private final String title;
+    private final Component title;
 
+    @Deprecated
     public ChestMenu(String title, int rows) {
-        Validate.notBlank(title, "Title can't be null");
+        this(Text.of(title), rows);
+    }
+
+    public ChestMenu(Component title, int rows) {
+        Validate.notNull(title, "Title can't be null");
         Validate.inclusiveBetween(1, 6, rows, "Rows must be from 1 to 6! ");
         int size = rows * 9;
         this.title = title;
-        this.inventory = Bukkit.createInventory(this, size, Text.of(title));
+        this.inventory = Bukkit.createInventory(this, size, title);
         this.frames = new Frame[size];
     }
 

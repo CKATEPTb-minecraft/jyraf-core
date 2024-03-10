@@ -1,9 +1,11 @@
 package dev.ckateptb.minecraft.jyraf.menu.builder;
 
 import dev.ckateptb.minecraft.jyraf.builder.item.ItemBuilder;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.menu.Menu;
 import dev.ckateptb.minecraft.jyraf.menu.chest.ChestMenu;
 import dev.ckateptb.minecraft.jyraf.menu.frame.Frame;
+import net.kyori.adventure.text.Component;
 import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -16,7 +18,12 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class MenuBuilder {
+    @Deprecated
     public ChestBuilder chest(String title, int rows) {
+        return this.chest(Text.of(title), rows);
+    }
+
+    public ChestBuilder chest(Component title, int rows) {
         return new ChestBuilder(title, rows);
     }
 
@@ -72,11 +79,16 @@ public class MenuBuilder {
         private final int rows;
         private final List<Menu.CloseHandler> closeHandlers = new ArrayList<>();
         private final Frame[] frames;
-        public String title;
+        public Component title;
         private boolean editable = false;
         private boolean closable = true;
 
+        @Deprecated
         public ChestBuilder(String title, int rows) {
+            this(Text.of(title), rows);
+        }
+
+        public ChestBuilder(Component title, int rows) {
             this.title = title;
             this.rows = rows;
             this.frames = new Frame[rows * 9];

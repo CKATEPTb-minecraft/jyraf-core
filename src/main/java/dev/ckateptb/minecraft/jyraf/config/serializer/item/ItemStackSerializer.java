@@ -7,6 +7,7 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import dev.ckateptb.minecraft.jyraf.builder.item.ItemBuilder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -77,7 +78,10 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
         node.node("amount").set(item.getAmount());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            node.node("name").set(Text.of(meta.displayName()));
+            Component displayName = meta.displayName();
+            if(displayName != null) {
+                node.node("name").set(Text.of(displayName));
+            }
             node.node("lore").setList(String.class, Optional.ofNullable(meta.lore()).orElse(Collections.emptyList()).stream().map(Text::of).toList());
             ConfigurationNode enchants = node.node("enchants");
             if (enchants instanceof CommentedConfigurationNode commented) {
