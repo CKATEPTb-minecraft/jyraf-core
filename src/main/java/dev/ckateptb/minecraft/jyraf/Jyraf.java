@@ -35,6 +35,7 @@ import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.patheloper.mapping.PatheticMapper;
 import org.threeten.extra.PeriodDuration;
 import reactor.core.scheduler.Scheduler;
 
@@ -92,6 +93,7 @@ public class Jyraf extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        PatheticMapper.initialize(this);
         this.packetAPI.get().ifPresent(PacketEventsAPI::init);
         Bukkit.getPluginManager().registerEvents(new PluginStatusChangeListener(), this);
         IoC.initialize();
@@ -99,6 +101,7 @@ public class Jyraf extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        PatheticMapper.shutdown();
         this.packetAPI.get().ifPresent(PacketEventsAPI::terminate);
     }
 
