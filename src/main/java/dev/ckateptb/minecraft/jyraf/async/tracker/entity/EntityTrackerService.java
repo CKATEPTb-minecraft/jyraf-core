@@ -7,6 +7,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ckateptb.minecraft.jyraf.async.tracker.entity.world.WorldRepository;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,16 +16,14 @@ import org.bukkit.event.world.WorldUnloadEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Component
 public class EntityTrackerService implements Listener {
     private final AsyncCache<UUID, WorldRepository> worlds = Caffeine.newBuilder().buildAsync();
 
     public Mono<WorldRepository> getWorld(UUID uuid) {
-        return Optional.ofNullable(this.worlds.getIfPresent(uuid)).map(Mono::fromFuture).orElseGet(Mono::empty);
+        return Mono.fromFuture(this.worlds.get(uuid, key -> new WorldRepository(Bukkit.getWorld(uuid))));
     }
 
     @Schedule(async = true, initialDelay = 0, fixedRate = 1)
@@ -54,8 +53,8 @@ public class EntityTrackerService implements Listener {
     public void on(WorldLoadEvent event) {
         World world = event.getWorld();
         UUID uid = world.getUID();
-        WorldRepository worldRepository = new WorldRepository(world);
-        this.worlds.put(uid, CompletableFuture.completedFuture(worldRepository));
+        Mono.fromFuture(this.worlds.get(uid, uuid -> new WorldRepository(world)))
+                .subscribe();
     }
 
     @EventHandler

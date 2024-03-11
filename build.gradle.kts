@@ -13,7 +13,7 @@ plugins {
     id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.11.2-SNAPSHOT"
+version = "1.11.3-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -26,6 +26,7 @@ repositories {
     maven("https://repo.codemc.io/repository/maven-releases/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.minebench.de/")
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -72,6 +73,8 @@ dependencies {
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
     // Packets
     implementation("com.github.retrooper.packetevents:spigot:2.2.0")
+    // PathFinder
+    implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
     // PlaceholderAPI
     compileOnly("me.clip:placeholderapi:2.11.5")
 
@@ -102,6 +105,7 @@ tasks {
         relocate("de.themoep.minedown.adventure", "${internal}.minedown")
         relocate("com.github.retrooper.packetevents", "${internal}.packetevents.api")
         relocate("io.github.retrooper.packetevents", "${internal}.packetevents.impl")
+        relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
     }
     build {
         dependsOn(reobfJar, shadowJar)
