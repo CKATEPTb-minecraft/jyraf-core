@@ -27,6 +27,12 @@ import org.bukkit.plugin.Plugin;
 public class CommandInjection implements ComponentRegisterHandler, ContainerInitializeHandler {
     private final static Cache<Plugin, AnnotationParser<CommandSender>> COMMAND_CACHE = Caffeine.newBuilder().build();
 
+    public static void setExceptionHandler(Plugin plugin, MinecraftExceptionHandler<CommandSender> handler) {
+        AnnotationParser<CommandSender> parser = COMMAND_CACHE.getIfPresent(plugin);
+        if (parser == null) return;
+        handler.apply(parser.manager(), commandSender -> commandSender);
+    }
+
     @SneakyThrows
     @Override
     public void handle(Object component, String qualifier, Plugin owner) {
