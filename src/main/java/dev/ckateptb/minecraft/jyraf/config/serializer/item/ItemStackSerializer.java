@@ -79,7 +79,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             Component displayName = meta.displayName();
-            if(displayName != null) {
+            if (displayName != null) {
                 node.node("name").set(Text.of(displayName));
             }
             node.node("lore").setList(String.class, Optional.ofNullable(meta.lore()).orElse(Collections.emptyList()).stream().map(Text::of).toList());
