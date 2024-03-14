@@ -36,6 +36,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.patheloper.mapping.PatheticMapper;
+import org.spongepowered.configurate.ConfigurationOptions;
+import org.spongepowered.configurate.gson.GsonConfigurationLoader;
+import org.spongepowered.configurate.objectmapping.ObjectMapper;
+import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.threeten.extra.PeriodDuration;
 import reactor.core.scheduler.Scheduler;
 
@@ -43,6 +47,18 @@ import java.util.UUID;
 
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
+
+    private final static CachedReference<GsonConfigurationLoader> GSON_MAPPER = new CachedReference<>(() ->
+            GsonConfigurationLoader.builder().defaultOptions(ConfigurationOptions.defaults()
+                    .shouldCopyDefaults(true)
+                    .implicitInitialization(true)
+                    .serializers(TypeSerializerCollection.builder()
+                            .registerAll(TypeSerializerCollection.defaults())
+                            .registerAll(ConfigurationSerializers.getSerializers())
+                            .register((type) -> true, ObjectMapper.factory().asTypeSerializer())
+                            .build()
+                    )
+            ).build());
 
     @Getter
     private static Jyraf plugin;
@@ -111,5 +127,9 @@ public class Jyraf extends JavaPlugin {
 
     public PacketEventsAPI<Plugin> getPacketApi() {
         return this.packetAPI.getIfPresent();
+    }
+
+    public static GsonConfigurationLoader getGsonMapper() {
+        return GSON_MAPPER.get().orElse(null);
     }
 }

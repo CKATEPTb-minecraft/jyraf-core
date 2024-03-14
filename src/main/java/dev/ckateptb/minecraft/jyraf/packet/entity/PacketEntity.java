@@ -7,14 +7,15 @@ import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
+import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -36,16 +37,16 @@ import java.util.concurrent.CompletableFuture;
 public class PacketEntity {
     private final static CachedReference<PlayerManager> PACKET_MANAGER = new CachedReference<>(() ->
             PacketEvents.getAPI().getPlayerManager());
-    private final int id;
+    protected final int id;
     @Getter
-    private final UUID uniqueId;
-    private final EntityType type;
+    protected final UUID uniqueId;
+    protected final EntityType type;
     private final Set<Player> allowedViewers = Collections.synchronizedSet(new HashSet<>());
     private final Set<Player> currentViewers = Collections.synchronizedSet(new HashSet<>());
     @Getter
     @Setter
     private boolean global = true; // means that any player can see the entity
-    private Location location;
+    protected Location location;
     @Getter
     @Setter
     private LookType lookType = LookType.FIXED;
@@ -118,20 +119,22 @@ public class PacketEntity {
                                                     direction.negative() : direction);
                                     boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
                                     players.forEach(player -> this.teleport(player, onGround));
-                                } else if (this.gravity) { // GRAVITY
-                                    ImmutableVector origin = ImmutableVector.of(this.location);
-                                    double distanceAboveGround = origin.getDistanceAboveGround(world, true);
-                                    if (distanceAboveGround >= 0.1) {
-                                        ImmutableVector destiny = origin.subtract(new ImmutableVector(0d, distanceAboveGround, 0d));
-                                        ImmutableVector direction = destiny.subtract(origin).normalize();
-                                        double delta = this.speed * distanceAboveGround;
-                                        double speed = FastMath.max(this.speed, FastMath.min(1, delta));
-                                        origin = origin.add(direction.multiply(speed));
-                                        this.location.set(origin.getX(), origin.getY(), origin.getZ());
-                                        boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
-                                        players.forEach(player -> this.teleport(player, onGround));
+                                } else {
+                                    if (this.gravity) { // GRAVITY
+                                        ImmutableVector origin = ImmutableVector.of(this.location);
+                                        double distanceAboveGround = origin.getDistanceAboveGround(world, true);
+                                        if (distanceAboveGround >= 0.1) {
+                                            ImmutableVector destiny = origin.subtract(new ImmutableVector(0d, distanceAboveGround, 0d));
+                                            ImmutableVector direction = destiny.subtract(origin).normalize();
+                                            double delta = this.speed * distanceAboveGround;
+                                            double speed = FastMath.max(this.speed, FastMath.min(1, delta));
+                                            origin = origin.add(direction.multiply(speed));
+                                            this.location.set(origin.getX(), origin.getY(), origin.getZ());
+                                            boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
+                                            players.forEach(player -> this.teleport(player, onGround));
+                                        }
                                     }
-                                } else { // LOOK
+                                    // LOOK
                                     ImmutableVector original = ImmutableVector.of(this.location);
                                     switch (this.lookType) {
                                         case CLOSEST_PLAYER -> {
@@ -196,11 +199,6 @@ public class PacketEntity {
                 ).toCompletableFuture()))
                 .filter(PathfinderResult::successful)
                 .flatMap(result -> {
-                    System.out.println(result.getPath().length());
-                    for (PathPosition path : result.getPath()) {
-                        Location l = BukkitMapper.toLocation(path);
-                        this.currentViewers.forEach(player -> player.sendBlockChange(l, Material.ROSE_BUSH.createBlockData()));
-                    }
                     CompletableFuture<Location> future = new CompletableFuture<>();
                     this.destiny = Tuples.of(result.getPath().iterator(), future);
                     return Mono.fromFuture(future);
@@ -211,7 +209,29 @@ public class PacketEntity {
                 }));
     }
 
-    private void spawn(Player player) {
+    private TeamColor teamColor = null;
+
+    protected void setTeam(Player player, TeamColor color) {
+        String team = "npc-team-" + this.id;
+        if (teamColor != null) {
+            this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
+        }
+        this.teamColor = color == null ? TeamColor.WHITE : color;
+        // TODO Not Working
+        WrapperPlayServerTeams.ScoreBoardTeamInfo info = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                Text.of(" "), null, null,
+                WrapperPlayServerTeams.NameTagVisibility.NEVER,
+                WrapperPlayServerTeams.CollisionRule.NEVER,
+                this.teamColor.getKyori(),
+                WrapperPlayServerTeams.OptionData.NONE
+        );
+        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.CREATE, info));
+        String id = this.type == EntityType.PLAYER ? Integer.toString(this.id) : this.getUniqueId().toString();
+        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.ADD_ENTITIES,
+                (WrapperPlayServerTeams.ScoreBoardTeamInfo) null, id));
+    }
+
+    protected void spawn(Player player) {
         this.sendPacket(player, new WrapperPlayServerSpawnEntity(this.id, this.uniqueId,
                 SpigotConversionUtil.fromBukkitEntityType(this.type),
                 SpigotConversionUtil.fromBukkitLocation(this.location),
@@ -231,7 +251,7 @@ public class PacketEntity {
         return this.location.getWorld();
     }
 
-    private void sendPacket(Player player, PacketWrapper<?> packet) {
+    protected void sendPacket(Player player, PacketWrapper<?> packet) {
         PACKET_MANAGER.get().ifPresent(playerManager -> playerManager.sendPacket(player, packet));
     }
 }

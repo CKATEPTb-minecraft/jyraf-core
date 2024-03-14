@@ -9,8 +9,8 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
-import dev.ckateptb.minecraft.jyraf.config.serializer.ConfigurationSerializers;
 import dev.ckateptb.minecraft.jyraf.database.repository.Repository;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -19,12 +19,8 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bukkit.plugin.Plugin;
 import org.spongepowered.configurate.BasicConfigurationNode;
-import org.spongepowered.configurate.ConfigurationNodeFactory;
-import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
-import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.serialize.SerializationException;
-import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -32,21 +28,9 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
-    private static final CachedReference<GsonConfigurationLoader> MAPPER = new CachedReference<>(() ->
-            GsonConfigurationLoader.builder().defaultOptions(ConfigurationOptions.defaults()
-                    .shouldCopyDefaults(true)
-                    .implicitInitialization(true)
-                    .serializers(TypeSerializerCollection.builder()
-                            .registerAll(TypeSerializerCollection.defaults())
-                            .registerAll(ConfigurationSerializers.getSerializers())
-                            .register((type) -> true, ObjectMapper.factory().asTypeSerializer())
-                            .build()
-                    )
-            ).build());
     protected final String url;
     protected final String database;
     private MongoClient client;
@@ -154,9 +138,7 @@ public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
 
     @SneakyThrows
     private Document adapt(Entity entity) {
-        Optional<GsonConfigurationLoader> optional = MAPPER.get();
-        if (optional.isEmpty()) return new Document();
-        GsonConfigurationLoader mapper = optional.get();
+        GsonConfigurationLoader mapper = Jyraf.getGsonMapper();
         JsonObject json = mapper.createNode().set(entity).get(JsonObject.class);
         if (json == null) return new Document();
         return Document.parse(json.toString());
@@ -164,9 +146,7 @@ public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
 
     @SneakyThrows
     private Document adapt(Map<String, Object> map) {
-        Optional<GsonConfigurationLoader> optional = MAPPER.get();
-        if (optional.isEmpty()) return new Document();
-        GsonConfigurationLoader mapper = optional.get();
+        GsonConfigurationLoader mapper = Jyraf.getGsonMapper();
         BasicConfigurationNode node = mapper.createNode();
         map.forEach((key, value) -> {
             try {
@@ -184,12 +164,12 @@ public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
     private Entity adapt(Document document) {
         Map<String, Object> map = new HashMap<>(Map.copyOf(document));
         map.remove("_id");
-        return MAPPER.get().map(ConfigurationNodeFactory::createNode).map(node -> {
-            try {
-                return node.set(map).get(this.entityClass);
-            } catch (SerializationException e) {
-                throw new RuntimeException(e);
-            }
-        }).orElse(null);
+        GsonConfigurationLoader mapper = Jyraf.getGsonMapper();
+        BasicConfigurationNode node = mapper.createNode();
+        try {
+            return node.set(map).get(this.entityClass);
+        } catch (SerializationException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
