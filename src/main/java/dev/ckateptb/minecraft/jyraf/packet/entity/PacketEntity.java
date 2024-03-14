@@ -2,19 +2,24 @@ package dev.ckateptb.minecraft.jyraf.packet.entity;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.player.PlayerManager;
+import com.github.retrooper.packetevents.protocol.player.GameMode;
+import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
+import dev.ckateptb.minecraft.jyraf.packet.entity.skin.Skin;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
@@ -217,7 +222,6 @@ public class PacketEntity {
             this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
         }
         this.teamColor = color == null ? TeamColor.WHITE : color;
-        // TODO Not Working
         WrapperPlayServerTeams.ScoreBoardTeamInfo info = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
                 Text.of(" "), null, null,
                 WrapperPlayServerTeams.NameTagVisibility.NEVER,
@@ -232,12 +236,42 @@ public class PacketEntity {
     }
 
     protected void spawn(Player player) {
+        if (this.type == EntityType.PLAYER) {
+            this.spawnPlayer(player);
+        } else {
+            this.spawnEntity(player);
+            this.setTeam(player, TeamColor.WHITE);
+        }
+    }
+
+    private void spawnPlayer(Player player) {
+        UserProfile profile = new UserProfile(this.uniqueId, Integer.toString(this.id));
+        Skin.from(player)
+                .doOnNext(profile::setTextureProperties)
+                .doFinally(signalType -> Bukkit.getScheduler()
+                        .runTaskLaterAsynchronously(Jyraf.getPlugin(), () ->
+                                this.sendPacket(player, new WrapperPlayServerPlayerInfoRemove(this.uniqueId)), 60)
+                )
+                .subscribe(textureProperty -> {
+                    WrapperPlayServerPlayerInfoUpdate.PlayerInfo info = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
+                            profile, false, 1, GameMode.CREATIVE, Text.of("npc-" + this.id), null
+                    );
+                    this.sendPacket(player, new WrapperPlayServerPlayerInfoUpdate(EnumSet.of(
+                            WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+                            WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED
+                    ), info, info));
+                    this.spawnEntity(player);
+                    this.lookAt(player, this.location.getYaw(), this.location.getPitch());
+                    this.setTeam(player, TeamColor.GOLD);
+                });
+    }
+
+    private void spawnEntity(Player player) {
         this.sendPacket(player, new WrapperPlayServerSpawnEntity(this.id, this.uniqueId,
                 SpigotConversionUtil.fromBukkitEntityType(this.type),
                 SpigotConversionUtil.fromBukkitLocation(this.location),
                 this.location.getYaw(), 0, new Vector3d()
         ));
-        this.setTeam(player, TeamColor.WHITE);
     }
 
     private void despawn(Player player) {
