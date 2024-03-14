@@ -2,16 +2,23 @@ package dev.ckateptb.minecraft.jyraf.packet.entity;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.player.PlayerManager;
+import com.github.retrooper.packetevents.protocol.player.Equipment;
+import com.github.retrooper.packetevents.protocol.player.GameMode;
+import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
+import dev.ckateptb.minecraft.jyraf.packet.entity.enums.team.TeamColor;
+import dev.ckateptb.minecraft.jyraf.packet.entity.property.PacketEntityProperty;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import lombok.Setter;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -45,6 +52,7 @@ public class PacketEntity {
     private final EntityType type;
     private final Set<Player> allowedViewers = Collections.synchronizedSet(new HashSet<>());
     private final Set<Player> currentViewers = Collections.synchronizedSet(new HashSet<>());
+    private final Map<PacketEntityProperty<?>, Object> properties = new HashMap<>();
     private Location location;
     @Getter
     @Setter
@@ -156,6 +164,11 @@ public class PacketEntity {
                 });
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> T getProperty(PacketEntityProperty<T> key) {
+        return (T) this.properties.getOrDefault(key, key.getDefaultValue());
+    }
+
     public void show(Player player) {
         this.allowedViewers.add(player);
     }
@@ -172,6 +185,30 @@ public class PacketEntity {
     public void lookAt(Player player, float yaw, float pitch) {
         this.sendPacket(player, new WrapperPlayServerEntityHeadLook(this.id, yaw));
         this.sendPacket(player, new WrapperPlayServerEntityRotation(this.id, yaw, pitch, true));
+    }
+
+    public void equip(Player player, Equipment equipment) {
+        this.sendPacket(player, new WrapperPlayServerEntityEquipment(this.id, Collections.singletonList(equipment)));
+    }
+
+    public void setTeam(Player player, TeamColor color) {
+        String team = "npc_team_" + this.id;
+        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.CREATE,
+                new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                        Text.of(" "), null, null,
+                        WrapperPlayServerTeams.NameTagVisibility.NEVER,
+                        WrapperPlayServerTeams.CollisionRule.NEVER,
+                        color == null ? NamedTextColor.WHITE : NamedTextColor.NAMES.value(color.name().toLowerCase()),
+                        WrapperPlayServerTeams.OptionData.NONE
+                )));
+        this.sendPacket(player, new WrapperPlayServerTeams(
+                team, WrapperPlayServerTeams.TeamMode.ADD_ENTITIES, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null,
+                this.type == EntityType.PLAYER ? Integer.toString(this.id) : this.uniqueId.toString()));
+    }
+
+    public void removeTeam(Player player) {
+        this.sendPacket(player, new WrapperPlayServerTeams("npc_team_" + this.id,
+                WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
     }
 
     public void teleport(Player player, Location location) {
@@ -212,11 +249,29 @@ public class PacketEntity {
     }
 
     private void spawn(Player player) {
+        boolean isPlayer = this.type == EntityType.PLAYER;
+        if (isPlayer) {
+            String name = "npc-" + this.id;
+            UserProfile profile = new UserProfile(this.uniqueId, name);
+            // TODO Skin
+            WrapperPlayServerPlayerInfoUpdate.PlayerInfo info = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
+                    profile, false, 1, GameMode.CREATIVE, Text.of(name), null
+            );
+            this.sendPacket(player, new WrapperPlayServerPlayerInfoUpdate(EnumSet.of(
+                    WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+                    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED
+            ), info, info));
+        }
+        float yaw = this.location.getYaw();
         this.sendPacket(player, new WrapperPlayServerSpawnEntity(this.id, this.uniqueId,
                 SpigotConversionUtil.fromBukkitEntityType(this.type),
                 SpigotConversionUtil.fromBukkitLocation(this.location),
-                this.location.getYaw(), 0, new Vector3d()
+                yaw, 0, new Vector3d()
         ));
+        if (isPlayer) {
+            this.lookAt(player, yaw, this.location.getPitch());
+            // TODO Send Metadata
+        }
     }
 
     private void despawn(Player player) {
