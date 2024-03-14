@@ -74,7 +74,7 @@ dependencies {
     // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
     // Packets
-    implementation("com.github.retrooper.packetevents:spigot:2.2.0")
+    implementation("com.github.retrooper.packetevents:spigot:2.2.1")
     // PathFinder
     implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
     // PlaceholderAPI
