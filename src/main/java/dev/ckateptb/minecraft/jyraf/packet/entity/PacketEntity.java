@@ -214,19 +214,14 @@ public class PacketEntity {
                 }));
     }
 
-    private TeamColor teamColor = null;
-
     protected void setTeam(Player player, TeamColor color) {
         String team = "npc-team-" + this.id;
-        if (teamColor != null) {
-            this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
-        }
-        this.teamColor = color == null ? TeamColor.WHITE : color;
+        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
         WrapperPlayServerTeams.ScoreBoardTeamInfo info = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
                 Text.of(" "), null, null,
                 WrapperPlayServerTeams.NameTagVisibility.NEVER,
                 WrapperPlayServerTeams.CollisionRule.NEVER,
-                this.teamColor.getKyori(),
+                Optional.ofNullable(color).orElse(TeamColor.WHITE).getKyori(),
                 WrapperPlayServerTeams.OptionData.NONE
         );
         this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.CREATE, info));
