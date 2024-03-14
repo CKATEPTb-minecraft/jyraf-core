@@ -237,6 +237,7 @@ public class PacketEntity {
                 SpigotConversionUtil.fromBukkitLocation(this.location),
                 this.location.getYaw(), 0, new Vector3d()
         ));
+        this.setTeam(player, TeamColor.WHITE);
     }
 
     private void despawn(Player player) {

@@ -24,8 +24,7 @@ public class PacketPlayer extends PacketEntity {
 
     @Override
     protected void spawn(Player player) {
-        String name = "npc-" + this.id;
-        UserProfile profile = new UserProfile(this.uniqueId, name);
+        UserProfile profile = new UserProfile(this.uniqueId, Integer.toString(this.id));
         Skin.from(player)
                 .doOnNext(profile::setTextureProperties)
                 .doFinally(signalType -> Bukkit.getScheduler()
@@ -34,16 +33,15 @@ public class PacketPlayer extends PacketEntity {
                 )
                 .subscribe(textureProperty -> {
                     WrapperPlayServerPlayerInfoUpdate.PlayerInfo info = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
-                            profile, false, 1, GameMode.CREATIVE, Text.of(name), null
+                            profile, false, 1, GameMode.CREATIVE, Text.of("npc-" + this.id), null
                     );
                     this.sendPacket(player, new WrapperPlayServerPlayerInfoUpdate(EnumSet.of(
                             WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
                             WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED
                     ), info, info));
-                    this.setTeam(player, TeamColor.WHITE);
                     super.spawn(player);
                     this.lookAt(player, this.location.getYaw(), this.location.getPitch());
-                    // TODO Send Metadata
+                    this.setTeam(player, TeamColor.GOLD);
                 });
     }
 }
