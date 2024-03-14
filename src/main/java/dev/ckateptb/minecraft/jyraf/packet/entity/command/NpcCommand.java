@@ -7,7 +7,6 @@ import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
-import dev.ckateptb.minecraft.jyraf.packet.entity.player.PacketPlayer;
 import dev.ckateptb.minecraft.jyraf.world.WorldService;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
@@ -22,18 +21,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class NpcCommand implements Command {
     private final WorldService service;
-
-    @CommandMethod("npc player")
-    @CommandPermission("jnpcs.admin")
-    public void npc(Player player) {
-        PacketEntity packetEntity = new PacketPlayer(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), player.getLocation());
-        packetEntity.setGlobal(true);
-        packetEntity.setLookType(LookType.PER_PLAYER);
-        packetEntity.setGravity(true);
-        this.service.getWorld(player.getWorld())
-                .flatMap(worldRepository -> worldRepository.add(packetEntity))
-                .subscribe();
-    }
 
     @CommandMethod("npc <type>")
     @CommandPermission("jnpcs.admin")

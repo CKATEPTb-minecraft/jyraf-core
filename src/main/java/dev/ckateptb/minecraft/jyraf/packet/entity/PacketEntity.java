@@ -39,6 +39,12 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+// TODO Implement properties like a
+//  skin, glow, entity type data (villager type etc.)
+//  Holograms, Multiple NameTags (based on Holograms)
+//  Interaction Handler, Equipments, Poses, States
+//  Dropped Item, Item Display, Block Display, Text Display
+//  Implement 1.16.5 support
 public class PacketEntity {
     private final static CachedReference<PlayerManager> PACKET_MANAGER = new CachedReference<>(() ->
             PacketEvents.getAPI().getPlayerManager());
@@ -177,6 +183,10 @@ public class PacketEntity {
         return this.allowedViewers.contains(player);
     }
 
+    public boolean isDisplayed(Player player) {
+        return this.currentViewers.contains(player);
+    }
+
     public void lookAt(Player player, float yaw, float pitch) {
         this.sendPacket(player, new WrapperPlayServerEntityHeadLook(this.id, yaw));
         this.sendPacket(player, new WrapperPlayServerEntityRotation(this.id, yaw, pitch, true));
@@ -241,7 +251,7 @@ public class PacketEntity {
 
     private void spawnPlayer(Player player) {
         UserProfile profile = new UserProfile(this.uniqueId, Integer.toString(this.id));
-        Skin.from(player)
+        Skin.from(player) // TODO parse from properties
                 .doOnNext(profile::setTextureProperties)
                 .doFinally(signalType -> Bukkit.getScheduler()
                         .runTaskLaterAsynchronously(Jyraf.getPlugin(), () ->
