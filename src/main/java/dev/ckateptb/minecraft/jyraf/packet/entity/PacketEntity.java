@@ -38,13 +38,13 @@ public class PacketEntity {
             PacketEvents.getAPI().getPlayerManager());
     private final int id;
     @Getter
-    @Setter
-    private boolean global = true; // means that any player can see the entity
-    @Getter
     private final UUID uniqueId;
     private final EntityType type;
     private final Set<Player> allowedViewers = Collections.synchronizedSet(new HashSet<>());
     private final Set<Player> currentViewers = Collections.synchronizedSet(new HashSet<>());
+    @Getter
+    @Setter
+    private boolean global = true; // means that any player can see the entity
     private Location location;
     @Getter
     @Setter
