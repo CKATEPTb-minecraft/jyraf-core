@@ -7,7 +7,7 @@ import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
-import dev.ckateptb.minecraft.jyraf.packet.entity.service.PacketEntityService;
+import dev.ckateptb.minecraft.jyraf.world.WorldService;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class NpcCommand implements Command {
-    private final PacketEntityService service;
+    private final WorldService service;
 
     @CommandMethod("npc <type>")
     @CommandPermission("jnpcs.admin")
@@ -35,7 +35,7 @@ public class NpcCommand implements Command {
         packetEntity.setPathfinderStrategy(new WalkablePathfinderStrategy());
         this.follow(packetEntity, player).subscribe();
         this.service.getWorld(player.getWorld().getUID())
-                .flatMap(worldRepository -> worldRepository.addEntity(packetEntity))
+                .flatMap(worldRepository -> worldRepository.add(packetEntity))
                 .subscribe();
     }
 

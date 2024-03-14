@@ -1,12 +1,12 @@
 package dev.ckateptb.minecraft.jyraf.colider.geometry;
 
 import com.google.common.base.Objects;
-import dev.ckateptb.minecraft.jyraf.async.tracker.entity.EntityTrackerService;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.colider.Collider;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
+import dev.ckateptb.minecraft.jyraf.world.WorldService;
 import lombok.Getter;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
@@ -24,8 +24,8 @@ import java.util.function.Consumer;
 
 @Getter
 public class AxisAlignedBoundingBoxCollider implements Collider {
-    public static final CachedReference<Mono<EntityTrackerService>> WORLD_SERVICE_CACHED_REFERENCE =
-            new CachedReference<>(() -> IoC.getBean(EntityTrackerService.class).orElseGet(Mono::empty));
+    public static final CachedReference<Mono<WorldService>> WORLD_SERVICE_CACHED_REFERENCE =
+            new CachedReference<>(() -> IoC.getBean(WorldService.class).orElseGet(Mono::empty));
 
     protected final World world;
     protected final ImmutableVector min;
@@ -112,7 +112,7 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
         ImmutableVector vector = min.max(max).subtract(center);
         consumer.accept(Mono.defer(() -> Mono.just(center.toLocation(world)))
                 .flatMapMany(location -> WORLD_SERVICE_CACHED_REFERENCE.get().orElseGet(Mono::empty)
-                        .flatMap(entityTrackerService -> entityTrackerService.getWorld(world.getUID()))
+                        .flatMap(worldService -> worldService.getWorld(world.getUID()))
                         .flatMapMany(worldRepository -> worldRepository.getNearbyEntities(location, vector.maxComponent())))
                 .filter(entity -> this.intersects(Colliders.aabb(entity))));
         return this;

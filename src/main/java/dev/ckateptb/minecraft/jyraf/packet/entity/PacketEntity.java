@@ -77,7 +77,7 @@ public class PacketEntity {
                             .sort((o1, o2) -> {
                                 Location first = o1.getLocation();
                                 Location second = o2.getLocation();
-                                return (int) (first.distanceSquared(location) - second.distanceSquared(location));
+                                return (int) (first.distanceSquared(this.location) - second.distanceSquared(this.location));
                             });
                     if (!this.global) flux = flux.filter(this.allowedViewers::contains);
                     flux.collectList()
