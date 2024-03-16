@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class ItemStackSerializer implements TypeSerializer<ItemStack> {
     private final ItemStack empty = new ItemStack(Material.AIR);
-    private final String allowedEnchantments = Arrays.stream(Enchantment.values())
+    private final String allowedEnchantments = Registry.ENCHANTMENT.stream()
             .map(enchantment -> enchantment.getKey().getKey()).collect(Collectors.joining(", "));
     private final String allowedFlags = Arrays.stream(ItemFlag.values())
             .map(ItemFlag::name).collect(Collectors.joining(", "));
@@ -50,7 +50,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
             if (enchantsNode.isMap()) {
                 Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
                 map.forEach((key, configurationNode) -> {
-                    Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft((String) key));
+                    Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft((String) key));
                     if (enchantment != null) {
                         int level = configurationNode.getInt();
                         builder.enchant(enchantment, level);
