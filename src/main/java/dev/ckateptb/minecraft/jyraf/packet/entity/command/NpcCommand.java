@@ -17,13 +17,13 @@ import org.bukkit.entity.Player;
 import java.util.UUID;
 
 @Getter
-@Component
+//@Component
 @RequiredArgsConstructor
 public class NpcCommand implements Command {
     private final WorldService service;
 
-    @CommandMethod("npc <type>")
-    @CommandPermission("jnpcs.admin")
+//    @CommandMethod("npc <type>")
+//    @CommandPermission("jnpcs.admin")
     public void npc(Player player, @Argument("type") EntityType type) {
         PacketEntity packetEntity = new PacketEntity(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), type, player.getLocation());
         packetEntity.setGlobal(true);
