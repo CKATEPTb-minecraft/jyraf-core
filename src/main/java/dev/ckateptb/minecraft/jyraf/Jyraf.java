@@ -47,6 +47,12 @@ import reactor.core.scheduler.Scheduler;
 
 import java.util.UUID;
 
+// TODO:
+//  Redis database
+//  Temporary system (blocks, effects, callbacks, etc.)
+//  Packet block
+//  Packet boss bar
+//  Packet scoreboard
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
 
