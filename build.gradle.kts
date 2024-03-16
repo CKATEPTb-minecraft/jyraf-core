@@ -10,10 +10,10 @@ plugins {
     id("com.github.johnrengelman.shadow").version("7.1.0")
     id("io.github.gradle-nexus.publish-plugin").version("1.1.0")
     // https://github.com/PaperMC/paperweight
-    id("io.papermc.paperweight.userdev").version("1.5.11")
+//    id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.13.0-SNAPSHOT"
+version = "1.14.1-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -27,13 +27,17 @@ repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.minebench.de/")
     maven("https://jitpack.io")
+    maven("https://repo.codemc.io/repository/nms/")
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
+//    paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
+    compileOnly("com.destroystokyo.paper:paper:1.16.5-R0.1-SNAPSHOT")
 
     // Non-blocking threads
     implementation("io.projectreactor:reactor-core:3.6.1")
+    // Non-blocking netty
+    implementation("io.projectreactor.netty:reactor-netty:1.1.17")
     // High performance cache
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8") {
         exclude(module = "checker-qual")
@@ -72,7 +76,7 @@ dependencies {
     // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
     // Packets
-    implementation("com.github.retrooper.packetevents:spigot:2.2.0")
+    implementation("com.github.retrooper.packetevents:spigot:2.2.1")
     // PathFinder
     implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
     // PlaceholderAPI
@@ -106,16 +110,17 @@ tasks {
         relocate("com.github.retrooper.packetevents", "${internal}.packetevents.api")
         relocate("io.github.retrooper.packetevents", "${internal}.packetevents.impl")
         relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
+        relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
     }
     build {
-        dependsOn(reobfJar, shadowJar)
+        dependsOn(/*reobfJar,*/ shadowJar)
     }
     publish {
-        dependsOn(reobfJar, shadowJar)
+        dependsOn(/*reobfJar,*/ shadowJar)
     }
     withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
-        options.release.set(17)
+        options.release.set(16)
     }
     named<Copy>("processResources") {
         filesMatching("plugin.yml") {
@@ -133,7 +138,7 @@ tasks {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(16))
     }
 }
 

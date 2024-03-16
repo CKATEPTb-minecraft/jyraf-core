@@ -1,20 +1,25 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity;
 
-import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.player.PlayerManager;
+import com.github.retrooper.packetevents.protocol.player.GameMode;
+import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
+import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
+import dev.ckateptb.minecraft.jyraf.packet.entity.skin.Skin;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -33,19 +38,25 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+// TODO Implement properties like a
+//  skin, glow, entity type data (villager type etc.)
+//  Holograms, Multiple NameTags (based on Holograms)
+//  Interaction Handler, Equipments, Poses, States
+//  Dropped Item, Item Display, Block Display, Text Display
+//  Implement 1.16.5 support
 public class PacketEntity {
     private final static CachedReference<PlayerManager> PACKET_MANAGER = new CachedReference<>(() ->
-            PacketEvents.getAPI().getPlayerManager());
-    private final int id;
+            Jyraf.getPlugin().getPacketApi().getPlayerManager());
+    protected final int id;
     @Getter
-    private final UUID uniqueId;
-    private final EntityType type;
+    protected final UUID uniqueId;
+    protected final EntityType type;
     private final Set<Player> allowedViewers = Collections.synchronizedSet(new HashSet<>());
     private final Set<Player> currentViewers = Collections.synchronizedSet(new HashSet<>());
     @Getter
     @Setter
     private boolean global = true; // means that any player can see the entity
-    private Location location;
+    protected Location location;
     @Getter
     @Setter
     private LookType lookType = LookType.FIXED;
@@ -118,20 +129,22 @@ public class PacketEntity {
                                                     direction.negative() : direction);
                                     boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
                                     players.forEach(player -> this.teleport(player, onGround));
-                                } else if (this.gravity) { // GRAVITY
-                                    ImmutableVector origin = ImmutableVector.of(this.location);
-                                    double distanceAboveGround = origin.getDistanceAboveGround(world, true);
-                                    if (distanceAboveGround >= 0.1) {
-                                        ImmutableVector destiny = origin.subtract(new ImmutableVector(0d, distanceAboveGround, 0d));
-                                        ImmutableVector direction = destiny.subtract(origin).normalize();
-                                        double delta = this.speed * distanceAboveGround;
-                                        double speed = FastMath.max(this.speed, FastMath.min(1, delta));
-                                        origin = origin.add(direction.multiply(speed));
-                                        this.location.set(origin.getX(), origin.getY(), origin.getZ());
-                                        boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
-                                        players.forEach(player -> this.teleport(player, onGround));
+                                } else {
+                                    if (this.gravity) { // GRAVITY
+                                        ImmutableVector origin = ImmutableVector.of(this.location);
+                                        double distanceAboveGround = origin.getDistanceAboveGround(world, true);
+                                        if (distanceAboveGround >= 0.1) {
+                                            ImmutableVector destiny = origin.subtract(new ImmutableVector(0d, distanceAboveGround, 0d));
+                                            ImmutableVector direction = destiny.subtract(origin).normalize();
+                                            double delta = this.speed * distanceAboveGround;
+                                            double speed = FastMath.max(this.speed, FastMath.min(1, delta));
+                                            origin = origin.add(direction.multiply(speed));
+                                            this.location.set(origin.getX(), origin.getY(), origin.getZ());
+                                            boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
+                                            players.forEach(player -> this.teleport(player, onGround));
+                                        }
                                     }
-                                } else { // LOOK
+                                    // LOOK
                                     ImmutableVector original = ImmutableVector.of(this.location);
                                     switch (this.lookType) {
                                         case CLOSEST_PLAYER -> {
@@ -169,6 +182,10 @@ public class PacketEntity {
         return this.allowedViewers.contains(player);
     }
 
+    public boolean isDisplayed(Player player) {
+        return this.currentViewers.contains(player);
+    }
+
     public void lookAt(Player player, float yaw, float pitch) {
         this.sendPacket(player, new WrapperPlayServerEntityHeadLook(this.id, yaw));
         this.sendPacket(player, new WrapperPlayServerEntityRotation(this.id, yaw, pitch, true));
@@ -196,11 +213,6 @@ public class PacketEntity {
                 ).toCompletableFuture()))
                 .filter(PathfinderResult::successful)
                 .flatMap(result -> {
-                    System.out.println(result.getPath().length());
-                    for (PathPosition path : result.getPath()) {
-                        Location l = BukkitMapper.toLocation(path);
-                        this.currentViewers.forEach(player -> player.sendBlockChange(l, Material.ROSE_BUSH.createBlockData()));
-                    }
                     CompletableFuture<Location> future = new CompletableFuture<>();
                     this.destiny = Tuples.of(result.getPath().iterator(), future);
                     return Mono.fromFuture(future);
@@ -211,7 +223,54 @@ public class PacketEntity {
                 }));
     }
 
-    private void spawn(Player player) {
+    protected void setTeam(Player player, TeamColor color) {
+        String team = "npc-team-" + this.id;
+        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
+        WrapperPlayServerTeams.ScoreBoardTeamInfo info = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
+                Text.of(" "), null, null,
+                WrapperPlayServerTeams.NameTagVisibility.NEVER,
+                WrapperPlayServerTeams.CollisionRule.NEVER,
+                Optional.ofNullable(color).orElse(TeamColor.WHITE).getKyori(),
+                WrapperPlayServerTeams.OptionData.NONE
+        );
+        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.CREATE, info));
+        String id = this.type == EntityType.PLAYER ? Integer.toString(this.id) : this.getUniqueId().toString();
+        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.ADD_ENTITIES,
+                (WrapperPlayServerTeams.ScoreBoardTeamInfo) null, id));
+    }
+
+    protected void spawn(Player player) {
+        if (this.type == EntityType.PLAYER) {
+            this.spawnPlayer(player);
+        } else {
+            this.spawnEntity(player);
+            this.setTeam(player, TeamColor.WHITE);
+        }
+    }
+
+    private void spawnPlayer(Player player) {
+        UserProfile profile = new UserProfile(this.uniqueId, Integer.toString(this.id));
+        Skin.from(player) // TODO parse from properties
+                .doOnNext(profile::setTextureProperties)
+                .doFinally(signalType -> Bukkit.getScheduler()
+                        .runTaskLaterAsynchronously(Jyraf.getPlugin(), () ->
+                                this.sendPacket(player, new WrapperPlayServerPlayerInfoRemove(this.uniqueId)), 60)
+                )
+                .subscribe(textureProperty -> {
+                    WrapperPlayServerPlayerInfoUpdate.PlayerInfo info = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
+                            profile, false, 1, GameMode.CREATIVE, Text.of("npc-" + this.id), null
+                    );
+                    this.sendPacket(player, new WrapperPlayServerPlayerInfoUpdate(EnumSet.of(
+                            WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+                            WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED
+                    ), info, info));
+                    this.spawnEntity(player);
+                    this.lookAt(player, this.location.getYaw(), this.location.getPitch());
+                    this.setTeam(player, TeamColor.GOLD);
+                });
+    }
+
+    private void spawnEntity(Player player) {
         this.sendPacket(player, new WrapperPlayServerSpawnEntity(this.id, this.uniqueId,
                 SpigotConversionUtil.fromBukkitEntityType(this.type),
                 SpigotConversionUtil.fromBukkitLocation(this.location),
@@ -231,7 +290,7 @@ public class PacketEntity {
         return this.location.getWorld();
     }
 
-    private void sendPacket(Player player, PacketWrapper<?> packet) {
+    protected void sendPacket(Player player, PacketWrapper<?> packet) {
         PACKET_MANAGER.get().ifPresent(playerManager -> playerManager.sendPacket(player, packet));
     }
 }

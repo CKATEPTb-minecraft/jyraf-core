@@ -38,7 +38,7 @@ public class WorldRepository implements EntityLookup, PacketEntityLookup {
     public void tick() {
         Flux.fromIterable(this.chunks.asMap().values())
                 .flatMap(Mono::fromFuture)
-                .doOnNext(ChunkRepository::tick)
+                .doOnNext(ChunkRepository::tick) // TODO Tick only loaded chunks
                 .flatMap(chunkRepository -> {
                     Flux<Entity> entities = chunkRepository.getEntities();
                     Flux<PacketEntity> packetEntities = chunkRepository.getPacketEntities();

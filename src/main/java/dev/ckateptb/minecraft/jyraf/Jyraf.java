@@ -15,6 +15,7 @@ import dev.ckateptb.minecraft.jyraf.config.serializer.UUIDSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.duration.DurationSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.enums.EnumSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.item.ItemStackSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.item.attribute.AttributeModifierSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.location.LocationSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.objectid.ObjectIdSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.world.WorldSerializer;
@@ -32,17 +33,40 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.patheloper.mapping.PatheticMapper;
+import org.spongepowered.configurate.ConfigurationOptions;
+import org.spongepowered.configurate.gson.GsonConfigurationLoader;
+import org.spongepowered.configurate.objectmapping.ObjectMapper;
+import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.threeten.extra.PeriodDuration;
 import reactor.core.scheduler.Scheduler;
 
 import java.util.UUID;
 
+// TODO:
+//  Redis database
+//  Temporary system (blocks, effects, callbacks, etc.)
+//  Packet block
+//  Packet boss bar
+//  Packet scoreboard
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
+
+    private final static CachedReference<GsonConfigurationLoader> GSON_MAPPER = new CachedReference<>(() ->
+            GsonConfigurationLoader.builder().defaultOptions(ConfigurationOptions.defaults()
+                    .shouldCopyDefaults(true)
+                    .implicitInitialization(true)
+                    .serializers(TypeSerializerCollection.builder()
+                            .registerAll(TypeSerializerCollection.defaults())
+                            .registerAll(ConfigurationSerializers.getSerializers())
+                            .register((type) -> true, ObjectMapper.factory().asTypeSerializer())
+                            .build()
+                    )
+            ).build());
 
     @Getter
     private static Jyraf plugin;
@@ -64,6 +88,7 @@ public class Jyraf extends JavaPlugin {
         ConfigurationSerializers.registerSerializer(Location.class, new LocationSerializer());
         ConfigurationSerializers.registerSerializer(ObjectId.class, new ObjectIdSerializer());
         ConfigurationSerializers.registerSerializer(UUID.class, new UUIDSerializer());
+        ConfigurationSerializers.registerSerializer(AttributeModifier.class, new AttributeModifierSerializer());
         Logger.setGlobalLogLevel(Level.ERROR);
         Server server = Bukkit.getServer();
         IoC.registerBean(this, server);
@@ -111,5 +136,9 @@ public class Jyraf extends JavaPlugin {
 
     public PacketEventsAPI<Plugin> getPacketApi() {
         return this.packetAPI.getIfPresent();
+    }
+
+    public static GsonConfigurationLoader getGsonMapper() {
+        return GSON_MAPPER.get().orElse(null);
     }
 }

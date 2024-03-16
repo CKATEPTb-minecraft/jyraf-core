@@ -6,6 +6,8 @@ import com.mojang.authlib.properties.Property;
 import dev.ckateptb.minecraft.jyraf.builder.Builder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -75,6 +77,22 @@ public class ItemBuilder implements Builder<ItemStack> {
         if (this.meta != null) {
             for (Enchantment enchantment : enchantments) {
                 this.meta.removeEnchant(enchantment);
+            }
+        }
+        return this;
+    }
+
+    public ItemBuilder attribute(Attribute attribute, AttributeModifier modifier) {
+        if (this.meta != null) {
+            this.meta.addAttributeModifier(attribute, modifier);
+        }
+        return this;
+    }
+
+    public ItemBuilder unattribute(Attribute... attributes) {
+        if (this.meta != null) {
+            for (Attribute attribute : attributes) {
+                this.meta.removeAttributeModifier(attribute);
             }
         }
         return this;
