@@ -13,7 +13,7 @@ plugins {
 //    id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.13.1-SNAPSHOT"
+version = "1.14.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -109,6 +109,7 @@ tasks {
         relocate("de.themoep.minedown.adventure", "${internal}.minedown")
         relocate("com.github.retrooper.packetevents", "${internal}.packetevents.api")
         relocate("io.github.retrooper.packetevents", "${internal}.packetevents.impl")
+        relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
         relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
     }
     build {
