@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import org.bukkit.entity.Player;
+import org.joor.Reflect;
 import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 import reactor.core.publisher.Mono;
@@ -25,7 +26,13 @@ public class Skin {
         return Mono.fromFuture(CACHE.get(player.getName(), key -> {
             if (!(player.getPlayerProfile() instanceof CraftPlayerProfile profile)) return new ArrayList<>();
             return profile.getGameProfile().getProperties().values().stream()
-                    .map(property -> new TextureProperty(property.name(), property.value(), property.signature()))
+                    .map(property -> {
+                        Reflect reflect = Reflect.on(property);
+                        String name = reflect.field("name").as(String.class);
+                        String value = reflect.field("value").as(String.class);
+                        String signature = reflect.field("signature").as(String.class);
+                        return new TextureProperty(name, value, signature);
+                    })
                     .collect(Collectors.toList());
         }));
     }

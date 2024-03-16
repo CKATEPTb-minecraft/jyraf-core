@@ -9,6 +9,7 @@ import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
 import dev.ckateptb.minecraft.jyraf.world.repository.WorldRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import reactor.core.publisher.Flux;
@@ -39,15 +40,17 @@ public class WorldService implements Listener {
 
     @EventHandler
     public void on(EntityAddToWorldEvent event) {
-        this.getWorld(event.getWorld())
-                .flatMap(worldRepository -> worldRepository.add(event.getEntity()))
+        Entity entity = event.getEntity();
+        this.getWorld(entity.getWorld())
+                .flatMap(worldRepository -> worldRepository.add(entity))
                 .subscribe();
     }
 
     @EventHandler
     public void on(EntityRemoveFromWorldEvent event) {
-        this.getWorld(event.getWorld())
-                .flatMap(worldRepository -> worldRepository.remove(event.getEntity()))
+        Entity entity = event.getEntity();
+        this.getWorld(entity.getWorld())
+                .flatMap(worldRepository -> worldRepository.remove(entity))
                 .subscribe();
     }
 }

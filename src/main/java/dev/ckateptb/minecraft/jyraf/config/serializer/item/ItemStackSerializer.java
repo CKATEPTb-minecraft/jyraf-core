@@ -31,12 +31,13 @@ import org.spongepowered.configurate.serialize.TypeSerializer;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class ItemStackSerializer implements TypeSerializer<ItemStack> {
     private final ItemStack empty = new ItemStack(Material.AIR);
-    private final String allowedEnchantments = Registry.ENCHANTMENT.stream()
+    private final String allowedEnchantments = StreamSupport.stream(Registry.ENCHANTMENT.spliterator(), false)
             .map(enchantment -> enchantment.getKey().getKey()).collect(Collectors.joining(", "));
-    private final String allowedAttributes = Registry.ATTRIBUTE.stream()
+    private final String allowedAttributes = StreamSupport.stream(Registry.ATTRIBUTE.spliterator(), false)
             .map(attribute -> attribute.getKey().getKey()).collect(Collectors.joining(", "));
     private final String allowedFlags = Arrays.stream(ItemFlag.values())
             .map(ItemFlag::name).collect(Collectors.joining(", "));
