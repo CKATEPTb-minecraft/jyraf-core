@@ -2,6 +2,7 @@ package dev.ckateptb.minecraft.jyraf.config.serializer.item;
 
 import com.destroystokyo.paper.profile.CraftPlayerProfile;
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
@@ -10,6 +11,9 @@ import dev.ckateptb.minecraft.jyraf.component.Text;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -32,6 +36,8 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
     private final ItemStack empty = new ItemStack(Material.AIR);
     private final String allowedEnchantments = Registry.ENCHANTMENT.stream()
             .map(enchantment -> enchantment.getKey().getKey()).collect(Collectors.joining(", "));
+    private final String allowedAttributes = Registry.ATTRIBUTE.stream()
+            .map(attribute -> attribute.getKey().getKey()).collect(Collectors.joining(", "));
     private final String allowedFlags = Arrays.stream(ItemFlag.values())
             .map(ItemFlag::name).collect(Collectors.joining(", "));
 
@@ -54,6 +60,26 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                     if (enchantment != null) {
                         int level = configurationNode.getInt();
                         builder.enchant(enchantment, level);
+                    }
+                });
+            }
+        }
+        if (node.hasChild("attributes")) {
+            ConfigurationNode attributes = node.node("attributes");
+            if (attributes.isMap()) {
+                Map<Object, ? extends ConfigurationNode> map = attributes.childrenMap();
+                map.forEach((key, configurationNode) -> {
+                    Attribute attribute = Registry.ATTRIBUTE.get(NamespacedKey.minecraft((String) key));
+                    if (attribute != null && configurationNode.isList()) {
+                        try {
+                            List<AttributeModifier> list = configurationNode.getList(AttributeModifier.class);
+                            if (list == null || list.isEmpty()) return;
+                            for (AttributeModifier modifier : list) {
+                                builder.attribute(attribute, modifier);
+                            }
+                        } catch (SerializationException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 });
             }
@@ -100,6 +126,23 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                 commented.comment("Allowed options " + this.allowedFlags);
             }
             flags.setList(String.class, meta.getItemFlags().stream().map(ItemFlag::name).collect(Collectors.toList()));
+
+            ConfigurationNode attributes = node.node("attributes");
+            if (attributes instanceof CommentedConfigurationNode commented) {
+                commented.comment("Allowed options " + this.allowedAttributes);
+            }
+            Multimap<Attribute, AttributeModifier> modifiersMultimap = meta.getAttributeModifiers();
+            if (modifiersMultimap != null) {
+                modifiersMultimap.asMap()
+                        .forEach((key, value) -> {
+                            try {
+                                attributes.node(key).setList(AttributeModifier.class, new ArrayList<>(value));
+                            } catch (SerializationException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            }
+
             if (meta instanceof Damageable damageable) {
                 node.node("data").set(damageable.getDamage());
             }
