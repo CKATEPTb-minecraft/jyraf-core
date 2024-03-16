@@ -1,6 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity;
 
-import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.player.PlayerManager;
 import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
@@ -47,7 +46,7 @@ import java.util.concurrent.CompletableFuture;
 //  Implement 1.16.5 support
 public class PacketEntity {
     private final static CachedReference<PlayerManager> PACKET_MANAGER = new CachedReference<>(() ->
-            PacketEvents.getAPI().getPlayerManager());
+            Jyraf.getPlugin().getPacketApi().getPlayerManager());
     protected final int id;
     @Getter
     protected final UUID uniqueId;
