@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 @SuppressWarnings({"unchecked"})
-public class ItemBuilder<T extends ItemBuilder<T>> implements Builder<ItemStack> {
+public class ItemBuilder<B extends ItemBuilder<B>> implements Builder<ItemStack> {
 
     protected final ItemStack item;
     protected final ItemMeta meta;
@@ -45,79 +45,79 @@ public class ItemBuilder<T extends ItemBuilder<T>> implements Builder<ItemStack>
         this.meta = this.item.getItemMeta();
     }
 
-    public <X, Y> T set(@NonNull NamespacedKey key, @NonNull PersistentDataType<X, Y> type, Y value) {
-        if (this.meta == null) return (T) this;
+    public <K, V> B set(@NonNull NamespacedKey key, @NonNull PersistentDataType<K, V> type, V value) {
+        if (this.meta == null) return (B) this;
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
         if (value == null) {
             pdc.remove(key);
-            return (T) this;
+            return (B) this;
         }
         pdc.set(key, type, value);
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T name(String name) {
-        if (this.meta == null) return (T) this;
+    public B name(String name) {
+        if (this.meta == null) return (B) this;
         this.meta.displayName(Text.of(name));
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T amount(int amount) {
+    public B amount(int amount) {
         this.item.setAmount(amount);
-        return (T) this;
+        return (B) this;
     }
 
-    public T lore(String... lore) {
+    public B lore(String... lore) {
         return lore(Arrays.asList(lore));
     }
 
-    public T lore(List<String> lore) {
-        if (this.meta == null || lore == null || lore.isEmpty()) return (T) this;
+    public B lore(List<String> lore) {
+        if (this.meta == null || lore == null || lore.isEmpty()) return (B) this;
         this.meta.lore(lore.stream().map(Text::of).toList());
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T color(Color color) {
+    public B color(Color color) {
         return this.durability(color.data());
     }
 
-    public T durability(short durability) {
-        if (!(this.meta instanceof Damageable damageable)) return (T) this;
+    public B durability(short durability) {
+        if (!(this.meta instanceof Damageable damageable)) return (B) this;
         damageable.setDamage(durability);
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T enchant(Enchantment enchantment, int level) {
-        if (this.meta == null) return (T) this;
+    public B enchant(Enchantment enchantment, int level) {
+        if (this.meta == null) return (B) this;
         if (this.meta instanceof EnchantmentStorageMeta storageMeta) {
             storageMeta.addStoredEnchant(enchantment, level, true);
         } else {
             this.meta.addEnchant(enchantment, level, true);
         }
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T unenchant(Enchantment... enchantments) {
-        if (this.meta == null) return (T) this;
+    public B unenchant(Enchantment... enchantments) {
+        if (this.meta == null) return (B) this;
         for (Enchantment enchantment : enchantments) {
             this.meta.removeEnchant(enchantment);
         }
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T attribute(Attribute attribute, AttributeModifier modifier) {
+    public B attribute(Attribute attribute, AttributeModifier modifier) {
         return this.attribute(attribute, modifier, true);
     }
 
-    public T attribute(Attribute attribute, AttributeModifier modifier, boolean overwrite) {
-        if (this.meta == null) return (T) this;
+    public B attribute(Attribute attribute, AttributeModifier modifier, boolean overwrite) {
+        if (this.meta == null) return (B) this;
         if (overwrite) {
             Multimap<Attribute, AttributeModifier> attributes = this.meta.getAttributeModifiers();
             AttributeModifier finalModifier = modifier;
@@ -129,45 +129,45 @@ public class ItemBuilder<T extends ItemBuilder<T>> implements Builder<ItemStack>
 
         this.meta.addAttributeModifier(attribute, modifier);
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T unattribute(Attribute... attributes) {
-        if (this.meta == null) return (T) this;
+    public B unattribute(Attribute... attributes) {
+        if (this.meta == null) return (B) this;
         for (Attribute attribute : attributes) {
             this.meta.removeAttributeModifier(attribute);
         }
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T flag(ItemFlag... flag) {
-        if (this.meta == null) return (T) this;
+    public B flag(ItemFlag... flag) {
+        if (this.meta == null) return (B) this;
         this.meta.addItemFlags(flag);
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T deflag(ItemFlag... flag) {
-        if (this.meta == null) return (T) this;
+    public B deflag(ItemFlag... flag) {
+        if (this.meta == null) return (B) this;
         this.meta.removeItemFlags(flag);
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T unbreakable(boolean unbreakable) {
+    public B unbreakable(boolean unbreakable) {
         meta.setUnbreakable(unbreakable);
 
-        return (T) this;
+        return (B) this;
     }
 
-    public T skull(String texture) {
-        if (!(this.meta instanceof SkullMeta skullMeta)) return (T) this;
+    public B skull(String texture) {
+        if (!(this.meta instanceof SkullMeta skullMeta)) return (B) this;
         PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
         profile.getProperties().add(new ProfileProperty("textures", texture));
         skullMeta.setPlayerProfile(profile);
 
-        return (T) this;
+        return (B) this;
     }
 
     public ItemStack build() {
