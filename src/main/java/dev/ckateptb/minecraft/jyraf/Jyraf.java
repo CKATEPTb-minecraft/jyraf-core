@@ -16,6 +16,9 @@ import dev.ckateptb.minecraft.jyraf.config.serializer.duration.DurationSerialize
 import dev.ckateptb.minecraft.jyraf.config.serializer.enums.EnumSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.item.ItemStackSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.item.attribute.AttributeModifierSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.item.color.BukkitColorSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.item.potion.PotionDataSerializer;
+import dev.ckateptb.minecraft.jyraf.config.serializer.item.potion.PotionEffectSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.location.LocationSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.objectid.ObjectIdSerializer;
 import dev.ckateptb.minecraft.jyraf.config.serializer.world.WorldSerializer;
@@ -29,14 +32,13 @@ import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
 import org.bson.types.ObjectId;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Server;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionEffect;
 import org.patheloper.mapping.PatheticMapper;
 import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
@@ -82,6 +84,9 @@ public class Jyraf extends JavaPlugin {
         Jyraf.plugin = this;
         //noinspection unchecked
         ConfigurationSerializers.registerSerializer((Class<Enum<?>>) (Object) Enum.class, new EnumSerializer());
+        ConfigurationSerializers.registerSerializer(Color.class, new BukkitColorSerializer());
+        ConfigurationSerializers.registerSerializer(PotionEffect.class, new PotionEffectSerializer());
+        ConfigurationSerializers.registerSerializer(PotionData.class, new PotionDataSerializer());
         ConfigurationSerializers.registerSerializer(ItemStack.class, new ItemStackSerializer());
         ConfigurationSerializers.registerSerializer(PeriodDuration.class, new DurationSerializer());
         ConfigurationSerializers.registerSerializer(World.class, new WorldSerializer());
