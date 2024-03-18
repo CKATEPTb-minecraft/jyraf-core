@@ -16,9 +16,11 @@ public class AttributeModifierSerializer implements TypeSerializer<AttributeModi
     public AttributeModifier deserialize(Type type, ConfigurationNode node) throws SerializationException {
         UUID uuid = Optional.ofNullable(node.node("uuid").get(UUID.class)).orElse(UUID.randomUUID());
         String name = node.node("name").getString();
-        if(name == null) throw new RuntimeException("Failed to deserialize AttributeModifier. The 'name' field is missing.");
+        if (name == null)
+            throw new RuntimeException("Failed to deserialize AttributeModifier. The 'name' field is missing.");
         AttributeModifier.Operation operation = node.node("operation").get(AttributeModifier.Operation.class);
-        if(operation == null) throw new RuntimeException("Failed to deserialize AttributeModifier. The 'operation' field is missing.");
+        if (operation == null)
+            throw new RuntimeException("Failed to deserialize AttributeModifier. The 'operation' field is missing.");
         double amount = node.node("amount").getDouble();
         if (node.hasChild("slot")) {
             EquipmentSlot slot = node.node("slot").get(EquipmentSlot.class);

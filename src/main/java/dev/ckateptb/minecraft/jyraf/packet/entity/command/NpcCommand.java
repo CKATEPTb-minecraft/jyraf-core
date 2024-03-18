@@ -1,10 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity.command;
 
 import cloud.commandframework.annotations.Argument;
-import cloud.commandframework.annotations.CommandMethod;
-import cloud.commandframework.annotations.CommandPermission;
 import dev.ckateptb.minecraft.jyraf.command.Command;
-import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.world.WorldService;

@@ -7,8 +7,10 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import dev.ckateptb.minecraft.jyraf.builder.item.ItemBuilder;
+import dev.ckateptb.minecraft.jyraf.builder.potion.PotionBuilder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
@@ -17,9 +19,9 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.meta.*;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionEffect;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joor.Reflect;
 import org.spongepowered.configurate.CommentedConfigurationNode;
@@ -44,14 +46,17 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
     @Override
     public ItemStack deserialize(Type token, ConfigurationNode node) throws SerializationException {
-        ItemBuilder builder = new ItemBuilder(Material.valueOf(node.node("type").getString()))
+        ItemBuilder<?> builder = new ItemBuilder(Material.valueOf(node.node("type").getString()))
                 .amount(node.node("amount").getInt());
+
         if (node.hasChild("name")) {
             builder.name(node.node("name").getString());
         }
+
         if (node.hasChild("lore")) {
             builder.lore(node.node("lore").getList(String.class));
         }
+
         if (node.hasChild("enchants")) {
             ConfigurationNode enchantsNode = node.node("enchants");
             if (enchantsNode.isMap()) {
@@ -65,36 +70,73 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                 });
             }
         }
+
+        if (node.hasChild("storedEnchants")) {
+            ConfigurationNode enchantsNode = node.node("storedEnchants");
+            if (enchantsNode.isMap()) {
+                Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
+                map.forEach((key, configurationNode) -> {
+                    Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft((String) key));
+                    if (enchantment != null) {
+                        int level = configurationNode.getInt();
+                        builder.storedEnchant(enchantment, level);
+                    }
+                });
+            }
+        }
+
         if (node.hasChild("attributes")) {
             ConfigurationNode attributes = node.node("attributes");
             if (attributes.isMap()) {
                 Map<Object, ? extends ConfigurationNode> map = attributes.childrenMap();
                 map.forEach((key, configurationNode) -> {
-                    Attribute attribute = Registry.ATTRIBUTE.get(NamespacedKey.minecraft((String) key));
-                    if (attribute != null && configurationNode.isList()) {
+                    if (configurationNode.isList()) {
                         try {
+                            Attribute attribute = Attribute.valueOf(((String) key).toUpperCase());
+
                             List<AttributeModifier> list = configurationNode.getList(AttributeModifier.class);
                             if (list == null || list.isEmpty()) return;
                             for (AttributeModifier modifier : list) {
                                 builder.attribute(attribute, modifier);
                             }
-                        } catch (SerializationException e) {
+                        } catch (SerializationException | IllegalArgumentException e) {
                             throw new RuntimeException(e);
                         }
                     }
                 });
             }
         }
+
         if (node.hasChild("flags")) {
             builder.flag(Optional.ofNullable(node.node("flags").getList(String.class))
                     .orElse(Collections.emptyList()).stream().map(ItemFlag::valueOf).toArray(ItemFlag[]::new));
         }
+
         if (node.hasChild("data")) {
             builder.durability((short) node.node("data").getInt());
         }
+
         if (node.hasChild("skull")) {
             builder.skull(node.node("skull").getString());
         }
+
+        if (node.hasChild("unbreakable")) {
+            builder.unbreakable(node.node("unbreakable").getBoolean(false));
+        }
+
+        if (node.hasChild("potion")) {
+            ConfigurationNode potionNode = node.node("potion");
+            PotionBuilder potionBuilder = new PotionBuilder(builder.getItem(), false);
+
+            if (potionNode.hasChild("color")) potionBuilder.color(potionNode.node("color").get(Color.class));
+            if (potionNode.hasChild("effects"))
+                potionBuilder.effects(potionNode.node("effects").getList(PotionEffect.class, List.of()));
+            if (potionNode.hasChild("baseData"))
+                potionBuilder.baseData(potionNode.node("baseData").get(PotionData.class));
+
+            return potionBuilder.build();
+        }
+
         return builder.build();
     }
 
@@ -114,6 +156,18 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
             if (enchants instanceof CommentedConfigurationNode commented) {
                 commented.comment("Allowed options " + this.allowedEnchantments);
             }
+
+            if (meta instanceof EnchantmentStorageMeta storageMeta) {
+                storageMeta.getStoredEnchants()
+                        .forEach((key, value) -> {
+                            try {
+                                node.node("storedEnchants").node(key.getKey().getKey()).set(value);
+                            } catch (SerializationException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            }
+
             meta.getEnchants()
                     .forEach((key, value) -> {
                         try {
@@ -122,6 +176,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                             throw new RuntimeException(e);
                         }
                     });
+
             ConfigurationNode flags = node.node("flags");
             if (flags instanceof CommentedConfigurationNode commented) {
                 commented.comment("Allowed options " + this.allowedFlags);
@@ -147,11 +202,14 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
             if (meta instanceof Damageable damageable) {
                 node.node("data").set(damageable.getDamage());
             }
-            if (meta instanceof SkullMeta skullMeta && skullMeta.hasOwner()) {
+
+            if (meta instanceof SkullMeta skullMeta) {
                 PlayerProfile playerProfile = skullMeta.getPlayerProfile();
+
                 if (playerProfile instanceof CraftPlayerProfile craftProfile) {
                     GameProfile profile = craftProfile.getGameProfile();
                     PropertyMap properties = profile.getProperties();
+
                     if (properties.containsKey("textures")) {
                         Iterator<Property> iterator = properties.get("textures").iterator();
                         if (iterator.hasNext()) {
@@ -162,6 +220,14 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                         }
                     }
                 }
+            }
+
+            if (meta.isUnbreakable()) node.node("unbreakable").set(true);
+
+            if (meta instanceof PotionMeta potionMeta) {
+                node.node("potion", "baseData").set(PotionData.class, potionMeta.getBasePotionData());
+                node.node("potion", "effects").setList(PotionEffect.class, potionMeta.getCustomEffects());
+                node.node("potion", "color").setList(PotionEffect.class, potionMeta.getCustomEffects());
             }
         }
     }
