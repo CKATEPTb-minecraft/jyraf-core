@@ -7,7 +7,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import dev.ckateptb.minecraft.jyraf.builder.item.ItemBuilder;
-import dev.ckateptb.minecraft.jyraf.builder.potion.PotionBuilder;
+import dev.ckateptb.minecraft.jyraf.builder.item.potion.PotionBuilder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
@@ -57,34 +57,6 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
             builder.lore(node.node("lore").getList(String.class));
         }
 
-        if (node.hasChild("enchants")) {
-            ConfigurationNode enchantsNode = node.node("enchants");
-            if (enchantsNode.isMap()) {
-                Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
-                map.forEach((key, configurationNode) -> {
-                    Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft((String) key));
-                    if (enchantment != null) {
-                        int level = configurationNode.getInt();
-                        builder.enchant(enchantment, level);
-                    }
-                });
-            }
-        }
-
-        if (node.hasChild("storedEnchants")) {
-            ConfigurationNode enchantsNode = node.node("storedEnchants");
-            if (enchantsNode.isMap()) {
-                Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
-                map.forEach((key, configurationNode) -> {
-                    Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft((String) key));
-                    if (enchantment != null) {
-                        int level = configurationNode.getInt();
-                        builder.storedEnchant(enchantment, level);
-                    }
-                });
-            }
-        }
-
         if (node.hasChild("attributes")) {
             ConfigurationNode attributes = node.node("attributes");
             if (attributes.isMap()) {
@@ -121,18 +93,44 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
         }
 
         if (node.hasChild("unbreakable")) {
-            builder.unbreakable(node.node("unbreakable").getBoolean(false));
+            builder.unbreakable(node.node("unbreakable").getBoolean());
+        }
+
+        if (node.hasChild("enchants")) {
+            ConfigurationNode enchantsNode = node.node("enchants");
+            if (enchantsNode.isMap()) {
+                Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
+                map.forEach((key, configurationNode) -> {
+                    Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft((String) key));
+                    if (enchantment != null) {
+                        builder.enchant(enchantment, configurationNode.getInt());
+                    }
+                });
+            }
+        }
+
+        if (node.hasChild("storedEnchants")) {
+            ConfigurationNode enchantsNode = node.node("storedEnchants");
+            if (enchantsNode.isMap()) {
+                Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
+                map.forEach((key, configurationNode) -> {
+                    Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft((String) key));
+                    if (enchantment != null) {
+                        builder.enchant(enchantment, configurationNode.getInt());
+                    }
+                });
+            }
         }
 
         if (node.hasChild("potion")) {
             ConfigurationNode potionNode = node.node("potion");
-            PotionBuilder potionBuilder = new PotionBuilder(builder.getItem(), false);
+            PotionBuilder potionBuilder = new PotionBuilder(builder.build(), false);
 
             if (potionNode.hasChild("color")) potionBuilder.color(potionNode.node("color").get(Color.class));
+            if (potionNode.hasChild("data"))
+                potionBuilder.data(potionNode.node("effect").get(PotionData.class));
             if (potionNode.hasChild("effects"))
-                potionBuilder.effects(potionNode.node("effects").getList(PotionEffect.class, List.of()));
-            if (potionNode.hasChild("baseData"))
-                potionBuilder.baseData(potionNode.node("baseData").get(PotionData.class));
+                potionBuilder.effects(Objects.requireNonNull(potionNode.node("effects").getList(PotionEffect.class)));
 
             return potionBuilder.build();
         }
@@ -225,7 +223,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
             if (meta.isUnbreakable()) node.node("unbreakable").set(true);
 
             if (meta instanceof PotionMeta potionMeta) {
-                node.node("potion", "baseData").set(PotionData.class, potionMeta.getBasePotionData());
+                node.node("potion", "data").set(PotionData.class, potionMeta.getBasePotionData());
                 node.node("potion", "effects").setList(PotionEffect.class, potionMeta.getCustomEffects());
                 node.node("potion", "color").setList(PotionEffect.class, potionMeta.getCustomEffects());
             }

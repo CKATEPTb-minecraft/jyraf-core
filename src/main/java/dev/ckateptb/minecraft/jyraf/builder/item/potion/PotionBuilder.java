@@ -1,4 +1,4 @@
-package dev.ckateptb.minecraft.jyraf.builder.potion;
+package dev.ckateptb.minecraft.jyraf.builder.item.potion;
 
 import dev.ckateptb.minecraft.jyraf.builder.item.ItemBuilder;
 import lombok.NonNull;
@@ -9,7 +9,6 @@ import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 
 import java.util.List;
-import java.util.Objects;
 
 public class PotionBuilder extends ItemBuilder<PotionBuilder> {
 
@@ -21,26 +20,23 @@ public class PotionBuilder extends ItemBuilder<PotionBuilder> {
         this(type.getMaterial());
     }
 
+    public PotionBuilder(@NonNull Material material) {
+        this(new ItemStack(material));
+    }
+
     public PotionBuilder(@NonNull ItemStack stack) {
-        super(stack);
+        this(stack, true);
     }
 
     public PotionBuilder(@NonNull ItemStack stack, boolean clone) {
-        super(clone ? stack.clone() : stack, clone);
+        super(stack, clone);
         Material material = stack.getType();
         if (material != Material.POTION && material != Material.SPLASH_POTION && material != Material.LINGERING_POTION)
             throw new IllegalArgumentException("Material should be provided as potion, provided: " + material.name());
     }
 
-    public PotionBuilder(@NonNull Material material) {
-        super(new ItemStack(material));
-        Objects.requireNonNull(material, "material cannot be null");
-        if (material != Material.POTION && material != Material.SPLASH_POTION && material != Material.LINGERING_POTION)
-            throw new IllegalArgumentException("Material should be provided as potion, provided: " + material.name());
-    }
-
     public PotionBuilder color(org.bukkit.Color color) {
-        if (!(getMeta() instanceof PotionMeta meta)) return this;
+        if (!(this.meta instanceof PotionMeta meta)) return this;
         meta.setColor(color);
 
         return this;
@@ -55,15 +51,15 @@ public class PotionBuilder extends ItemBuilder<PotionBuilder> {
         return this;
     }
 
-    public PotionBuilder baseData(PotionData baseData) {
-        if (!(getMeta() instanceof PotionMeta meta)) return this;
+    public PotionBuilder data(PotionData baseData) {
+        if (!(this.meta instanceof PotionMeta meta)) return this;
         meta.setBasePotionData(baseData);
 
         return this;
     }
 
     public PotionBuilder effect(PotionEffect effect, boolean overwrite) {
-        if (!(getMeta() instanceof PotionMeta meta)) return this;
+        if (!(this.meta instanceof PotionMeta meta)) return this;
         meta.addCustomEffect(effect, overwrite);
 
         return this;
@@ -71,10 +67,10 @@ public class PotionBuilder extends ItemBuilder<PotionBuilder> {
 
     @Override
     public ItemStack build() {
-        if (getMeta() == null) return getItem();
-        getItem().setItemMeta(getMeta());
+        if (this.meta == null) return this.item;
+        this.item.setItemMeta(this.meta);
 
-        return getItem();
+        return this.item;
     }
 
     public enum PotionType {

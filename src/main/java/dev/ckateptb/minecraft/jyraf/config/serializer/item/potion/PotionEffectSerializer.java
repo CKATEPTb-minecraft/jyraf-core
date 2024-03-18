@@ -3,28 +3,24 @@ package dev.ckateptb.minecraft.jyraf.config.serializer.item.potion;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Locale;
 
 public class PotionEffectSerializer implements TypeSerializer<PotionEffect> {
 
     private final PotionEffect empty;
-    private final List<PotionEffectType> allowedTypes;
 
     public PotionEffectSerializer() {
         this.empty = new PotionEffect(PotionEffectType.UNLUCK, 0, 0, true, true, true);
-        this.allowedTypes = List.of(PotionEffectType.values());
     }
 
     @Override
     public PotionEffect deserialize(Type type, ConfigurationNode node) throws SerializationException {
-        String effectTypeStr = node.node("effectType").getString();
+        String effectTypeStr = node.node("type").getString();
         if (effectTypeStr == null || effectTypeStr.isBlank())
             throw new SerializationException("Potion effect type is null or blank");
 
@@ -32,17 +28,11 @@ public class PotionEffectSerializer implements TypeSerializer<PotionEffect> {
         if (potionEffectType == null)
             throw new SerializationException("Invalid potion effect type: " + effectTypeStr);
 
-        int duration = 0;
-        int amplifier = 0;
-        boolean ambient = true;
-        boolean particles = true;
-        boolean icon = true;
-
-        if (node.hasChild("duration")) duration = node.node("duration").getInt(0);
-        if (node.hasChild("amplifier")) amplifier = node.node("amplifier").getInt(0);
-        if (node.hasChild("ambient")) ambient = node.node("ambient").getBoolean(true);
-        if (node.hasChild("particles")) particles = node.node("particles").getBoolean(true);
-        if (node.hasChild("icon")) icon = node.node("icon").getBoolean(true);
+        int duration = node.hasChild("duration") ? node.node("duration").getInt() : 0;
+        int amplifier = node.hasChild("amplifier") ? node.node("amplifier").getInt() : 0;
+        boolean ambient = !node.hasChild("ambient") || node.node("ambient").getBoolean();
+        boolean particles = !node.hasChild("particles") || node.node("particles").getBoolean();
+        boolean icon = !node.hasChild("icon") || node.node("icon").getBoolean();
 
         return new PotionEffect(potionEffectType, duration, amplifier, ambient, particles, icon);
     }
@@ -51,10 +41,7 @@ public class PotionEffectSerializer implements TypeSerializer<PotionEffect> {
     public void serialize(Type type, @Nullable PotionEffect effect, ConfigurationNode node) throws SerializationException {
         if (effect == null) effect = this.empty;
 
-        ConfigurationNode effectTypeNode = node.node("effectType");
-        if (effectTypeNode instanceof CommentedConfigurationNode commented) {
-            commented.comment("Allowed options " + this.allowedTypes);
-        }
+        ConfigurationNode effectTypeNode = node.node("type");
         effectTypeNode.set(effect.getType().getName());
         node.node("duration").set(effect.getDuration());
         node.node("amplifier").set(effect.getAmplifier());

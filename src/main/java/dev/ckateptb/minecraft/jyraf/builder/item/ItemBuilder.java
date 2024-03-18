@@ -5,7 +5,6 @@ import com.destroystokyo.paper.profile.ProfileProperty;
 import com.google.common.collect.Multimap;
 import dev.ckateptb.minecraft.jyraf.builder.Builder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
-import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -21,19 +20,16 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.Plugin;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
-@Getter
 @SuppressWarnings({"unchecked"})
-public class ItemBuilder<X extends ItemBuilder<X>> implements Builder<ItemStack> {
+public class ItemBuilder<T extends ItemBuilder<T>> implements Builder<ItemStack> {
 
-    private final ItemStack item;
-    private final ItemMeta meta;
+    protected final ItemStack item;
+    protected final ItemMeta meta;
 
     public ItemBuilder(Material material) {
         this(new ItemStack(material));
@@ -49,87 +45,79 @@ public class ItemBuilder<X extends ItemBuilder<X>> implements Builder<ItemStack>
         this.meta = this.item.getItemMeta();
     }
 
-    public <T, Z> X set(@NonNull Plugin plugin, @NonNull String key, @NonNull PersistentDataType<T, Z> type, Z value) {
-        return this.set(plugin.getName().toLowerCase(Locale.ROOT), key, type, value);
-    }
-
-    public <T, Z> X set(@NonNull String namespace, @NonNull String key, @NonNull PersistentDataType<T, Z> type, Z value) {
-        if (this.meta == null) return (X) this;
-        NamespacedKey namespacedKey = new NamespacedKey(namespace, key);
+    public <X, Y> T set(@NonNull NamespacedKey key, @NonNull PersistentDataType<X, Y> type, Y value) {
+        if (this.meta == null) return (T) this;
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
         if (value == null) {
-            pdc.remove(namespacedKey);
-            return (X) this;
+            pdc.remove(key);
+            return (T) this;
         }
-        pdc.set(namespacedKey, type, value);
+        pdc.set(key, type, value);
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X name(String name) {
-        if (this.meta == null) return (X) this;
+    public T name(String name) {
+        if (this.meta == null) return (T) this;
         this.meta.displayName(Text.of(name));
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X amount(int amount) {
+    public T amount(int amount) {
         this.item.setAmount(amount);
-        return (X) this;
+        return (T) this;
     }
 
-    public X lore(String... lore) {
+    public T lore(String... lore) {
         return lore(Arrays.asList(lore));
     }
 
-    public X lore(List<String> lore) {
-        if (this.meta == null || lore == null || lore.isEmpty()) return (X) this;
+    public T lore(List<String> lore) {
+        if (this.meta == null || lore == null || lore.isEmpty()) return (T) this;
         this.meta.lore(lore.stream().map(Text::of).toList());
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X color(Color color) {
+    public T color(Color color) {
         return this.durability(color.data());
     }
 
-    public X durability(short durability) {
-        if (!(this.meta instanceof Damageable damageable)) return (X) this;
+    public T durability(short durability) {
+        if (!(this.meta instanceof Damageable damageable)) return (T) this;
         damageable.setDamage(durability);
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X enchant(Enchantment enchantment, int level) {
-        if (this.meta == null) return (X) this;
-        this.meta.addEnchant(enchantment, level, true);
+    public T enchant(Enchantment enchantment, int level) {
+        if (this.meta == null) return (T) this;
+        if (this.meta instanceof EnchantmentStorageMeta storageMeta) {
+            storageMeta.addStoredEnchant(enchantment, level, true);
+        } else {
+            this.meta.addEnchant(enchantment, level, true);
+        }
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X storedEnchant(Enchantment enchantment, int level) {
-        if (!(this.meta instanceof EnchantmentStorageMeta storageMeta)) return (X) this;
-        storageMeta.addStoredEnchant(enchantment, level, true);
-
-        return (X) this;
-    }
-
-    public X unenchant(Enchantment... enchantments) {
-        if (this.meta == null) return (X) this;
+    public T unenchant(Enchantment... enchantments) {
+        if (this.meta == null) return (T) this;
         for (Enchantment enchantment : enchantments) {
             this.meta.removeEnchant(enchantment);
         }
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X attribute(Attribute attribute, AttributeModifier modifier) {
+    public T attribute(Attribute attribute, AttributeModifier modifier) {
         return this.attribute(attribute, modifier, true);
     }
 
-    public X attribute(Attribute attribute, AttributeModifier modifier, boolean overwrite) {
-        if (this.meta == null) return (X) this;
+    public T attribute(Attribute attribute, AttributeModifier modifier, boolean overwrite) {
+        if (this.meta == null) return (T) this;
         if (overwrite) {
             Multimap<Attribute, AttributeModifier> attributes = this.meta.getAttributeModifiers();
             AttributeModifier finalModifier = modifier;
@@ -141,45 +129,45 @@ public class ItemBuilder<X extends ItemBuilder<X>> implements Builder<ItemStack>
 
         this.meta.addAttributeModifier(attribute, modifier);
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X unattribute(Attribute... attributes) {
-        if (this.meta == null) return (X) this;
+    public T unattribute(Attribute... attributes) {
+        if (this.meta == null) return (T) this;
         for (Attribute attribute : attributes) {
             this.meta.removeAttributeModifier(attribute);
         }
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X flag(ItemFlag... flag) {
-        if (this.meta == null) return (X) this;
+    public T flag(ItemFlag... flag) {
+        if (this.meta == null) return (T) this;
         this.meta.addItemFlags(flag);
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X unbreakable(boolean unbreakable) {
+    public T deflag(ItemFlag... flag) {
+        if (this.meta == null) return (T) this;
+        this.meta.removeItemFlags(flag);
+
+        return (T) this;
+    }
+
+    public T unbreakable(boolean unbreakable) {
         meta.setUnbreakable(unbreakable);
 
-        return (X) this;
+        return (T) this;
     }
 
-    public X skull(String texture) {
-        if (!(this.meta instanceof SkullMeta skullMeta)) return (X) this;
+    public T skull(String texture) {
+        if (!(this.meta instanceof SkullMeta skullMeta)) return (T) this;
         PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
         profile.getProperties().add(new ProfileProperty("textures", texture));
         skullMeta.setPlayerProfile(profile);
 
-        return (X) this;
-    }
-
-    public X deflag(ItemFlag... flag) {
-        if (this.meta == null) return (X) this;
-        this.meta.removeItemFlags(flag);
-
-        return (X) this;
+        return (T) this;
     }
 
     public ItemStack build() {
