@@ -109,19 +109,6 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
             }
         }
 
-        if (node.hasChild("storedEnchants")) {
-            ConfigurationNode enchantsNode = node.node("storedEnchants");
-            if (enchantsNode.isMap()) {
-                Map<Object, ? extends ConfigurationNode> map = enchantsNode.childrenMap();
-                map.forEach((key, configurationNode) -> {
-                    Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft((String) key));
-                    if (enchantment != null) {
-                        builder.enchant(enchantment, configurationNode.getInt());
-                    }
-                });
-            }
-        }
-
         if (node.hasChild("potion")) {
             ConfigurationNode potionNode = node.node("potion");
             PotionBuilder potionBuilder = new PotionBuilder(builder.build(), false);
@@ -130,7 +117,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
             if (potionNode.hasChild("data"))
                 potionBuilder.data(potionNode.node("effect").get(PotionData.class));
             if (potionNode.hasChild("effects"))
-                potionBuilder.effects(Objects.requireNonNull(potionNode.node("effects").getList(PotionEffect.class)));
+                potionBuilder.effect(Objects.requireNonNull(potionNode.node("effects").getList(PotionEffect.class)).toArray(new PotionEffect[0]));
 
             return potionBuilder.build();
         }
@@ -155,18 +142,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                 commented.comment("Allowed options " + this.allowedEnchantments);
             }
 
-            if (meta instanceof EnchantmentStorageMeta storageMeta) {
-                storageMeta.getStoredEnchants()
-                        .forEach((key, value) -> {
-                            try {
-                                node.node("storedEnchants").node(key.getKey().getKey()).set(value);
-                            } catch (SerializationException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-            }
-
-            meta.getEnchants()
+            (meta instanceof EnchantmentStorageMeta book ? book.getStoredEnchants() : meta.getEnchants())
                     .forEach((key, value) -> {
                         try {
                             enchants.node(key.getKey().getKey()).set(value);

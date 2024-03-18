@@ -8,12 +8,12 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 
-import java.util.List;
+import java.util.Arrays;
 
 public class PotionBuilder extends ItemBuilder<PotionBuilder> {
 
     public PotionBuilder() {
-        this(PotionType.DEFAULT);
+        this(PotionType.POTION);
     }
 
     public PotionBuilder(@NonNull PotionType type) {
@@ -42,25 +42,21 @@ public class PotionBuilder extends ItemBuilder<PotionBuilder> {
         return this;
     }
 
-    public PotionBuilder effect(PotionEffect effect) {
-        return effect(effect, true);
-    }
-
-    public PotionBuilder effects(List<PotionEffect> effects) {
-        effects.forEach(this::effect);
-        return this;
-    }
-
-    public PotionBuilder data(PotionData baseData) {
-        if (!(this.meta instanceof PotionMeta meta)) return this;
-        meta.setBasePotionData(baseData);
-
+    public PotionBuilder effect(PotionEffect... effects) {
+        Arrays.stream(effects).forEach(effect -> this.effect(effect, true));
         return this;
     }
 
     public PotionBuilder effect(PotionEffect effect, boolean overwrite) {
         if (!(this.meta instanceof PotionMeta meta)) return this;
         meta.addCustomEffect(effect, overwrite);
+
+        return this;
+    }
+
+    public PotionBuilder data(PotionData baseData) {
+        if (!(this.meta instanceof PotionMeta meta)) return this;
+        meta.setBasePotionData(baseData);
 
         return this;
     }
@@ -74,28 +70,17 @@ public class PotionBuilder extends ItemBuilder<PotionBuilder> {
     }
 
     public enum PotionType {
-
-        DEFAULT,
-        SPLASH,
-        LINGERING;
+        POTION,
+        SPLASH_POTION,
+        LINGERING_POTION;
 
         public Material getMaterial() {
-            return switch (this) {
-                case DEFAULT -> Material.POTION;
-                case SPLASH -> Material.SPLASH_POTION;
-                case LINGERING -> Material.LINGERING_POTION;
-            };
+            return Material.valueOf(name());
         }
 
         public static PotionType getByMaterial(@NonNull Material material) {
-            return switch (material) {
-                case POTION -> DEFAULT;
-                case SPLASH_POTION -> SPLASH;
-                case LINGERING_POTION -> LINGERING;
-                default -> null;
-            };
+            return PotionType.valueOf(material.name());
         }
-
     }
 
 }
