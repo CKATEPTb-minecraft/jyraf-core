@@ -45,16 +45,14 @@ public class ItemBuilder<R extends ItemBuilder<R>> implements Builder<ItemStack>
         this.meta = this.item.getItemMeta();
     }
 
-    public <K, V> R setTag(@NonNull NamespacedKey key, @NonNull PersistentDataType<K, V> type, V value) {
+    public <K, V> R tag(@NonNull NamespacedKey key, PersistentDataType<K, V> type, V value) {
         if (this.meta == null) return (R) this;
-        PersistentDataContainer pdc = meta.getPersistentDataContainer();
-
+        PersistentDataContainer container = meta.getPersistentDataContainer();
         if (value == null) {
-            pdc.remove(key);
+            container.remove(key);
             return (R) this;
         }
-        pdc.set(key, type, value);
-
+        container.set(key, type, value);
         return (R) this;
     }
 
