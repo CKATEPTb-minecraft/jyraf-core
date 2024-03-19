@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+// TODO add NBT serialization
 public class ItemStackSerializer implements TypeSerializer<ItemStack> {
     private final ItemStack empty = new ItemStack(Material.AIR);
     private final String allowedEnchantments = StreamSupport.stream(Registry.ENCHANTMENT.spliterator(), false)
