@@ -19,10 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -232,6 +229,11 @@ public class ReactiveContainer implements AsyncContainer {
     @SuppressWarnings("unchecked")
     private <T> Constructor<T> findConstructor(Class<T> component) {
         Constructor<T>[] constructors = (Constructor<T>[]) component.getConstructors();
+        int modifiers = component.getModifiers();
+        if (Modifier.isInterface(modifiers) || Modifier.isAbstract(modifiers)) {
+            throw new RuntimeException("A class annotated as a component (" + component.getName() +
+                    ") cannot be initialized because it is abstract or an interface.");
+        }
         Constructor<T> constructor = Arrays.stream(constructors)
                 .filter(value -> value.isAnnotationPresent(Autowired.class))
                 .findFirst().orElseGet(() -> constructors[0]);
