@@ -8,7 +8,6 @@ import com.jeff_media.persistentdataserializer.PersistentDataSerializer;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.builder.Builder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
