@@ -13,7 +13,7 @@ plugins {
 //    id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.15.0-SNAPSHOT"
+version = "1.16.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -79,6 +79,8 @@ dependencies {
     implementation("com.github.retrooper.packetevents:spigot:2.2.1")
     // PathFinder
     implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
+    // PersistentDataContainerSerializer
+    implementation("com.jeff-media:persistent-data-serializer:1.0")
     // PlaceholderAPI
     compileOnly("me.clip:placeholderapi:2.11.5")
 
@@ -110,7 +112,7 @@ tasks {
         relocate("com.github.retrooper.packetevents", "${internal}.packetevents.api")
         relocate("io.github.retrooper.packetevents", "${internal}.packetevents.impl")
         relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
-        relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
+        relocate("com.jeff_media.persistentdataserializer", "${internal}.persistentdataserializer")
     }
     build {
         dependsOn(/*reobfJar,*/ shadowJar)

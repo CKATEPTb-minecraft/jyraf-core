@@ -3,9 +3,13 @@ package dev.ckateptb.minecraft.jyraf.builder.item;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import com.google.common.collect.Multimap;
+import com.google.gson.JsonObject;
+import com.jeff_media.persistentdataserializer.PersistentDataSerializer;
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.builder.Builder;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -14,19 +18,22 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.spongepowered.configurate.ConfigurationNode;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
-@SuppressWarnings({"unchecked"})
-public class ItemBuilder<R extends ItemBuilder<R>> implements Builder<ItemStack> {
+public class ItemBuilder implements Builder<ItemStack> {
 
     protected final ItemStack item;
     protected final ItemMeta meta;
@@ -45,77 +52,83 @@ public class ItemBuilder<R extends ItemBuilder<R>> implements Builder<ItemStack>
         this.meta = this.item.getItemMeta();
     }
 
-    public <K, V> R tag(@NonNull NamespacedKey key, PersistentDataType<K, V> type, V value) {
-        if (this.meta == null) return (R) this;
-        PersistentDataContainer container = meta.getPersistentDataContainer();
-        if (value == null) {
-            container.remove(key);
-            return (R) this;
-        }
-        container.set(key, type, value);
-        return (R) this;
+    public <K, V> ItemBuilder tag(String serialized) {
+        if (this.meta == null) return this;
+        PersistentDataSerializer.fromJson(serialized, this.meta.getPersistentDataContainer());
+        return this;
     }
 
-    public R name(String name) {
-        if (this.meta == null) return (R) this;
+    public <K, V> ItemBuilder tag(NamespacedKey key, PersistentDataType<K, V> type, V value) {
+        if (this.meta == null) return this;
+        PersistentDataContainer container = this.meta.getPersistentDataContainer();
+        container.set(key, type, value);
+        return this;
+    }
+
+    public <K, V> ItemBuilder untag(NamespacedKey... keys) {
+        if (this.meta == null) return this;
+        PersistentDataContainer container = this.meta.getPersistentDataContainer();
+        for (NamespacedKey key : keys) {
+            container.remove(key);
+        }
+        return this;
+    }
+
+    public ItemBuilder name(String name) {
+        if (this.meta == null) return this;
         this.meta.displayName(Text.of(name));
 
-        return (R) this;
+        return this;
     }
 
-    public R amount(int amount) {
+    public ItemBuilder amount(int amount) {
         this.item.setAmount(amount);
-        return (R) this;
+        return this;
     }
 
-    public R lore(String... lore) {
+    public ItemBuilder lore(String... lore) {
         return lore(Arrays.asList(lore));
     }
 
-    public R lore(List<String> lore) {
-        if (this.meta == null || lore == null || lore.isEmpty()) return (R) this;
+    public ItemBuilder lore(List<String> lore) {
+        if (this.meta == null || lore == null || lore.isEmpty()) return this;
         this.meta.lore(lore.stream().map(Text::of).toList());
 
-        return (R) this;
+        return this;
     }
 
-    public R color(Color color) {
+    public ItemBuilder color(Color color) {
         return this.durability(color.data());
     }
 
-    public R durability(short durability) {
-        if (!(this.meta instanceof Damageable damageable)) return (R) this;
+    public ItemBuilder durability(short durability) {
+        if (!(this.meta instanceof Damageable damageable)) return this;
         damageable.setDamage(durability);
 
-        return (R) this;
+        return this;
     }
 
-    public R enchant(Enchantment enchantment, int level) {
-        if (this.meta == null) return (R) this;
-        if (this.meta instanceof EnchantmentStorageMeta storageMeta) {
-            storageMeta.addStoredEnchant(enchantment, level, true);
-        } else {
-            this.meta.addEnchant(enchantment, level, true);
-        }
-
-        return (R) this;
+    public ItemBuilder enchant(Enchantment enchantment, int level) {
+        if (this.meta == null) return this;
+        this.meta.addEnchant(enchantment, level, true);
+        return this;
     }
 
-    public R unenchant(Enchantment... enchantments) {
-        if (this.meta == null) return (R) this;
+    public ItemBuilder unenchant(Enchantment... enchantments) {
+        if (this.meta == null) return this;
         for (Enchantment enchantment : enchantments) {
             this.meta.removeEnchant(enchantment);
         }
 
-        return (R) this;
+        return this;
     }
 
-    public R attribute(Attribute attribute, AttributeModifier modifier) {
+    public ItemBuilder attribute(Attribute attribute, AttributeModifier modifier) {
         return this.attribute(attribute, modifier, true);
     }
 
-    public R attribute(Attribute attribute, AttributeModifier modifier, boolean overwrite) {
-        if (this.meta == null) return (R) this;
+    public ItemBuilder attribute(Attribute attribute, AttributeModifier modifier, boolean overwrite) {
+        if (this.meta == null) return this;
         if (overwrite) {
             Multimap<Attribute, AttributeModifier> attributes = this.meta.getAttributeModifiers();
             AttributeModifier finalModifier = modifier;
@@ -127,53 +140,142 @@ public class ItemBuilder<R extends ItemBuilder<R>> implements Builder<ItemStack>
 
         this.meta.addAttributeModifier(attribute, modifier);
 
-        return (R) this;
+        return this;
     }
 
-    public R unattribute(Attribute... attributes) {
-        if (this.meta == null) return (R) this;
+    public ItemBuilder unattribute(Attribute... attributes) {
+        if (this.meta == null) return this;
         for (Attribute attribute : attributes) {
             this.meta.removeAttributeModifier(attribute);
         }
 
-        return (R) this;
+        return this;
     }
 
-    public R flag(ItemFlag... flag) {
-        if (this.meta == null) return (R) this;
+    public ItemBuilder flag(ItemFlag... flag) {
+        if (this.meta == null) return this;
         this.meta.addItemFlags(flag);
 
-        return (R) this;
+        return this;
     }
 
-    public R deflag(ItemFlag... flag) {
-        if (this.meta == null) return (R) this;
+    public ItemBuilder deflag(ItemFlag... flag) {
+        if (this.meta == null) return this;
         this.meta.removeItemFlags(flag);
 
-        return (R) this;
+        return this;
     }
 
-    public R unbreakable(boolean unbreakable) {
-        meta.setUnbreakable(unbreakable);
-
-        return (R) this;
+    public ItemBuilder unbreakable(boolean unbreakable) {
+        this.meta.setUnbreakable(unbreakable);
+        return this;
     }
 
-    public R skull(String texture) {
-        if (!(this.meta instanceof SkullMeta skullMeta)) return (R) this;
+    public ItemBuilder skull(String texture) {
+        if (!(this.meta instanceof SkullMeta skullMeta)) return this;
         PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
         profile.getProperties().add(new ProfileProperty("textures", texture));
         skullMeta.setPlayerProfile(profile);
+        return this;
+    }
 
-        return (R) this;
+    public ItemBuilder book(Consumer<BookBuilder> consumer) {
+        if (!(this.meta instanceof EnchantmentStorageMeta)) return this;
+        consumer.accept(new BookBuilder());
+        return this;
+    }
+
+    public ItemBuilder skull(Consumer<SkullBuilder> consumer) {
+        if (!(this.meta instanceof SkullMeta)) return this;
+        consumer.accept(new SkullBuilder());
+        return this;
+    }
+
+    public ItemBuilder potion(Consumer<PotionBuilder> consumer) {
+        if (!(this.meta instanceof PotionMeta)) return this;
+        consumer.accept(new PotionBuilder());
+        return this;
     }
 
     public ItemStack build() {
         if (this.meta == null) return this.item;
-
         this.item.setItemMeta(this.meta);
-
         return this.item;
+    }
+
+    public class BookBuilder {
+        public BookBuilder enchant(Enchantment enchantment, int level) {
+            ((EnchantmentStorageMeta) ItemBuilder.this.meta).addStoredEnchant(enchantment, level, true);
+            return this;
+        }
+
+        public BookBuilder unenchant(Enchantment... enchantments) {
+            for (Enchantment enchantment : enchantments) {
+                ((EnchantmentStorageMeta) ItemBuilder.this.meta).removeStoredEnchant(enchantment);
+            }
+            return this;
+        }
+    }
+
+    public class SkullBuilder {
+        public SkullBuilder url(String url) {
+            return url(url, UUID.randomUUID());
+        }
+
+        @SneakyThrows
+        public SkullBuilder url(String url, UUID profileUUID) {
+            ConfigurationNode node = Jyraf.getGsonMapper().createNode();
+            node.node("textures", "SKIN", "url").set(url);
+            JsonObject json = node.get(JsonObject.class);
+            if (json == null) return this;
+            byte[] bytes = json.getAsString().getBytes(StandardCharsets.UTF_8);
+            return texture(Base64.getEncoder().encodeToString(bytes), profileUUID);
+        }
+
+        public SkullBuilder texture(String texture) {
+            return texture(texture, UUID.randomUUID());
+        }
+
+        public SkullBuilder texture(String texture, UUID profileUUID) {
+            PlayerProfile profile = Bukkit.createProfile(profileUUID);
+            profile.getProperties().add(new ProfileProperty("textures", texture));
+            ((SkullMeta) ItemBuilder.this.meta).setPlayerProfile(profile);
+            return this;
+        }
+
+        public SkullBuilder owner(UUID uuid) {
+            ((SkullMeta) ItemBuilder.this.meta).setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
+            return this;
+        }
+    }
+
+    public class PotionBuilder {
+        public PotionBuilder color(org.bukkit.Color color) {
+            ((PotionMeta) ItemBuilder.this.meta).setColor(color);
+            return this;
+        }
+
+        public PotionBuilder effect(PotionEffect... effects) {
+            for (PotionEffect effect : effects) {
+                this.effect(effect, true);
+            }
+            return this;
+        }
+
+        public PotionBuilder uneffect(PotionEffectType type) {
+            ((PotionMeta) ItemBuilder.this.meta).removeCustomEffect(type);
+            return this;
+        }
+
+        public PotionBuilder effect(PotionEffect effect, boolean overwrite) {
+            ((PotionMeta) ItemBuilder.this.meta).addCustomEffect(effect, overwrite);
+            return this;
+        }
+
+        public PotionBuilder data(PotionData baseData) {
+            ((PotionMeta) ItemBuilder.this.meta).setBasePotionData(baseData);
+            return this;
+        }
     }
 
     public enum Color {
