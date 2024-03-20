@@ -36,8 +36,6 @@ dependencies {
 
     // Non-blocking threads
     implementation("io.projectreactor:reactor-core:3.6.1")
-    // Non-blocking netty
-    implementation("io.projectreactor.netty:reactor-netty:1.1.17")
     // High performance cache
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8") {
         exclude(module = "checker-qual")
