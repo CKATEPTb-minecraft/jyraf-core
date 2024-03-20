@@ -4,9 +4,11 @@ import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
 import dev.ckateptb.minecraft.jyraf.world.repository.WorldRepository;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -18,7 +20,9 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class WorldService implements Listener {
+    private final Jyraf plugin;
     private final AsyncCache<UUID, WorldRepository> worlds = Caffeine.newBuilder().buildAsync();
 
     public Mono<WorldRepository> getWorld(UUID uuid) {
@@ -40,17 +44,21 @@ public class WorldService implements Listener {
 
     @EventHandler
     public void on(EntityAddToWorldEvent event) {
-        Entity entity = event.getEntity();
-        this.getWorld(entity.getWorld())
-                .flatMap(worldRepository -> worldRepository.add(entity))
-                .subscribe();
+        Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
+            Entity entity = event.getEntity();
+            this.getWorld(entity.getWorld())
+                    .flatMap(worldRepository -> worldRepository.add(entity))
+                    .subscribe();
+        });
     }
 
     @EventHandler
     public void on(EntityRemoveFromWorldEvent event) {
-        Entity entity = event.getEntity();
-        this.getWorld(entity.getWorld())
-                .flatMap(worldRepository -> worldRepository.remove(entity))
-                .subscribe();
+        Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
+            Entity entity = event.getEntity();
+            this.getWorld(entity.getWorld())
+                    .flatMap(worldRepository -> worldRepository.remove(entity))
+                    .subscribe();
+        });
     }
 }
