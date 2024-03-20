@@ -72,7 +72,7 @@ dependencies {
     // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
     // Packets
-    implementation("com.github.retrooper.packetevents:spigot:2.2.1")
+    implementation(project(path = ":packetevents", configuration = "shadow"))
     // PathFinder
     implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
     // PersistentDataContainerSerializer
@@ -105,8 +105,6 @@ tasks {
         relocate("org.bson", "${internal}.bson")
         relocate("org.json", "${internal}.json")
         relocate("de.themoep.minedown.adventure", "${internal}.minedown")
-        relocate("com.github.retrooper.packetevents", "${internal}.packetevents.api")
-        relocate("io.github.retrooper.packetevents", "${internal}.packetevents.impl")
         relocate("org.patheloper", "${internal}.pathetic")
         relocate("com.jeff_media.persistentdataserializer", "${internal}.persistentdataserializer")
     }

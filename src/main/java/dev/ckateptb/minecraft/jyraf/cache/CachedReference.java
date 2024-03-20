@@ -32,6 +32,10 @@ public class CachedReference<T> {
         return Optional.ofNullable(this.obj);
     }
 
+    public T force() {
+        return this.get().orElse(null);
+    }
+
     public void set(T obj) {
         this.obj = obj;
     }

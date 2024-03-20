@@ -2,8 +2,6 @@ package dev.ckateptb.minecraft.jyraf;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
@@ -29,7 +27,9 @@ import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
 import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
+import dev.ckateptb.minecraft.packetevents.api.PacketEvents;
+import dev.ckateptb.minecraft.packetevents.api.PacketEventsAPI;
+import dev.ckateptb.minecraft.packetevents.impl.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
 import org.bson.types.ObjectId;
 import org.bukkit.*;
@@ -55,6 +55,7 @@ import java.util.UUID;
 //  Packet block
 //  Packet boss bar
 //  Packet scoreboard
+//  Split by subprojects for better dependency control
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
 
