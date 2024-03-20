@@ -111,7 +111,7 @@ tasks {
         relocate("de.themoep.minedown.adventure", "${internal}.minedown")
         relocate("com.github.retrooper.packetevents", "${internal}.packetevents.api")
         relocate("io.github.retrooper.packetevents", "${internal}.packetevents.impl")
-        relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
+        relocate("org.patheloper", "${internal}.pathetic")
         relocate("com.jeff_media.persistentdataserializer", "${internal}.persistentdataserializer")
     }
     build {
