@@ -13,6 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 public class ChunkRepository implements EntityLookup, PacketEntityLookup {
@@ -30,7 +31,9 @@ public class ChunkRepository implements EntityLookup, PacketEntityLookup {
 
     @SuppressWarnings("unchecked")
     private <T> Mono<T> remove(T ignored, UUID uuid) {
-        return (Mono<T>) Mono.fromFuture(this.entities.asMap().remove(uuid));
+        CompletableFuture<Object> future = this.entities.asMap().remove(uuid);
+        if(future == null) return Mono.empty();
+        return (Mono<T>) Mono.fromFuture(future);
     }
 
     @Override
