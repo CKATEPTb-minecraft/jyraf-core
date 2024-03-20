@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Getter
-//@Component
+//@Component // debug colliders
 @RequiredArgsConstructor
 public class CollidersCommand implements Command {
     private final Jyraf plugin;
