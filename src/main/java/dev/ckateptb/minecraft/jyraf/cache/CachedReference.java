@@ -3,6 +3,7 @@ package dev.ckateptb.minecraft.jyraf.cache;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+// TODO Rewrite
 public class CachedReference<T> {
     private final Supplier<T> supplier;
     private T obj;

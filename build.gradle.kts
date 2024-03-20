@@ -41,27 +41,10 @@ dependencies {
         exclude(module = "checker-qual")
         exclude(module = "error_prone_annotations")
     }
-    // Configuration
-    implementation("org.spongepowered:configurate-gson:4.1.2")
-    implementation("org.spongepowered:configurate-hocon:4.1.2")
-    implementation("org.spongepowered:configurate-yaml:4.1.2") {
-        exclude(module = "snakeyaml")
-    }
-    // Commands
-    implementation("cloud.commandframework:cloud-paper:1.8.4")
-    implementation("cloud.commandframework:cloud-minecraft-extras:1.8.4")
-    implementation("cloud.commandframework:cloud-annotations:1.8.4")
     // Commons
     implementation("org.apache.commons:commons-math3:3.6.1")
     implementation("org.apache.commons:commons-lang3:3.14.0")
     implementation("commons-io:commons-io:2.15.1")
-    // Database
-    implementation("com.zaxxer:HikariCP:5.1.0") {
-        exclude(module = "slf4j-api")
-    }
-    implementation("com.j256.ormlite:ormlite-jdbc:6.0")
-    implementation("org.apache.commons:commons-pool2:2.12.0")
-    implementation("org.mongodb:mongodb-driver-reactivestreams:4.11.1")
     // Text Components
     implementation("ink.glowing:inkymessage:0.12.0-SNAPSHOT")
     implementation("de.themoep:minedown-adventure:1.7.1-SNAPSHOT")
@@ -71,8 +54,6 @@ dependencies {
     implementation("org.threeten:threeten-extra:1.7.2")
     // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
-    // Packets
-    implementation(project(path = ":packetevents", configuration = "shadow"))
     // PathFinder
     implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
     // PersistentDataContainerSerializer
@@ -88,21 +69,12 @@ tasks {
     shadowJar {
         archiveClassifier.set("")
         relocate("org.apache.commons", "${internal}.commons")
-        relocate("com.github.benmanes.caffeine.cache", "${internal}.cache")
         relocate("com.j256.ormlite", "${internal}.ormlite")
         relocate("com.zaxxer.hikari", "${internal}.hikari")
         relocate("ink.glowing.text", "${internal}.ink")
-        relocate("org.spongepowered.configurate", "${internal}.configurate")
-        relocate("cloud.commandframework", "${internal}.commands")
-        relocate("io.leangen.geantyref", "${internal}.geantyref")
-        relocate("com.fasterxml.jackson.core", "${internal}.jackson")
-//        relocate("com.google.gson", "${internal}.gson")
-        relocate("com.typesafe.config", "${internal}.typesafe")
         relocate("org.joor", "${internal}.reflection")
         relocate("org.threeten.extra", "${internal}.time")
         relocate("net.wesjd.anvilgui", "${internal}.anvil")
-        relocate("com.mongodb", "${internal}.mongo")
-        relocate("org.bson", "${internal}.bson")
         relocate("org.json", "${internal}.json")
         relocate("de.themoep.minedown.adventure", "${internal}.minedown")
         relocate("org.patheloper", "${internal}.pathetic")
