@@ -44,8 +44,6 @@ dependencies {
     // Configuration
     implementation("org.spongepowered:configurate-gson:4.1.2")
     implementation("org.spongepowered:configurate-hocon:4.1.2")
-    implementation("org.spongepowered:configurate-jackson:4.1.2")
-    implementation("org.spongepowered:configurate-xml:4.1.2")
     implementation("org.spongepowered:configurate-yaml:4.1.2") {
         exclude(module = "snakeyaml")
     }
