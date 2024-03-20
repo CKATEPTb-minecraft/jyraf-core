@@ -2,9 +2,9 @@ package dev.ckateptb.minecraft.jyraf.math;
 
 import com.google.common.primitives.Doubles;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import dev.ckateptb.minecraft.jyraf.internal.commons.math3.geometry.euclidean.threed.Vector3D;
+import dev.ckateptb.minecraft.jyraf.internal.commons.math3.util.FastMath;
 import lombok.NonNull;
-import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.EulerAngle;

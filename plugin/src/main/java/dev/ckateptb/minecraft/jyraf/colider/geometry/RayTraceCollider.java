@@ -2,10 +2,12 @@ package dev.ckateptb.minecraft.jyraf.colider.geometry;
 
 import dev.ckateptb.minecraft.jyraf.colider.Collider;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import dev.ckateptb.minecraft.jyraf.internal.commons.math3.util.FastMath;
+import dev.ckateptb.minecraft.jyraf.internal.reactor.core.publisher.Flux;
+import dev.ckateptb.minecraft.jyraf.internal.reactor.core.publisher.Mono;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.commons.math3.util.FastMath;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -13,8 +15,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.*;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.Map;
 import java.util.Optional;

@@ -29,6 +29,9 @@ dependencies {
         exclude(module = "checker-qual")
         exclude(module = "error_prone_annotations")
     }
+    implementation("org.apache.commons:commons-math3:3.6.1")
+    implementation("org.apache.commons:commons-lang3:3.14.0")
+    implementation("commons-io:commons-io:2.15.1")
 }
 
 tasks {
@@ -43,6 +46,7 @@ tasks {
         relocate("reactor.", "${internal}.reactor.") // Dot in name to be safe
         relocate("com.mongodb", "${internal}.mongo")
         relocate("org.bson", "${internal}.bson")
+        relocate("org.apache.commons", "${internal}.commons")
     }
     build {
         dependsOn(shadowJar)

@@ -1,8 +1,8 @@
 package dev.ckateptb.minecraft.jyraf.database.repository;
 
+import dev.ckateptb.minecraft.jyraf.internal.reactor.core.publisher.Flux;
+import dev.ckateptb.minecraft.jyraf.internal.reactor.core.publisher.Mono;
 import org.bukkit.plugin.Plugin;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.Map;
 

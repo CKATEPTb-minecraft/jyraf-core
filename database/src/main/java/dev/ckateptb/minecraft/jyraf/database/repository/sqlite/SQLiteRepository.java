@@ -4,9 +4,9 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.ckateptb.minecraft.jyraf.database.dialect.SQLDialect;
 import dev.ckateptb.minecraft.jyraf.database.repository.AbstractRepository;
+import dev.ckateptb.minecraft.jyraf.internal.commons.io.FileUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
 
 import java.nio.file.Path;
 

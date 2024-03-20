@@ -41,10 +41,6 @@ dependencies {
         exclude(module = "checker-qual")
         exclude(module = "error_prone_annotations")
     }
-    // Commons
-    implementation("org.apache.commons:commons-math3:3.6.1")
-    implementation("org.apache.commons:commons-lang3:3.14.0")
-    implementation("commons-io:commons-io:2.15.1")
     // Text Components
     implementation("ink.glowing:inkymessage:0.12.0-SNAPSHOT")
     implementation("de.themoep:minedown-adventure:1.7.1-SNAPSHOT")
@@ -68,7 +64,6 @@ dependencies {
 tasks {
     shadowJar {
         archiveClassifier.set("")
-        relocate("org.apache.commons", "${internal}.commons")
         relocate("com.j256.ormlite", "${internal}.ormlite")
         relocate("com.zaxxer.hikari", "${internal}.hikari")
         relocate("ink.glowing.text", "${internal}.ink")

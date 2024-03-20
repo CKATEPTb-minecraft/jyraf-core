@@ -1,6 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.math;
 
-import org.apache.commons.math3.util.FastMath;
+import dev.ckateptb.minecraft.jyraf.internal.commons.math3.util.FastMath;
 import org.bukkit.util.Vector;
 
 public class MathUtils {
