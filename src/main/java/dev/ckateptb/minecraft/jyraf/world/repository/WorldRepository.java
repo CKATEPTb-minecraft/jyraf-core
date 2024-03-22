@@ -2,6 +2,7 @@ package dev.ckateptb.minecraft.jyraf.world.repository;
 
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.colider.geometry.SphereBoundingBoxCollider;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
@@ -27,21 +28,24 @@ import java.util.concurrent.CompletableFuture;
 public class WorldRepository implements EntityLookup, PacketEntityLookup {
     @Getter
     private final World world;
+    private final boolean asyncEntityLookup;
     private final AsyncCache<Long, ChunkRepository> chunks = Caffeine.newBuilder().buildAsync();
     private final AsyncCache<UUID, Long> entityChunkCache = Caffeine.newBuilder().buildAsync();
 
     public Mono<ChunkRepository> getChunk(Long chunkKey) {
-        return Mono.fromFuture(this.chunks.get(chunkKey, ChunkRepository::new));
+        return Mono.fromFuture(this.chunks.get(chunkKey, key -> new ChunkRepository(this.world, key, this.asyncEntityLookup)));
     }
 
     @Override
     public void tick() {
         Flux.fromIterable(this.chunks.asMap().values())
                 .flatMap(Mono::fromFuture)
-                .doOnNext(ChunkRepository::tick) // TODO Tick only loaded chunks
+                .filter(ChunkRepository::isLoaded)
+                .doOnNext(ChunkRepository::tick)
                 .flatMap(chunkRepository -> {
-                    Flux<Entity> entities = chunkRepository.getEntities();
                     Flux<PacketEntity> packetEntities = chunkRepository.getPacketEntities();
+                    if (!this.asyncEntityLookup) return packetEntities;
+                    Flux<Entity> entities = chunkRepository.getEntities();
                     return Flux.merge(entities, packetEntities);
                 })
                 .filterWhen(object -> {
@@ -101,16 +105,22 @@ public class WorldRepository implements EntityLookup, PacketEntityLookup {
 
     @Override
     public Mono<Entity> add(Entity entity) {
+        if (!this.asyncEntityLookup) return Mono.just(entity);
         return this.add(entity, entity.getUniqueId(), entity.getWorld(), entity.getLocation());
     }
 
     @Override
     public Mono<Entity> remove(Entity entity) {
+        if (!this.asyncEntityLookup) return Mono.just(entity);
         return this.remove(entity, entity.getUniqueId());
     }
 
     @Override
     public Flux<Entity> getEntities() {
+        if (!this.asyncEntityLookup) {
+            return Flux.defer(() -> Flux.fromIterable(this.world.getEntities()))
+                    .subscribeOn(Jyraf.getPlugin().syncScheduler());
+        }
         return Flux.fromIterable(this.chunks.asMap().values())
                 .flatMap(Mono::fromFuture)
                 .flatMap(EntityLookup::getEntities);
@@ -131,6 +141,10 @@ public class WorldRepository implements EntityLookup, PacketEntityLookup {
     }
 
     public Flux<Entity> getNearbyEntities(Location location, double radius) {
+        if (!this.asyncEntityLookup) {
+            return Flux.defer(() -> Flux.fromIterable(this.world.getNearbyEntities(location, radius, radius, radius)))
+                    .subscribeOn(Jyraf.getPlugin().syncScheduler());
+        }
         SphereBoundingBoxCollider sphere = Colliders.sphere(location, radius);
         return this.getNearbyChunks(location, radius, radius)
                 .flatMap(ChunkRepository::getEntities)

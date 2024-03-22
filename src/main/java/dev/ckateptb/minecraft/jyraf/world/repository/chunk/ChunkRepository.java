@@ -2,12 +2,16 @@ package dev.ckateptb.minecraft.jyraf.world.repository.chunk;
 
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.world.lookup.entity.EntityLookup;
 import dev.ckateptb.minecraft.jyraf.world.lookup.entity.PacketEntityLookup;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -17,7 +21,10 @@ import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 public class ChunkRepository implements EntityLookup, PacketEntityLookup {
+    private final World world;
+    @Getter
     private final Long chunkKey;
+    private final boolean asyncEntityLookup;
 
     // Entity and PacketEntity map by UUID
     private final AsyncCache<UUID, Object> entities = Caffeine.newBuilder().buildAsync();
@@ -32,17 +39,19 @@ public class ChunkRepository implements EntityLookup, PacketEntityLookup {
     @SuppressWarnings("unchecked")
     private <T> Mono<T> remove(T ignored, UUID uuid) {
         CompletableFuture<Object> future = this.entities.asMap().remove(uuid);
-        if(future == null) return Mono.empty();
+        if (future == null) return Mono.empty();
         return (Mono<T>) Mono.fromFuture(future);
     }
 
     @Override
     public Mono<Entity> add(Entity entity) {
+        if (!this.asyncEntityLookup) return Mono.just(entity);
         return this.add(entity, entity.getUniqueId(), entity.getLocation());
     }
 
     @Override
     public Mono<Entity> remove(Entity entity) {
+        if (!this.asyncEntityLookup) return Mono.just(entity);
         return this.remove(entity, entity.getUniqueId());
     }
 
@@ -68,7 +77,15 @@ public class ChunkRepository implements EntityLookup, PacketEntityLookup {
 
     @Override
     public Flux<Entity> getEntities() {
+        if (!this.asyncEntityLookup) {
+            return Flux.defer(() -> Flux.fromArray(this.world.getChunkAt(this.chunkKey).getEntities()))
+                    .publishOn(Jyraf.getPlugin().syncScheduler());
+        }
         return this.get().filter(object -> object instanceof Entity).cast(Entity.class);
+    }
+
+    public boolean isLoaded() {
+        return this.world.isChunkLoaded(FastMath.toIntExact(this.chunkKey), (int) (this.chunkKey >> 32));
     }
 
     @Override
