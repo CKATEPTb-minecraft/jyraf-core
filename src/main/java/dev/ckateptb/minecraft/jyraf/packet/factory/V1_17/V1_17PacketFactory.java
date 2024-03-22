@@ -1,10 +1,10 @@
 package dev.ckateptb.minecraft.jyraf.packet.factory.V1_17;
 
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.factory.v1_8.V1_8PacketFactory;
-import dev.ckateptb.minecraft.packetevents.api.util.Vector3d;
-import dev.ckateptb.minecraft.packetevents.api.wrapper.play.server.WrapperPlayServerSpawnEntity;
-import dev.ckateptb.minecraft.packetevents.impl.util.SpigotConversionUtil;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 

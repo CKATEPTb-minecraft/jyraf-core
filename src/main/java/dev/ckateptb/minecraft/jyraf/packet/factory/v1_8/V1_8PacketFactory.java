@@ -1,20 +1,20 @@
 package dev.ckateptb.minecraft.jyraf.packet.factory.v1_8;
 
+import com.github.retrooper.packetevents.manager.player.PlayerManager;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.player.GameMode;
+import com.github.retrooper.packetevents.protocol.player.UserProfile;
+import com.github.retrooper.packetevents.protocol.world.Location;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
-import dev.ckateptb.minecraft.packetevents.api.manager.player.PlayerManager;
-import dev.ckateptb.minecraft.packetevents.api.protocol.entity.type.EntityType;
-import dev.ckateptb.minecraft.packetevents.api.protocol.player.ClientVersion;
-import dev.ckateptb.minecraft.packetevents.api.protocol.player.GameMode;
-import dev.ckateptb.minecraft.packetevents.api.protocol.player.UserProfile;
-import dev.ckateptb.minecraft.packetevents.api.protocol.world.Location;
-import dev.ckateptb.minecraft.packetevents.api.util.Vector3d;
-import dev.ckateptb.minecraft.packetevents.api.wrapper.PacketWrapper;
-import dev.ckateptb.minecraft.packetevents.api.wrapper.play.server.*;
-import dev.ckateptb.minecraft.packetevents.impl.util.SpigotConversionUtil;
-import dev.ckateptb.minecraft.packetevents.internal.kyori.adventure.text.Component;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import reactor.core.publisher.Mono;
@@ -51,7 +51,7 @@ public class V1_8PacketFactory {
         String team = "npc-team-" + entity.getId();
         this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
         WrapperPlayServerTeams.ScoreBoardTeamInfo info = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
-                Component.text(" "), null, null,
+                Text.of(" "), null, null,
                 WrapperPlayServerTeams.NameTagVisibility.NEVER,
                 WrapperPlayServerTeams.CollisionRule.NEVER,
                 Optional.ofNullable(entity.getTeamColor()).orElse(TeamColor.WHITE).getKyori(),
@@ -72,7 +72,7 @@ public class V1_8PacketFactory {
 //        profile.setTextureProperties();
         this.sendPacket(player, new WrapperPlayServerPlayerInfo(
                 WrapperPlayServerPlayerInfo.Action.ADD_PLAYER, new WrapperPlayServerPlayerInfo.PlayerData(
-                Component.text("NPC" + entityId),
+                Text.of("NPC" + entityId),
                 profile, GameMode.CREATIVE, 1)));
     }
 

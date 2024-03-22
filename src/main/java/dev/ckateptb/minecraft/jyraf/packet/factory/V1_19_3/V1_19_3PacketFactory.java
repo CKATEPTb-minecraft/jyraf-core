@@ -1,12 +1,12 @@
 package dev.ckateptb.minecraft.jyraf.packet.factory.V1_19_3;
 
+import com.github.retrooper.packetevents.protocol.player.GameMode;
+import com.github.retrooper.packetevents.protocol.player.UserProfile;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoRemove;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.factory.V1_17.V1_17PacketFactory;
-import dev.ckateptb.minecraft.packetevents.api.protocol.player.GameMode;
-import dev.ckateptb.minecraft.packetevents.api.protocol.player.UserProfile;
-import dev.ckateptb.minecraft.packetevents.api.wrapper.play.server.WrapperPlayServerPlayerInfoRemove;
-import dev.ckateptb.minecraft.packetevents.api.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
-import dev.ckateptb.minecraft.packetevents.internal.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
 import java.util.EnumSet;
@@ -22,7 +22,7 @@ public class V1_19_3PacketFactory extends V1_17PacketFactory {
         UserProfile profile = new UserProfile(uniqueId, Integer.toString(entityId));
         // TODO APPLY SKIN
         WrapperPlayServerPlayerInfoUpdate.PlayerInfo info = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
-                profile, false, 1, GameMode.CREATIVE, Component.text("npc-" + entityId), null
+                profile, false, 1, GameMode.CREATIVE, Text.of("npc-" + entityId), null
         );
         this.sendPacket(player, new WrapperPlayServerPlayerInfoUpdate(EnumSet.of(
                 WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,

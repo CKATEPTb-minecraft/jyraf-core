@@ -71,14 +71,14 @@ dependencies {
     implementation("org.threeten:threeten-extra:1.7.2")
     // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
-    // Packets
-    implementation(project(path = ":packetevents", configuration = "shadow"))
     // PathFinder
     implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
     // PersistentDataContainerSerializer
     implementation("com.jeff-media:persistent-data-serializer:1.0")
     // PlaceholderAPI
     compileOnly("me.clip:placeholderapi:2.11.5")
+    // Packets
+    compileOnly("com.github.retrooper.packetevents:spigot:2.2.1")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")

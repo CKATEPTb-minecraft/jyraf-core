@@ -1,9 +1,9 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity.enums;
 
-import dev.ckateptb.minecraft.packetevents.internal.kyori.adventure.text.format.NamedTextColor;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)

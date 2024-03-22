@@ -9,7 +9,7 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.world.WorldService;
-import dev.ckateptb.minecraft.packetevents.impl.util.SpigotReflectionUtil;
+import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -19,13 +19,13 @@ import org.bukkit.entity.Player;
 import java.util.UUID;
 
 @Getter
-//@Component
+@Component
 @RequiredArgsConstructor
 public class NpcCommand implements Command {
     private final WorldService service;
 
-//    @CommandMethod("npc <type>")
-//    @CommandPermission("jnpcs.admin")
+    @CommandMethod("jyrafnpc <type>")
+    @CommandPermission("jnpcs.admin")
     public void npc(Player player, @Argument("type") EntityType type) {
         PacketEntity packetEntity = new PacketEntity(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), type, player.getLocation());
         packetEntity.setGlobal(true);
