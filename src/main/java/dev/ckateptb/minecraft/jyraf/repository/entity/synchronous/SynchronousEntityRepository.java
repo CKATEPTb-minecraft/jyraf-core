@@ -11,6 +11,7 @@ import org.bukkit.entity.Entity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+// TODO drop to external plugin
 @RequiredArgsConstructor
 public class SynchronousEntityRepository implements EntityRepository, WorldRepository<Entity> {
     private final World world;
