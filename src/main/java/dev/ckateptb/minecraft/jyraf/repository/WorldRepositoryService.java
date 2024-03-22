@@ -1,5 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.repository;
 
+import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
@@ -73,6 +75,25 @@ public class WorldRepositoryService implements Listener {
         this.registrations.put(clazz, CompletableFuture.completedFuture(Tuples.of(plugin, generator)));
     }
 
+    // TODO Find better way
+    @EventHandler
+    public void on(EntityAddToWorldEvent event) {
+        this.handleEntity(event.getEntity(), true);
+    }
+
+    @EventHandler
+    public void on(EntityRemoveFromWorldEvent event) {
+        this.handleEntity(event.getEntity(), false);
+    }
+
+    private void handleEntity(Entity entity, boolean add) {
+        Mono.defer(() -> this.getRepository(Entity.class, entity.getWorld()))
+                .subscribeOn(Schedulers.boundedElastic())
+                .filter(repository -> repository instanceof AsynchronousEntityRepository)
+                .flatMap(repository -> add ? repository.add(entity) : repository.remove(entity))
+                .subscribe();
+    }
+
     @SuppressWarnings("unchecked")
     public <T> Mono<WorldRepository<T>> getRepository(Class<T> type, World world) {
         return Mono.justOrEmpty(this.registrations.getIfPresent(type))
@@ -81,7 +102,7 @@ public class WorldRepositoryService implements Listener {
                     Plugin plugin = tuple.getT1();
                     Function<World, ? extends WorldRepository<?>> generator = tuple.getT2();
                     WorldRepository<?> repository = generator.apply(world);
-                    if (repository instanceof Listener listener) { // todo should register event if getRepository is not called
+                    if (repository instanceof Listener listener) {
                         Bukkit.getPluginManager().registerEvents(listener, plugin);
                     }
                     return repository;

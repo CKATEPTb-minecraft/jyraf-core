@@ -1,7 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.repository.entity.asynchronous;
 
-import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
-import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.colider.geometry.SphereBoundingBoxCollider;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
@@ -13,15 +11,11 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
 
-public class AsynchronousEntityRepository extends AbstractWorldRepository<UUID, Entity> implements EntityRepository, Listener, Repository.Tickable {
+public class AsynchronousEntityRepository extends AbstractWorldRepository<UUID, Entity> implements EntityRepository, Repository.Tickable {
     public AsynchronousEntityRepository(World world) {
         super(world);
     }
@@ -52,22 +46,6 @@ public class AsynchronousEntityRepository extends AbstractWorldRepository<UUID, 
         return this.getNearbyChunks(location, radius, radius)
                 .flatMap(ChunkRepository::get)
                 .filter(entity -> sphere.intersects(Colliders.aabb(entity)));
-    }
-
-    @EventHandler
-    public void on(EntityAddToWorldEvent event) {
-        this.handleEntity(event.getEntity(), true);
-    }
-
-    @EventHandler
-    public void on(EntityRemoveFromWorldEvent event) {
-        this.handleEntity(event.getEntity(), false);
-    }
-
-    private void handleEntity(Entity entity, boolean add) {
-        Mono.defer(() -> add ? this.add(entity) : this.remove(entity))
-                .subscribeOn(Schedulers.boundedElastic())
-                .subscribe();
     }
 
     @Override
