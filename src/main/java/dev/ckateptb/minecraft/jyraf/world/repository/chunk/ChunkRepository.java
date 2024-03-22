@@ -8,7 +8,7 @@ import dev.ckateptb.minecraft.jyraf.world.lookup.entity.EntityLookup;
 import dev.ckateptb.minecraft.jyraf.world.lookup.entity.PacketEntityLookup;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.math3.util.FastMath;
+import lombok.Setter;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -25,6 +25,9 @@ public class ChunkRepository implements EntityLookup, PacketEntityLookup {
     @Getter
     private final Long chunkKey;
     private final boolean asyncEntityLookup;
+    @Getter
+    @Setter
+    private boolean loaded = true;
 
     // Entity and PacketEntity map by UUID
     private final AsyncCache<UUID, Object> entities = Caffeine.newBuilder().buildAsync();
@@ -82,10 +85,6 @@ public class ChunkRepository implements EntityLookup, PacketEntityLookup {
                     .publishOn(Jyraf.getPlugin().syncScheduler());
         }
         return this.get().filter(object -> object instanceof Entity).cast(Entity.class);
-    }
-
-    public boolean isLoaded() {
-        return this.world.isChunkLoaded(FastMath.toIntExact(this.chunkKey), (int) (this.chunkKey >> 32));
     }
 
     @Override

@@ -29,11 +29,13 @@ public class WorldRepository implements EntityLookup, PacketEntityLookup {
     @Getter
     private final World world;
     private final boolean asyncEntityLookup;
+    @Getter
     private final AsyncCache<Long, ChunkRepository> chunks = Caffeine.newBuilder().buildAsync();
     private final AsyncCache<UUID, Long> entityChunkCache = Caffeine.newBuilder().buildAsync();
 
     public Mono<ChunkRepository> getChunk(Long chunkKey) {
-        return Mono.fromFuture(this.chunks.get(chunkKey, key -> new ChunkRepository(this.world, key, this.asyncEntityLookup)));
+        return Mono.fromFuture(this.chunks.get(chunkKey, key ->
+                new ChunkRepository(this.world, key, this.asyncEntityLookup)));
     }
 
     @Override
