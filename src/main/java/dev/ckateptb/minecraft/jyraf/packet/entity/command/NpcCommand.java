@@ -8,7 +8,7 @@ import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
-import dev.ckateptb.minecraft.jyraf.world.WorldService;
+import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class NpcCommand implements Command {
-    private final WorldService service;
+    private final WorldRepositoryService service;
 
     @CommandMethod("jyrafnpc <type>")
     @CommandPermission("jnpcs.admin")
@@ -34,7 +34,7 @@ public class NpcCommand implements Command {
         Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> {
             packetEntity.moveTo(player.getLocation()).subscribe();
         }, 60);
-        this.service.getWorld(player.getWorld())
+        this.service.getRepository(PacketEntity.class, player.getWorld())
                 .flatMap(worldRepository -> worldRepository.add(packetEntity))
                 .subscribe();
     }

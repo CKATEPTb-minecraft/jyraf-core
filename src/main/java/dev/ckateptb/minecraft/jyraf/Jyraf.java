@@ -45,9 +45,11 @@ import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.threeten.extra.PeriodDuration;
+import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Scheduler;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 // TODO:
 //  Redis database
@@ -146,5 +148,10 @@ public class Jyraf extends JavaPlugin {
 
     public static GsonConfigurationLoader getGsonMapper() {
         return GSON_MAPPER.get().orElse(null);
+    }
+
+    public static <T> Flux<T> synchronizedFlux(Supplier<Iterable<T>> supplier) {
+        return Flux.defer(() -> Flux.fromIterable(supplier.get()))
+                .subscribeOn(Jyraf.getPlugin().syncScheduler());
     }
 }
