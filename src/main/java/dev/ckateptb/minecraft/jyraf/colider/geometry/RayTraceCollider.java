@@ -3,6 +3,7 @@ package dev.ckateptb.minecraft.jyraf.colider.geometry;
 import dev.ckateptb.minecraft.jyraf.colider.Collider;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
+import dev.ckateptb.minecraft.jyraf.repository.entity.EntityRepository;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.math3.util.FastMath;
@@ -167,7 +168,8 @@ public class RayTraceCollider implements Collider {
         Vector dir = this.direction.clone().normalize().multiply(distance);
         BoundingBox aabb = BoundingBox.of(startPos, startPos).expandDirectional(dir).expand(this.size);
         return AxisAlignedBoundingBoxCollider.WORLD_SERVICE_CACHED_REFERENCE.get().orElseGet(Mono::empty)
-                .flatMap(worldService -> worldService.getWorld(this.world.getUID()))
+                .flatMap(service -> service.getRepository(Entity.class, this.world))
+                .cast(EntityRepository.class)
                 .flatMapMany(worldRepository -> {
                     Location location = startPos.toLocation(this.world);
                     double radius = ImmutableVector.of(aabb.getMax()).maxComponent();

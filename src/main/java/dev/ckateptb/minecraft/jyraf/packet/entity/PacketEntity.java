@@ -1,24 +1,13 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity;
 
-import com.github.retrooper.packetevents.manager.player.PlayerManager;
-import com.github.retrooper.packetevents.protocol.player.GameMode;
-import com.github.retrooper.packetevents.protocol.player.UserProfile;
-import com.github.retrooper.packetevents.util.Vector3d;
-import com.github.retrooper.packetevents.wrapper.PacketWrapper;
-import com.github.retrooper.packetevents.wrapper.play.server.*;
-import dev.ckateptb.minecraft.jyraf.Jyraf;
-import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
-import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
-import dev.ckateptb.minecraft.jyraf.packet.entity.skin.Skin;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
@@ -45,11 +34,11 @@ import java.util.concurrent.CompletableFuture;
 //  Dropped Item, Item Display, Block Display, Text Display
 //  Implement 1.16.5 support
 public class PacketEntity {
-    private final static CachedReference<PlayerManager> PACKET_MANAGER = new CachedReference<>(() ->
-            Jyraf.getPlugin().getPacketApi().getPlayerManager());
+    @Getter
     protected final int id;
     @Getter
     protected final UUID uniqueId;
+    @Getter
     protected final EntityType type;
     private final Set<Player> allowedViewers = Collections.synchronizedSet(new HashSet<>());
     private final Set<Player> currentViewers = Collections.synchronizedSet(new HashSet<>());
@@ -71,6 +60,9 @@ public class PacketEntity {
     private PathfinderStrategy pathfinderStrategy = new DirectPathfinderStrategy();
     private Tuple2<Iterator<PathPosition>, CompletableFuture<Location>> destiny = null;
     private Location currentPath;
+    @Getter
+    @Setter
+    private TeamColor teamColor = TeamColor.WHITE;
 
     public PacketEntity(int id, UUID uniqueId, EntityType type, Location location) {
         this.id = id;
@@ -187,21 +179,17 @@ public class PacketEntity {
     }
 
     public void lookAt(Player player, float yaw, float pitch) {
-        this.sendPacket(player, new WrapperPlayServerEntityHeadLook(this.id, yaw));
-        this.sendPacket(player, new WrapperPlayServerEntityRotation(this.id, yaw, pitch, true));
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.rotate(player, this, yaw, pitch));
     }
 
     public void teleport(Player player, Location location) {
-        boolean ground = ImmutableVector.of(location).getDistanceAboveGround(location.getWorld(), true) < 0.1;
         this.location = location;
-        this.sendPacket(player, new WrapperPlayServerEntityTeleport(this.id, SpigotConversionUtil.fromBukkitLocation(location), ground));
-        this.sendPacket(player, new WrapperPlayServerEntityHeadLook(this.id, location.getYaw()));
+        this.teleport(player, ImmutableVector.of(location)
+                .getDistanceAboveGround(location.getWorld(), true) < 0.1);
     }
 
     private void teleport(Player player, boolean onGround) {
-        this.sendPacket(player, new WrapperPlayServerEntityTeleport(this.id,
-                SpigotConversionUtil.fromBukkitLocation(this.location), onGround));
-        this.sendPacket(player, new WrapperPlayServerEntityHeadLook(this.id, this.location.getYaw()));
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.teleport(player, this, onGround));
     }
 
     public Mono<Location> moveTo(Location location) {
@@ -224,19 +212,7 @@ public class PacketEntity {
     }
 
     protected void setTeam(Player player, TeamColor color) {
-        String team = "npc-team-" + this.id;
-        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
-        WrapperPlayServerTeams.ScoreBoardTeamInfo info = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
-                Text.of(" "), null, null,
-                WrapperPlayServerTeams.NameTagVisibility.NEVER,
-                WrapperPlayServerTeams.CollisionRule.NEVER,
-                Optional.ofNullable(color).orElse(TeamColor.WHITE).getKyori(),
-                WrapperPlayServerTeams.OptionData.NONE
-        );
-        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.CREATE, info));
-        String id = this.type == EntityType.PLAYER ? Integer.toString(this.id) : this.getUniqueId().toString();
-        this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.ADD_ENTITIES,
-                (WrapperPlayServerTeams.ScoreBoardTeamInfo) null, id));
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.createTeam(player, this));
     }
 
     protected void spawn(Player player) {
@@ -244,42 +220,19 @@ public class PacketEntity {
             this.spawnPlayer(player);
         } else {
             this.spawnEntity(player);
-            this.setTeam(player, TeamColor.WHITE);
         }
     }
 
     private void spawnPlayer(Player player) {
-        UserProfile profile = new UserProfile(this.uniqueId, Integer.toString(this.id));
-        Skin.from(player) // TODO parse from properties
-                .doOnNext(profile::setTextureProperties)
-                .doFinally(signalType -> Bukkit.getScheduler()
-                        .runTaskLaterAsynchronously(Jyraf.getPlugin(), () ->
-                                this.sendPacket(player, new WrapperPlayServerPlayerInfoRemove(this.uniqueId)), 60)
-                )
-                .subscribe(textureProperty -> {
-                    WrapperPlayServerPlayerInfoUpdate.PlayerInfo info = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
-                            profile, false, 1, GameMode.CREATIVE, Text.of("npc-" + this.id), null
-                    );
-                    this.sendPacket(player, new WrapperPlayServerPlayerInfoUpdate(EnumSet.of(
-                            WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
-                            WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED
-                    ), info, info));
-                    this.spawnEntity(player);
-                    this.lookAt(player, this.location.getYaw(), this.location.getPitch());
-                    this.setTeam(player, TeamColor.GOLD);
-                });
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.spawnPlayer(player, this));
     }
 
     private void spawnEntity(Player player) {
-        this.sendPacket(player, new WrapperPlayServerSpawnEntity(this.id, this.uniqueId,
-                SpigotConversionUtil.fromBukkitEntityType(this.type),
-                SpigotConversionUtil.fromBukkitLocation(this.location),
-                this.location.getYaw(), 0, new Vector3d()
-        ));
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.spawnEntity(player, this));
     }
 
     private void despawn(Player player) {
-        this.sendPacket(player, new WrapperPlayServerDestroyEntities(this.id));
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.despawnEntity(player, this));
     }
 
     public Location getLocation() {
@@ -290,7 +243,4 @@ public class PacketEntity {
         return this.location.getWorld();
     }
 
-    protected void sendPacket(Player player, PacketWrapper<?> packet) {
-        PACKET_MANAGER.get().ifPresent(playerManager -> playerManager.sendPacket(player, packet));
-    }
 }

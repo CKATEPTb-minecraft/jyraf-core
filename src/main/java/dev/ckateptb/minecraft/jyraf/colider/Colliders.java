@@ -33,7 +33,7 @@ public class Colliders {
         if (block.getType().isAir()) {
             return new AxisAlignedBoundingBoxCollider(world, ImmutableVector.ZERO, ImmutableVector.ZERO);
         }
-        if (box.getVolume() == 0 || !block.isSolid() /*todo is solid correct for 1.13+?*/) {
+        if (box.getVolume() == 0 || !block.isSolid()) {
             return BLOCK.apply(world).at(block.getLocation().toCenterLocation());
         }
         ImmutableVector min = new ImmutableVector(box.getMinX(), box.getMinY(), box.getMinZ());

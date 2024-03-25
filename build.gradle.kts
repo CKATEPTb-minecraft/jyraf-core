@@ -13,7 +13,7 @@ plugins {
 //    id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.16.0-SNAPSHOT"
+version = "1.18.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -36,8 +36,6 @@ dependencies {
 
     // Non-blocking threads
     implementation("io.projectreactor:reactor-core:3.6.1")
-    // Non-blocking netty
-    implementation("io.projectreactor.netty:reactor-netty:1.1.17")
     // High performance cache
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8") {
         exclude(module = "checker-qual")
@@ -46,8 +44,6 @@ dependencies {
     // Configuration
     implementation("org.spongepowered:configurate-gson:4.1.2")
     implementation("org.spongepowered:configurate-hocon:4.1.2")
-    implementation("org.spongepowered:configurate-jackson:4.1.2")
-    implementation("org.spongepowered:configurate-xml:4.1.2")
     implementation("org.spongepowered:configurate-yaml:4.1.2") {
         exclude(module = "snakeyaml")
     }
@@ -75,14 +71,14 @@ dependencies {
     implementation("org.threeten:threeten-extra:1.7.2")
     // Anvil IUI
     implementation("net.wesjd:anvilgui:1.9.2-SNAPSHOT")
-    // Packets
-    implementation("com.github.retrooper.packetevents:spigot:2.2.1")
     // PathFinder
     implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
     // PersistentDataContainerSerializer
     implementation("com.jeff-media:persistent-data-serializer:1.0")
     // PlaceholderAPI
     compileOnly("me.clip:placeholderapi:2.11.5")
+    // Packets
+    compileOnly("com.github.retrooper.packetevents:spigot:2.2.1")
 
     compileOnly("org.projectlombok:lombok:+")
     annotationProcessor("org.projectlombok:lombok:+")
@@ -109,9 +105,7 @@ tasks {
         relocate("org.bson", "${internal}.bson")
         relocate("org.json", "${internal}.json")
         relocate("de.themoep.minedown.adventure", "${internal}.minedown")
-        relocate("com.github.retrooper.packetevents", "${internal}.packetevents.api")
-        relocate("io.github.retrooper.packetevents", "${internal}.packetevents.impl")
-        relocate("com.github.patheloper.pathetic", "${internal}.pathetic")
+        relocate("org.patheloper", "${internal}.pathetic")
         relocate("com.jeff_media.persistentdataserializer", "${internal}.persistentdataserializer")
     }
     build {
