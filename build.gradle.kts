@@ -13,7 +13,7 @@ plugins {
 //    id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.17.0-SNAPSHOT"
+version = "1.18.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"

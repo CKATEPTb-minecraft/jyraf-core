@@ -1,16 +1,14 @@
 package dev.ckateptb.minecraft.jyraf.repository;
 
-import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
-import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
-import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
 import dev.ckateptb.minecraft.jyraf.repository.entity.asynchronous.AsynchronousEntityRepository;
 import dev.ckateptb.minecraft.jyraf.repository.packet.PacketEntityRepository;
 import dev.ckateptb.minecraft.jyraf.repository.world.WorldRepository;
+import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -73,25 +71,6 @@ public class WorldRepositoryService implements Listener {
 
     public <T> void register(Plugin plugin, Class<T> clazz, Function<World, WorldRepository<T>> generator) {
         this.registrations.put(clazz, CompletableFuture.completedFuture(Tuples.of(plugin, generator)));
-    }
-
-    // TODO Find better way
-    @EventHandler
-    public void on(EntityAddToWorldEvent event) {
-        this.handleEntity(event.getEntity(), true);
-    }
-
-    @EventHandler
-    public void on(EntityRemoveFromWorldEvent event) {
-        this.handleEntity(event.getEntity(), false);
-    }
-
-    private void handleEntity(Entity entity, boolean add) {
-        Mono.defer(() -> this.getRepository(Entity.class, entity.getWorld()))
-                .subscribeOn(Schedulers.boundedElastic())
-                .filter(repository -> repository instanceof AsynchronousEntityRepository)
-                .flatMap(repository -> add ? repository.add(entity) : repository.remove(entity))
-                .subscribe();
     }
 
     @SuppressWarnings("unchecked")
