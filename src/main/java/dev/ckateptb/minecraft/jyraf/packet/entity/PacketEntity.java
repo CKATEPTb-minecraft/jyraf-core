@@ -4,6 +4,7 @@ import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
+import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 // TODO Implement properties like a
 //  skin, glow, entity type data (villager type etc.)
 //  Holograms, Multiple NameTags (based on Holograms)
-//  Interaction Handler, Equipments, Poses, States
+//  Equipments, Poses, States
 //  Dropped Item, Item Display, Block Display, Text Display
 //  Implement 1.16.5 support
 public class PacketEntity {
@@ -63,6 +64,9 @@ public class PacketEntity {
     @Getter
     @Setter
     private TeamColor teamColor = TeamColor.WHITE;
+    @Getter
+    @Setter
+    private PacketEntityInteractHandler interactHandler = null;
 
     public PacketEntity(int id, UUID uniqueId, EntityType type, Location location) {
         this.id = id;
@@ -245,6 +249,10 @@ public class PacketEntity {
 
     public void remove() {
         this.currentViewers.forEach(this::despawn);
+    }
+
+    public interface PacketEntityInteractHandler {
+        void handle(Player player, ClickType clickType);
     }
 
 }

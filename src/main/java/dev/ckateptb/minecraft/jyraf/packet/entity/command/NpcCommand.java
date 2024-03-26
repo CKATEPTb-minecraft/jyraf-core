@@ -26,15 +26,19 @@ public class NpcCommand implements Command {
 
     @CommandMethod("jyrafnpc <type>")
     @CommandPermission("jnpcs.admin")
-    public void npc(Player player, @Argument("type") EntityType type) {
-        PacketEntity packetEntity = new PacketEntity(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), type, player.getLocation());
+    public void npc(Player commandSender, @Argument("type") EntityType type) {
+        PacketEntity packetEntity =
+            new PacketEntity(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), type, commandSender.getLocation());
         packetEntity.setGlobal(true);
         packetEntity.setLookType(LookType.PER_PLAYER);
         packetEntity.setGravity(true);
         Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> {
-            packetEntity.moveTo(player.getLocation()).subscribe();
+            packetEntity.moveTo(commandSender.getLocation()).subscribe();
         }, 60);
-        this.service.getRepository(PacketEntity.class, player.getWorld())
+        packetEntity.setInteractHandler((player, clickType) -> {
+            player.sendMessage(clickType.name());
+        });
+        this.service.getRepository(PacketEntity.class, commandSender.getWorld())
                 .flatMap(worldRepository -> worldRepository.add(packetEntity))
                 .subscribe();
     }

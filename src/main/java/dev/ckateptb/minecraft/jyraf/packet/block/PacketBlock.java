@@ -31,8 +31,7 @@ public class PacketBlock {
     private final Vector3i position;
     @Setter
     @Getter
-    private PacketBlockInteractHandler interactHandler = (player, clickType) -> {
-    };
+    private PacketBlockInteractHandler interactHandler = null;
 
     public PacketBlock(Location location, BlockData data) {
         this.data = data.clone();
@@ -100,7 +99,7 @@ public class PacketBlock {
         this.placeBlock(player);
     }
 
-    public boolean isViewed(Player player) {
+    public boolean canView(Player player) {
         return this.currentViewers.contains(player);
     }
 

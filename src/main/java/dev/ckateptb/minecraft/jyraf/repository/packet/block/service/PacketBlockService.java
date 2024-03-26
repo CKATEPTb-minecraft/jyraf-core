@@ -35,8 +35,10 @@ public class PacketBlockService extends PacketListenerAbstract {
     }
 
     private void handleBlockInteract(Player player, PacketBlock block, boolean rightClick) {
-        block.getInteractHandler()
-            .handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
+        if (block.getInteractHandler() != null) {
+            block.getInteractHandler()
+                .handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
+        }
     }
 
     @Override
@@ -80,7 +82,7 @@ public class PacketBlockService extends PacketListenerAbstract {
             .cast(PacketBlockRepository.PacketBlockChunkRepository.class)
             .flatMapMany(AbstractChunkRepository::get)
             .cast(PacketBlock.class)
-            .filter(block -> block.getPosition().equals(position) && block.isViewed(player))
+            .filter(block -> block.getPosition().equals(position) && block.canView(player))
             .next();
     }
 }
