@@ -24,7 +24,7 @@ import java.util.UUID;
 public class NpcCommand implements Command {
     private final WorldRepositoryService service;
 
-    @CommandMethod(value = "jyrafnpc <type>", requiredSender = Player.class)
+    @CommandMethod("jyrafnpc <type>")
     @CommandPermission("jnpcs.admin")
     public void npc(Player sender, @Argument("type") EntityType type) {
         PacketEntity packetEntity =
@@ -32,12 +32,10 @@ public class NpcCommand implements Command {
         packetEntity.setGlobal(true);
         packetEntity.setLookType(LookType.PER_PLAYER);
         packetEntity.setGravity(true);
-        Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> {
-            packetEntity.moveTo(sender.getLocation()).subscribe();
-        }, 60);
-        packetEntity.setInteractHandler((player, clickType) -> {
-            player.sendMessage(clickType.name());
-        });
+        Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> packetEntity
+            .moveTo(sender.getLocation()).subscribe(), 60);
+        packetEntity.setInteractHandler((player, clickType) -> player
+            .sendMessage(clickType.name()));
         this.service.getRepository(PacketEntity.class, sender.getWorld())
                 .flatMap(worldRepository -> worldRepository.add(packetEntity))
                 .subscribe();
