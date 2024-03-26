@@ -69,6 +69,26 @@ public class PacketBlock {
             });
     }
 
+    // todo: make instead of actionId enum
+    //       params as well should be only pair depending on action
+    public void playAction(int actionId) {
+        this.playAction(actionId, 0);
+    }
+
+    public void playAction(int actionId, int param) {
+        // todo: callback on it when player joins to area
+        //       and if player broke block (i.e. chest), then, it should still exists
+        this.currentViewers.forEach(viewer -> playAction(viewer, actionId, param));
+    }
+
+    public void playAction(Player player, int actionId) {
+        this.playAction(player, actionId);
+    }
+
+    public void playAction(Player player, int actionId, int param) {
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.playBlockAction(player, this, actionId, param));
+    }
+
     public void show() {
         this.global = true;
     }
