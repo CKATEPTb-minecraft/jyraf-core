@@ -36,6 +36,7 @@ public class RepositoryInjection implements ComponentRegisterHandler {
         repo.connect(owner, entityClass, idClass);
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     private Stream<Tuple2<Type, Type>> resolveEntity(Class<?> repositoryClass) {
         ArrayList<Type> list = new ArrayList<>();
         list.add(repositoryClass.getGenericSuperclass());

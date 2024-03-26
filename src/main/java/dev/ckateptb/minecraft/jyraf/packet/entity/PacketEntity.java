@@ -86,7 +86,7 @@ public class PacketEntity {
                     flux.collectList()
                             .doOnNext(players -> { // calculate viewers
                                 this.currentViewers.removeIf(player -> {
-                                    if (players.contains(player)) return false;
+                                    if (players.contains(player) && player.isOnline()) return false;
                                     this.despawn(player);
                                     return true;
                                 });
@@ -161,12 +161,12 @@ public class PacketEntity {
                 });
     }
 
-    public void show(Player player) {
-        this.allowedViewers.add(player);
+    public boolean show(Player player) {
+        return this.allowedViewers.add(player);
     }
 
-    public void hide(Player player) {
-        this.allowedViewers.remove(player);
+    public boolean hide(Player player) {
+        return this.allowedViewers.remove(player);
     }
 
     public boolean canView(Player player) {
@@ -241,6 +241,10 @@ public class PacketEntity {
 
     public World getWorld() {
         return this.location.getWorld();
+    }
+
+    public void remove() {
+        this.currentViewers.forEach(this::despawn);
     }
 
 }

@@ -4,9 +4,11 @@ import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
+import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.repository.entity.asynchronous.AsynchronousEntityRepository;
-import dev.ckateptb.minecraft.jyraf.repository.packet.PacketEntityRepository;
+import dev.ckateptb.minecraft.jyraf.repository.packet.block.PacketBlockRepository;
+import dev.ckateptb.minecraft.jyraf.repository.packet.entity.PacketEntityRepository;
 import dev.ckateptb.minecraft.jyraf.repository.world.WorldRepository;
 import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class WorldRepositoryService implements Listener {
     public WorldRepositoryService(Jyraf plugin) {
         this.register(plugin, Entity.class, AsynchronousEntityRepository::new);
         this.register(plugin, PacketEntity.class, PacketEntityRepository::new);
+        this.register(plugin, PacketBlock.class, PacketBlockRepository::new);
     }
 
     @Schedule(async = true, initialDelay = 0, fixedRate = 1)

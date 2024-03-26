@@ -83,6 +83,7 @@ public class ReactiveContainer implements AsyncContainer {
 
     @Override
     @SneakyThrows
+    @SuppressWarnings("UnstableApiUsage")
     public <P extends Plugin> void scan(P plugin, Predicate<String> filter, String... packages) {
         this.registerBean(plugin, plugin);
         Class<? extends Plugin> pluginClass = plugin.getClass();
