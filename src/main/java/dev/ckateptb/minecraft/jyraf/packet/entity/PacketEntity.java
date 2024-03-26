@@ -215,6 +215,15 @@ public class PacketEntity {
                 }));
     }
 
+    public void show() {
+        this.global = true;
+    }
+
+    public void hide() {
+        this.global = false;
+        this.remove();
+    }
+
     protected void setTeam(Player player, TeamColor color) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.createTeam(player, this));
     }

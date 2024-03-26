@@ -69,6 +69,15 @@ public class PacketBlock {
             });
     }
 
+    public void show() {
+        this.global = true;
+    }
+
+    public void hide() {
+        this.global = false;
+        this.remove();
+    }
+
     public boolean show(Player player) {
         return this.allowedViewers.add(player);
     }
