@@ -9,10 +9,9 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientIn
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
+import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import dev.ckateptb.minecraft.jyraf.repository.packet.entity.PacketEntityRepository;
-import dev.ckateptb.minecraft.jyraf.repository.world.chunk.AbstractChunkRepository;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import reactor.core.publisher.Mono;
@@ -42,19 +41,15 @@ public class PacketEntityService extends PacketListenerAbstract {
         if (wrapper.getHand() != InteractionHand.MAIN_HAND) return;
         WrapperPlayClientInteractEntity.InteractAction action = wrapper.getAction();
         if (action == WrapperPlayClientInteractEntity.InteractAction.INTERACT_AT) return;
-        // todo: if npc stays in one chunk, but player's location is in other - interaction won't work,
-        //       so, we need to use npc's location instead of player's one (wrapper#getVector is empty in that situation)
-        this.findEntity(player, player.getLocation(), wrapper.getEntityId()).subscribe(entity -> {
-            this.handleEntityInteract(player, entity, action == WrapperPlayClientInteractEntity.InteractAction.INTERACT);
-        });
+        this.findEntity(player, player.getLocation(), wrapper.getEntityId()).subscribe(entity -> this
+            .handleEntityInteract(player, entity, action == WrapperPlayClientInteractEntity.InteractAction.INTERACT));
     }
 
     private Mono<PacketEntity> findEntity(Player player, Location location, int id) {
         return this.service.getRepository(PacketEntity.class, location.getWorld())
             .cast(PacketEntityRepository.class)
-            .flatMap(entityRepository -> entityRepository.getChunk(Chunk.getChunkKey(location)))
-            .cast(PacketEntityRepository.PacketEntityChunkRepository.class)
-            .flatMapMany(AbstractChunkRepository::get)
+            .flatMapMany(entityRepository -> entityRepository.getNearbyChunks(location, 6.0D, 6.0D))
+            .flatMap(Repository::get)
             .cast(PacketEntity.class)
             .filter(entity -> entity.getId() == id && entity.canView(player))
             .next();
