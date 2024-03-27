@@ -12,7 +12,6 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAn
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
@@ -24,7 +23,9 @@ import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.util.RayTraceResult;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -50,10 +51,12 @@ public class PacketBlockService extends PacketListenerAbstract {
             if (player.getGameMode() != GameMode.ADVENTURE) return;
             WrapperPlayClientAnimation wrapper = new WrapperPlayClientAnimation(event);
             if (wrapper.getHand() != InteractionHand.MAIN_HAND) return;
-            Colliders.ray(player, 3.0, 0.01).affectBlocks(blocks -> blocks
-                    .subscribe(block ->
-                            this.findBlock(player, block.getWorld(), SpigotConversionUtil.fromBukkitLocation(block.getLocation()).getPosition().toVector3i())
-                                    .subscribe(packetBlock -> this.handleBlockInteract(player, packetBlock, false))));
+            RayTraceResult result = player.rayTraceBlocks(5.0);
+            if (result == null) return;
+            Block block = result.getHitBlock();
+            if (block == null) return;
+            this.findBlock(player, block.getWorld(), SpigotConversionUtil.fromBukkitLocation(block.getLocation()).getPosition().toVector3i())
+                    .subscribe(packetBlock -> this.handleBlockInteract(player, packetBlock, false));
         } else if (event.getPacketType() == PacketType.Play.Client.PLAYER_DIGGING) { // LMB for other gamemodes
             if (player.getGameMode() == GameMode.ADVENTURE) return;
             WrapperPlayClientPlayerDigging wrapper = new WrapperPlayClientPlayerDigging(event);
