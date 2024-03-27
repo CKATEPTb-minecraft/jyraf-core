@@ -27,10 +27,9 @@ public class PacketEntityService extends PacketListenerAbstract {
     }
 
     private void handleEntityInteract(Player player, PacketEntity entity, boolean rightClick) {
-        if (entity.getInteractHandler() != null) {
-            entity.getInteractHandler()
-                .handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
-        }
+        PacketEntity.PacketEntityInteractHandler handler = entity.getInteractHandler();
+        if (handler == null) return;
+        handler.handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
     }
 
     @Override

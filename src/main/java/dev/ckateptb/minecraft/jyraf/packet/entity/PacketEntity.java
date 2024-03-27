@@ -66,7 +66,8 @@ public class PacketEntity {
     private TeamColor teamColor = TeamColor.WHITE;
     @Getter
     @Setter
-    private PacketEntityInteractHandler interactHandler = null;
+    private PacketEntityInteractHandler interactHandler = (player, clickType) -> {
+    };
 
     public PacketEntity(int id, UUID uniqueId, EntityType type, Location location) {
         this.id = id;
@@ -213,15 +214,6 @@ public class PacketEntity {
                     this.currentViewers.forEach(player -> this.teleport(player, location));
                     return Mono.just(this.location).delayElement(Duration.ofSeconds(1));
                 }));
-    }
-
-    public void show() {
-        this.global = true;
-    }
-
-    public void hide() {
-        this.global = false;
-        this.remove();
     }
 
     protected void setTeam(Player player, TeamColor color) {

@@ -35,16 +35,15 @@ public class PacketBlockService extends PacketListenerAbstract {
     }
 
     private void handleBlockInteract(Player player, PacketBlock block, boolean rightClick) {
-        if (block.getInteractHandler() != null) {
-            block.getInteractHandler()
-                .handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
-        }
+        PacketBlock.PacketBlockInteractHandler handler = block.getInteractHandler();
+        if (handler == null) return;
+        handler.handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
     }
 
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) return;
         if (event.getPacketType() == PacketType.Play.Client.PLAYER_DIGGING) { // LMB
-            if (!(event.getPlayer() instanceof Player player)) return;
             WrapperPlayClientPlayerDigging wrapper = new WrapperPlayClientPlayerDigging(event);
             this.findBlock(player, player.getWorld(), wrapper.getBlockPosition()).subscribe(packetBlock -> {
                 if (wrapper.getAction() == DiggingAction.START_DIGGING) {
@@ -55,7 +54,6 @@ public class PacketBlockService extends PacketListenerAbstract {
             });
         }
         else if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) { // RMB
-            if (!(event.getPlayer() instanceof Player player)) return;
             WrapperPlayClientPlayerBlockPlacement wrapper = new WrapperPlayClientPlayerBlockPlacement(event);
             if (wrapper.getHand() != InteractionHand.MAIN_HAND) return;
             this.findBlock(player, player.getWorld(), wrapper.getBlockPosition()).subscribe(packetBlock -> {

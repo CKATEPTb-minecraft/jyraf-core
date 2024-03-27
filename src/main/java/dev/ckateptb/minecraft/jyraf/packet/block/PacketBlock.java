@@ -31,7 +31,8 @@ public class PacketBlock {
     private final Vector3i position;
     @Setter
     @Getter
-    private PacketBlockInteractHandler interactHandler = null;
+    private PacketBlockInteractHandler interactHandler = (player, clickType) -> {
+    };
 
     public PacketBlock(Location location, BlockData data) {
         this.data = data.clone();
@@ -82,20 +83,11 @@ public class PacketBlock {
     }
 
     public void playAction(Player player, int actionId) {
-        this.playAction(player, actionId);
+        this.playAction(player, actionId, 0);
     }
 
     public void playAction(Player player, int actionId, int param) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.playBlockAction(player, this, actionId, param));
-    }
-
-    public void show() {
-        this.global = true;
-    }
-
-    public void hide() {
-        this.global = false;
-        this.remove();
     }
 
     public boolean show(Player player) {
