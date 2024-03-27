@@ -106,19 +106,18 @@ public class V1_8PacketFactory {
     }
 
     public void placeBlock(Player player, PacketBlock block) {
-        this.sendPacket(player, new WrapperPlayServerBlockChange(block.getPosition(),
-                                                                 SpigotConversionUtil.fromBukkitBlockData(block.getData()).getGlobalId()));
+        player.sendBlockChange(block.getLocation(), block.getData());
     }
 
     public void playBlockAction(Player player, PacketBlock block, int actionId, int param) {
         WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(block.getPosition(), actionId, param,
-                                                                               SpigotConversionUtil.fromBukkitBlockData(block.getData())
-                                                                                   .getGlobalId());
+                SpigotConversionUtil.fromBukkitBlockData(block.getData()).getGlobalId());
         this.sendPacket(player, packet);
     }
 
     public void breakBlock(Player player, PacketBlock block) {
-        block.getLocation().getBlock().getState().update();
+        org.bukkit.Location location = block.getLocation();
+        player.sendBlockChange(location, location.getBlock().getBlockData());
     }
 
     public void spawnEntity(Player player, PacketEntity entity) {

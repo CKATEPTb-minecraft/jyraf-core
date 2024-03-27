@@ -52,8 +52,7 @@ public class PacketBlockService extends PacketListenerAbstract {
                 event.setCancelled(true);
                 packetBlock.update(player);
             });
-        }
-        else if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) { // RMB
+        } else if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) { // RMB
             WrapperPlayClientPlayerBlockPlacement wrapper = new WrapperPlayClientPlayerBlockPlacement(event);
             if (wrapper.getHand() != InteractionHand.MAIN_HAND) return;
             this.findBlock(player, player.getWorld(), wrapper.getBlockPosition()).subscribe(packetBlock -> {
@@ -75,12 +74,12 @@ public class PacketBlockService extends PacketListenerAbstract {
     private Mono<PacketBlock> findBlock(Player player, World world, Vector3i position) {
         Location location = new Location(world, position.x, position.y, position.z);
         return this.service.getRepository(PacketBlock.class, world)
-            .cast(PacketBlockRepository.class)
-            .flatMap(blockRepository -> blockRepository.getChunk(Chunk.getChunkKey(location)))
-            .cast(PacketBlockRepository.PacketBlockChunkRepository.class)
-            .flatMapMany(AbstractChunkRepository::get)
-            .cast(PacketBlock.class)
-            .filter(block -> block.getPosition().equals(position) && block.canView(player))
-            .next();
+                .cast(PacketBlockRepository.class)
+                .flatMap(blockRepository -> blockRepository.getChunk(Chunk.getChunkKey(location)))
+                .cast(PacketBlockRepository.PacketBlockChunkRepository.class)
+                .flatMapMany(AbstractChunkRepository::get)
+                .cast(PacketBlock.class)
+                .filter(block -> block.getPosition().equals(position) && block.canView(player))
+                .next();
     }
 }
