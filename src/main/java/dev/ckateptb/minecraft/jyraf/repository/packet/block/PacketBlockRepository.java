@@ -20,9 +20,9 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
     @Override
     public void tick() {
         this.getChunks()
-            .cast(PacketBlockChunkRepository.class)
-            .filter(PacketBlockChunkRepository::shouldTick)
-            .subscribe(PacketBlockChunkRepository::tick);
+                .cast(PacketBlockChunkRepository.class)
+                .filter(PacketBlockChunkRepository::shouldTick)
+                .subscribe(PacketBlockChunkRepository::tick);
     }
 
     @Override
@@ -69,23 +69,23 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
         @Override
         public void tick() {
             this.get()
-                .subscribe(PacketBlock::tick);
+                    .subscribe(PacketBlock::tick);
         }
 
         @Override
         public Mono<PacketBlock> add(PacketBlock entry) {
             return Mono.justOrEmpty(this.entries.getIfPresent(entry.getPosition()))
-                .flatMap(Mono::fromFuture)
-                .map(this::remove)
-                .flatMap(ignored -> Mono.empty())
-                .switchIfEmpty(Mono.defer(() -> super.add(entry)))
-                .cast(PacketBlock.class);
+                    .flatMap(Mono::fromFuture)
+                    .map(this::remove)
+                    .flatMap(ignored -> Mono.empty())
+                    .switchIfEmpty(Mono.defer(() -> super.add(entry)))
+                    .cast(PacketBlock.class);
         }
 
         @Override
         public Mono<PacketBlock> remove(PacketBlock entry) {
             return super.remove(entry)
-                .doOnNext(PacketBlock::remove);
+                    .doOnNext(PacketBlock::remove);
         }
 
         @Override

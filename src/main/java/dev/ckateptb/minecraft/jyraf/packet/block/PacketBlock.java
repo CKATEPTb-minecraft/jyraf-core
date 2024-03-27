@@ -43,31 +43,31 @@ public class PacketBlock {
     public void tick() {
         Location location = this.getLocation();
         Colliders.sphere(location, 20)
-            .affectEntities(entities -> {
-                Flux<Player> flux = entities
-                    .filter(entity -> entity instanceof Player)
-                    .cast(Player.class)
-                    .sort((o1, o2) -> {
-                        Location first = o1.getLocation();
-                        Location second = o2.getLocation();
-                        return (int)(first.distanceSquared(location) - second.distanceSquared(location));
-                    });
-                if (!this.global) flux = flux.filter(this.allowedViewers::contains);
-                flux.collectList()
-                    .doOnNext(players -> {
-                        this.currentViewers.removeIf(player -> {
-                            if (players.contains(player) && player.isOnline()) return false;
-                            this.breakBlock(player);
-                            return true;
-                        });
-                        players.forEach(player -> {
-                            if (this.currentViewers.add(player)) {
-                                this.placeBlock(player);
-                            }
-                        });
-                    })
-                    .subscribe();
-            });
+                .affectEntities(entities -> {
+                    Flux<Player> flux = entities
+                            .filter(entity -> entity instanceof Player)
+                            .cast(Player.class)
+                            .sort((o1, o2) -> {
+                                Location first = o1.getLocation();
+                                Location second = o2.getLocation();
+                                return (int) (first.distanceSquared(location) - second.distanceSquared(location));
+                            });
+                    if (!this.global) flux = flux.filter(this.allowedViewers::contains);
+                    flux.collectList()
+                            .doOnNext(players -> {
+                                this.currentViewers.removeIf(player -> {
+                                    if (players.contains(player) && player.isOnline()) return false;
+                                    this.breakBlock(player);
+                                    return true;
+                                });
+                                players.forEach(player -> {
+                                    if (this.currentViewers.add(player)) {
+                                        this.placeBlock(player);
+                                    }
+                                });
+                            })
+                            .subscribe();
+                });
     }
 
     // todo: make instead of actionId enum

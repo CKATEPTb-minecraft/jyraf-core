@@ -35,13 +35,12 @@ public class BlockCommand implements Command {
             player.sendMessage(clickType.name());
             if (material == Material.CHEST || material == Material.ENDER_CHEST || material == Material.TRAPPED_CHEST) {
                 packetBlock.playAction(player, 1, clickType == ClickType.RIGHT ? 1 : 0); // open/close chest
-            }
-            else if (material == Material.SHULKER_BOX) {
+            } else if (material == Material.SHULKER_BOX) {
                 packetBlock.playAction(player, 1, clickType == ClickType.RIGHT ? 1 : 0); // open/close shulkerbox
             }
         });
         this.service.getRepository(PacketBlock.class, sender.getWorld())
-            .flatMap(worldRepository -> worldRepository.add(packetBlock))
-            .subscribe();
+                .flatMap(worldRepository -> worldRepository.add(packetBlock))
+                .subscribe();
     }
 }

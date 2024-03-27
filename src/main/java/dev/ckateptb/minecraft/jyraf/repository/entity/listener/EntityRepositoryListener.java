@@ -40,7 +40,7 @@ public class EntityRepositoryListener implements Listener {
                         .subscribe();
             }
         };
-        if(entity instanceof Player && add) {
+        if (entity instanceof Player && add) {
             runnable.runTaskLater(this.plugin, 20);
         } else runnable.run();
     }

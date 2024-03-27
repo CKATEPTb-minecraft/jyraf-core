@@ -40,15 +40,15 @@ public class PacketEntityRepository extends AbstractWorldRepository<UUID, Packet
     @Override
     public void tick() {
         this.getChunks()
-            .cast(PacketEntityChunkRepository.class)
-            .filter(PacketEntityChunkRepository::shouldTick)
-            .doOnNext(PacketEntityChunkRepository::tick)
-            .flatMap(Repository::get)
-            .filterWhen(entity -> this.getCachedChunkKey(entity.getUniqueId())
-                .map(chunkKey -> !chunkKey.equals(Chunk.getChunkKey(entity.getLocation()))))
-            .flatMap(this::remove)
-            .flatMap(this::add)
-            .subscribe();
+                .cast(PacketEntityChunkRepository.class)
+                .filter(PacketEntityChunkRepository::shouldTick)
+                .doOnNext(PacketEntityChunkRepository::tick)
+                .flatMap(Repository::get)
+                .filterWhen(entity -> this.getCachedChunkKey(entity.getUniqueId())
+                        .map(chunkKey -> !chunkKey.equals(Chunk.getChunkKey(entity.getLocation()))))
+                .flatMap(this::remove)
+                .flatMap(this::add)
+                .subscribe();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class PacketEntityRepository extends AbstractWorldRepository<UUID, Packet
         @Override
         public Mono<PacketEntity> remove(PacketEntity entry) {
             return super.remove(entry)
-                .doOnNext(PacketEntity::remove);
+                    .doOnNext(PacketEntity::remove);
         }
 
         @Override

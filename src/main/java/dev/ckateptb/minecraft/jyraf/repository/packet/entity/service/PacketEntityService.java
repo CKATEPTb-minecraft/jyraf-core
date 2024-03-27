@@ -41,16 +41,16 @@ public class PacketEntityService extends PacketListenerAbstract {
         WrapperPlayClientInteractEntity.InteractAction action = wrapper.getAction();
         if (action == WrapperPlayClientInteractEntity.InteractAction.INTERACT_AT) return;
         this.findEntity(player, player.getLocation(), wrapper.getEntityId()).subscribe(entity -> this
-            .handleEntityInteract(player, entity, action == WrapperPlayClientInteractEntity.InteractAction.INTERACT));
+                .handleEntityInteract(player, entity, action == WrapperPlayClientInteractEntity.InteractAction.INTERACT));
     }
 
     private Mono<PacketEntity> findEntity(Player player, Location location, int id) {
         return this.service.getRepository(PacketEntity.class, location.getWorld())
-            .cast(PacketEntityRepository.class)
-            .flatMapMany(entityRepository -> entityRepository.getNearbyChunks(location, 6.0D, 6.0D))
-            .flatMap(Repository::get)
-            .cast(PacketEntity.class)
-            .filter(entity -> entity.getId() == id && entity.canView(player))
-            .next();
+                .cast(PacketEntityRepository.class)
+                .flatMapMany(entityRepository -> entityRepository.getNearbyChunks(location, 6.0D, 6.0D))
+                .flatMap(Repository::get)
+                .cast(PacketEntity.class)
+                .filter(entity -> entity.getId() == id && entity.canView(player))
+                .next();
     }
 }
