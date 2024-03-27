@@ -27,6 +27,7 @@ import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
 import dev.ckateptb.minecraft.jyraf.database.types.inject.PersisterInjection;
 import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
 import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
+import dev.ckateptb.minecraft.jyraf.packet.inject.PacketInjection;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
@@ -106,6 +107,7 @@ public class Jyraf extends JavaPlugin {
         IoC.addComponentRegisterHandler(new PersisterInjection());
         IoC.addComponentRegisterHandler(new ClosableInjection());
         IoC.addComponentRegisterHandler(new ConfigurationInjection());
+        IoC.addComponentRegisterHandler(new PacketInjection());
         IoC.addComponentRegisterHandler(new RepositoryInjection());
         CommandInjection commandInjection = new CommandInjection();
         IoC.addComponentRegisterHandler(commandInjection);

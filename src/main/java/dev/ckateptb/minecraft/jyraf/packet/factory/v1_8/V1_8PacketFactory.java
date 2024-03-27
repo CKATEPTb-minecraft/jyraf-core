@@ -12,6 +12,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.component.Text;
+import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
@@ -102,6 +103,22 @@ public class V1_8PacketFactory {
                     this.sendMetadata(player, entity);
                     this.createTeam(player, entity);
                 });
+    }
+
+    public void placeBlock(Player player, PacketBlock block) {
+        this.sendPacket(player, new WrapperPlayServerBlockChange(block.getPosition(),
+                                                                 SpigotConversionUtil.fromBukkitBlockData(block.getData()).getGlobalId()));
+    }
+
+    public void playBlockAction(Player player, PacketBlock block, int actionId, int param) {
+        WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(block.getPosition(), actionId, param,
+                                                                               SpigotConversionUtil.fromBukkitBlockData(block.getData())
+                                                                                   .getGlobalId());
+        this.sendPacket(player, packet);
+    }
+
+    public void breakBlock(Player player, PacketBlock block) {
+        block.getLocation().getBlock().getState().update();
     }
 
     public void spawnEntity(Player player, PacketEntity entity) {
