@@ -16,7 +16,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @NoArgsConstructor
@@ -61,15 +60,14 @@ public abstract class AbstractConfig<N extends ScopedConfigurationNode<N>> imple
     }
 
     private List<Field> getAllFields(Class<?> clazz) {
-        List<Field> declaredFields = Arrays.stream(clazz.getDeclaredFields()).toList();
-        List<Field> fields = new ArrayList<>(declaredFields);
+        List<Field> fields = new ArrayList<>(List.of(clazz.getDeclaredFields()));
         Class<?> parent = clazz.getSuperclass();
         if (parent == null) return fields;
         List<Field> parentFields = getAllFields(parent);
         fields.addAll(parentFields);
         return fields.stream().filter(field -> {
             int modifiers = field.getModifiers();
-            return !Modifier.isProtected(modifiers) && !Modifier.isFinal(modifiers) && !Modifier.isTransient(modifiers);
+            return !Modifier.isFinal(modifiers) && !Modifier.isTransient(modifiers);
         }).toList();
     }
 
