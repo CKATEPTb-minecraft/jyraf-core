@@ -43,7 +43,7 @@ public class PacketBlockService extends PacketListenerAbstract {
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
-        if (event.getPacketType() == PacketType.Play.Client.PLAYER_DIGGING) { // LMB
+        if (event.getPacketType() == PacketType.Play.Client.PLAYER_DIGGING) { // LMB todo не работает в adventure
             WrapperPlayClientPlayerDigging wrapper = new WrapperPlayClientPlayerDigging(event);
             this.findBlock(player, player.getWorld(), wrapper.getBlockPosition()).subscribe(packetBlock -> {
                 if (wrapper.getAction() == DiggingAction.START_DIGGING) {
