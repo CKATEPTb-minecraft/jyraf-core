@@ -14,6 +14,9 @@ import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor
 public abstract class AbstractConfig<N extends ScopedConfigurationNode<N>> implements Config {
@@ -50,10 +53,22 @@ public abstract class AbstractConfig<N extends ScopedConfigurationNode<N>> imple
         this.configurationNode = this.configurationLoader.load();
         Class<? extends Config> clazz = getClass();
         Object copy = this.configurationNode.get(clazz);
-        for (Field field : clazz.getDeclaredFields()) {
+        for (Field field : getAllFields(clazz)) {
             field.setAccessible(true);
             field.set(this, field.get(copy));
         }
+    }
+
+    private List<Field> getAllFields(Class<?> clazz) {
+        List<Field> fields = new ArrayList<>(List.of(clazz.getDeclaredFields()));
+        Class<?> parent = clazz.getSuperclass();
+        if (parent == null) return fields;
+        List<Field> parentFields = getAllFields(parent);
+        fields.addAll(parentFields);
+        return fields.stream().filter(field -> {
+            int modifiers = field.getModifiers();
+            return !Modifier.isFinal(modifiers) && !Modifier.isTransient(modifiers);
+        }).toList();
     }
 
     @Override
