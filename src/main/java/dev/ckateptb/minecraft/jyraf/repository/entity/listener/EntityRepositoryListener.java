@@ -7,10 +7,8 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.scheduler.BukkitRunnable;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -31,17 +29,9 @@ public class EntityRepositoryListener implements Listener {
     }
 
     private void handleEntity(Entity entity, boolean add) {
-        BukkitRunnable runnable = new BukkitRunnable() {
-            @Override
-            public void run() {
-                Mono.defer(() -> EntityRepositoryListener.this.service.getRepository(Entity.class, entity.getWorld()))
-                        .subscribeOn(Schedulers.boundedElastic())
-                        .flatMap(repository -> add ? repository.add(entity) : repository.remove(entity))
-                        .subscribe();
-            }
-        };
-        if (entity instanceof Player && add) {
-            runnable.runTaskLater(this.plugin, 20);
-        } else runnable.run();
+        Mono.defer(() -> EntityRepositoryListener.this.service.getRepository(Entity.class, entity.getWorld()))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(repository -> add ? repository.add(entity) : repository.remove(entity))
+                .subscribe();
     }
 }

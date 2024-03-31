@@ -121,6 +121,10 @@ public class PacketBlock {
     }
 
     public boolean canView(Player player) {
+        return this.global || this.allowedViewers.contains(player);
+    }
+
+    public boolean isViewed(Player player) {
         return this.currentViewers.contains(player);
     }
 

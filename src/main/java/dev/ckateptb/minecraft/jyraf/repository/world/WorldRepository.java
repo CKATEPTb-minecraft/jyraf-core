@@ -11,6 +11,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface WorldRepository<T> extends Repository<T> {
+    Mono<Boolean> hasChunk(Long chunkKey);
+
     Mono<ChunkRepository<T>> getChunk(Long chunkKey);
 
     Flux<ChunkRepository<T>> getChunks();

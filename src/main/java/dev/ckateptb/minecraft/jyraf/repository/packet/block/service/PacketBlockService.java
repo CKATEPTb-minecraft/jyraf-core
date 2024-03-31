@@ -5,19 +5,26 @@ import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import com.github.retrooper.packetevents.protocol.player.DiggingAction;
 import com.github.retrooper.packetevents.protocol.player.InteractionHand;
+import com.github.retrooper.packetevents.protocol.world.chunk.BaseChunk;
+import com.github.retrooper.packetevents.protocol.world.chunk.Column;
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerAcknowledgeBlockChanges;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
+import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
+import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
-import dev.ckateptb.minecraft.jyraf.repository.packet.block.PacketBlockRepository;
-import dev.ckateptb.minecraft.jyraf.repository.world.chunk.AbstractChunkRepository;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
@@ -26,6 +33,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.RayTraceResult;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -34,7 +42,7 @@ public class PacketBlockService extends PacketListenerAbstract {
     private final WorldRepositoryService service;
 
     public PacketBlockService(WorldRepositoryService service) {
-        super(PacketListenerPriority.HIGHEST);
+        super(PacketListenerPriority.LOWEST);
         this.service = service;
     }
 
@@ -47,7 +55,7 @@ public class PacketBlockService extends PacketListenerAbstract {
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
-        if (event.getPacketType() == PacketType.Play.Client.ANIMATION) { // LMB gm 2
+        if (event.getPacketType() == PacketType.Play.Client.ANIMATION) { // LMB gm 2 todo fix handling when right click chest
             if (player.getGameMode() != GameMode.ADVENTURE) return;
             WrapperPlayClientAnimation wrapper = new WrapperPlayClientAnimation(event);
             if (wrapper.getHand() != InteractionHand.MAIN_HAND) return;
@@ -66,6 +74,9 @@ public class PacketBlockService extends PacketListenerAbstract {
                 }
                 event.setCancelled(true);
                 packetBlock.update(player);
+                PacketFactory.INSTANCE.get().ifPresent(factory ->
+                        factory.sendPacket(player,
+                                new WrapperPlayServerAcknowledgeBlockChanges(wrapper.getSequence())));
             });
         } else if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) { // RMB
             WrapperPlayClientPlayerBlockPlacement wrapper = new WrapperPlayClientPlayerBlockPlacement(event);
@@ -79,23 +90,58 @@ public class PacketBlockService extends PacketListenerAbstract {
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() != PacketType.Play.Server.BLOCK_CHANGE) return;
         if (!(event.getPlayer() instanceof Player player)) return;
-        WrapperPlayServerBlockChange wrapper = new WrapperPlayServerBlockChange(event);
-        this.findBlock(player, player.getWorld(), wrapper.getBlockPosition()).subscribe(block -> {
-            wrapper.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getData()));
-        });
+        PacketTypeCommon type = event.getPacketType();
+        World world = player.getWorld();
+        if (type == PacketType.Play.Server.CHUNK_DATA) {
+            WrapperPlayServerChunkData wrapper = new WrapperPlayServerChunkData(event);
+            Column column = wrapper.getColumn();
+            long chunkKey = Chunk.getChunkKey(column.getX(), column.getZ());
+            this.service.getRepository(PacketBlock.class, world)
+                    .filterWhen(repository -> repository.hasChunk(chunkKey))
+                    .flatMap(repository -> repository.getChunk(chunkKey))
+                    .flatMapMany(Repository::get)
+                    .filter(packetBlock -> packetBlock.canView(player))
+                    .subscribe(packetBlock -> {
+                        Vector3i position = packetBlock.getPosition();
+                        int x = position.getX() & 15;
+                        int y = position.getY() & 15;
+                        int z = position.getZ() & 15;
+                        WrappedBlockState state = SpigotConversionUtil.fromBukkitBlockData(packetBlock.getData());
+                        for (BaseChunk chunk : column.getChunks()) {
+                            chunk.set(x, y, z, state);
+                        }
+                    });
+        } else if (type == PacketType.Play.Server.MULTI_BLOCK_CHANGE) {
+            WrapperPlayServerMultiBlockChange wrapper = new WrapperPlayServerMultiBlockChange(event);
+            Flux.fromArray(wrapper.getBlocks())
+                    .flatMap(origin -> {
+                        Vector3i position = new Vector3i(origin.getX(), origin.getY(), origin.getZ());
+                        return this.findBlock(player, world, position)
+                                .map(block -> {
+                                    origin.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getData()));
+                                    return origin;
+                                })
+                                .switchIfEmpty(Mono.defer(() -> Mono.justOrEmpty(origin)));
+                    })
+                    .collectList()
+                    .subscribe(blocks ->
+                            wrapper.setBlocks(blocks.toArray(WrapperPlayServerMultiBlockChange.EncodedBlock[]::new)));
+        } else if (type == PacketType.Play.Server.BLOCK_CHANGE) {
+            WrapperPlayServerBlockChange wrapper = new WrapperPlayServerBlockChange(event);
+            this.findBlock(player, world, wrapper.getBlockPosition()).subscribe(block ->
+                    wrapper.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getData())));
+        }
     }
 
     private Mono<PacketBlock> findBlock(Player player, World world, Vector3i position) {
         Location location = new Location(world, position.x, position.y, position.z);
+        long chunkKey = Chunk.getChunkKey(location);
         return this.service.getRepository(PacketBlock.class, world)
-                .cast(PacketBlockRepository.class)
-                .flatMap(blockRepository -> blockRepository.getChunk(Chunk.getChunkKey(location)))
-                .cast(PacketBlockRepository.PacketBlockChunkRepository.class)
-                .flatMapMany(AbstractChunkRepository::get)
-                .cast(PacketBlock.class)
-                .filter(block -> block.getPosition().equals(position) && block.canView(player))
+                .filterWhen(repository -> repository.hasChunk(chunkKey))
+                .flatMap(repository -> repository.getChunk(chunkKey))
+                .flatMapMany(Repository::get)
+                .filter(block -> block.getPosition().equals(position) && block.isViewed(player))
                 .next();
     }
 }
