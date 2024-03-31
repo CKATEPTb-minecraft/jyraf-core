@@ -10,7 +10,6 @@ import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.colider.geometry.OrientedBoundingBoxCollider;
 import dev.ckateptb.minecraft.jyraf.colider.geometry.SphereBoundingBoxCollider;
 import dev.ckateptb.minecraft.jyraf.command.Command;
-import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
 import lombok.Getter;

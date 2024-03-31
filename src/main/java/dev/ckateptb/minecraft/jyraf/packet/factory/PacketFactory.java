@@ -26,7 +26,7 @@ public class PacketFactory {
     }
 
     private V1_8PacketFactory getPacketFactory() {
-        if(this.delegate != null) return this.delegate;
+        if (this.delegate != null) return this.delegate;
         HashMap<ServerVersion, CachedReference<? extends V1_8PacketFactory>> versions = new HashMap<>();
         versions.put(ServerVersion.V_1_16_5, new CachedReference<>(V1_8PacketFactory::new));
         versions.put(ServerVersion.V_1_17, new CachedReference<>(V1_17PacketFactory::new));

@@ -252,7 +252,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                 ConfigurationNode potion = node.node("potion");
                 potion.node("data").set(PotionData.class, potionMeta.getBasePotionData());
                 potion.node("effects").setList(PotionEffect.class, potionMeta.getCustomEffects());
-                potion.node("color").setList(PotionEffect.class, potionMeta.getCustomEffects());
+                potion.node("color").set(Color.class, potionMeta.getColor());
             }
         }
     }

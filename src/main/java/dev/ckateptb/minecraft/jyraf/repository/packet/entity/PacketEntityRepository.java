@@ -1,4 +1,4 @@
-package dev.ckateptb.minecraft.jyraf.repository.packet;
+package dev.ckateptb.minecraft.jyraf.repository.packet.entity;
 
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
@@ -8,6 +8,7 @@ import dev.ckateptb.minecraft.jyraf.repository.world.chunk.ChunkRepository;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
@@ -80,6 +81,12 @@ public class PacketEntityRepository extends AbstractWorldRepository<UUID, Packet
         @Override
         public void tick() {
             this.get().subscribe(PacketEntity::tick);
+        }
+
+        @Override
+        public Mono<PacketEntity> remove(PacketEntity entry) {
+            return super.remove(entry)
+                    .doOnNext(PacketEntity::remove);
         }
 
         @Override

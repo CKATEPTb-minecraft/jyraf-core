@@ -60,6 +60,14 @@ public abstract class AbstractWorldRepository<K, T> implements WorldRepository<T
     protected abstract ChunkRepository<T> createChunkRepository(Long chunkKey);
 
     @Override
+    public Mono<Boolean> hasChunk(Long chunkKey) {
+        return Mono.justOrEmpty(this.chunks.getIfPresent(chunkKey))
+                .flatMap(Mono::fromFuture)
+                .filter(ChunkRepository::isLoaded)
+                .hasElement();
+    }
+
+    @Override
     public Mono<ChunkRepository<T>> getChunk(Long chunkKey) {
         return Mono.fromFuture(this.chunks.get(chunkKey, this::createChunkRepository));
     }
