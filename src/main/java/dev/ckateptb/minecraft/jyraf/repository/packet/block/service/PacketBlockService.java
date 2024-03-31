@@ -73,10 +73,7 @@ public class PacketBlockService extends PacketListenerAbstract {
                     this.handleBlockInteract(player, packetBlock, false);
                 }
                 event.setCancelled(true);
-                packetBlock.update(player);
-                PacketFactory.INSTANCE.get().ifPresent(factory ->
-                        factory.sendPacket(player,
-                                new WrapperPlayServerAcknowledgeBlockChanges(wrapper.getSequence())));
+                packetBlock.update(player, wrapper);
             });
         } else if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) { // RMB
             WrapperPlayClientPlayerBlockPlacement wrapper = new WrapperPlayClientPlayerBlockPlacement(event);

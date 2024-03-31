@@ -1,6 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.packet.block;
 
 import com.github.retrooper.packetevents.util.Vector3i;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
@@ -62,7 +63,7 @@ public class PacketBlock {
                                 });
                                 players.forEach(player -> {
                                     if (this.currentViewers.add(player)) {
-                                        this.placeBlock(player);
+                                        this.placeBlock(player, null);
                                     }
                                 });
                             })
@@ -98,8 +99,13 @@ public class PacketBlock {
         return this.allowedViewers.remove(player);
     }
 
-    private void placeBlock(Player player) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.placeBlock(player, this));
+    private void placeBlock(Player player, WrapperPlayClientPlayerDigging wrapper) {
+        PacketFactory.INSTANCE.get().ifPresent(factory -> {
+            factory.placeBlock(player, this);
+            if(wrapper != null) {
+                factory.acknowledgeBlockChanges(player, wrapper.getSequence());
+            }
+        });
     }
 
     private void breakBlock(Player player) {
@@ -116,8 +122,12 @@ public class PacketBlock {
     }
 
     public void update(Player player) {
+        this.update(player, null);
+    }
+
+    public void update(Player player, WrapperPlayClientPlayerDigging wrapper) {
         if (!this.currentViewers.contains(player)) return;
-        this.placeBlock(player);
+        this.placeBlock(player, wrapper);
     }
 
     public boolean canView(Player player) {

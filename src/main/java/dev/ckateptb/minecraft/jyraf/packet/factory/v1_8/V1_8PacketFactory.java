@@ -105,6 +105,10 @@ public class V1_8PacketFactory {
                 });
     }
 
+    public void acknowledgeBlockChanges(Player player, int sequence) {
+        this.sendPacket(player, new WrapperPlayServerAcknowledgeBlockChanges(sequence));
+    }
+
     public void placeBlock(Player player, PacketBlock block) {
         player.sendBlockChange(block.getLocation(), block.getData());
     }
