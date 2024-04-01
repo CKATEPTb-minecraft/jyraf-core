@@ -1,7 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.repository.packet.block.service;
 
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
@@ -15,17 +14,16 @@ import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerAcknowledgeBlockChanges;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
-import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -37,14 +35,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
+@RequiredArgsConstructor
 public class PacketBlockService extends PacketListenerAbstract {
 
     private final WorldRepositoryService service;
-
-    public PacketBlockService(WorldRepositoryService service) {
-        super(PacketListenerPriority.LOWEST);
-        this.service = service;
-    }
 
     private void handleBlockInteract(Player player, PacketBlock block, boolean rightClick) {
         PacketBlock.PacketBlockInteractHandler handler = block.getInteractHandler();
@@ -115,15 +109,9 @@ public class PacketBlockService extends PacketListenerAbstract {
                     .flatMap(origin -> {
                         Vector3i position = new Vector3i(origin.getX(), origin.getY(), origin.getZ());
                         return this.findBlock(player, world, position)
-                                .map(block -> {
-                                    origin.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getData()));
-                                    return origin;
-                                })
-                                .switchIfEmpty(Mono.defer(() -> Mono.justOrEmpty(origin)));
+                                .doOnNext(block -> origin.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getData())));
                     })
-                    .collectList()
-                    .subscribe(blocks ->
-                            wrapper.setBlocks(blocks.toArray(WrapperPlayServerMultiBlockChange.EncodedBlock[]::new)));
+                    .subscribe();
         } else if (type == PacketType.Play.Server.BLOCK_CHANGE) {
             WrapperPlayServerBlockChange wrapper = new WrapperPlayServerBlockChange(event);
             this.findBlock(player, world, wrapper.getBlockPosition()).subscribe(block ->
