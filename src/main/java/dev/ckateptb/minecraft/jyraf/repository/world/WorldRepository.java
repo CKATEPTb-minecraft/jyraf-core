@@ -30,6 +30,6 @@ public interface WorldRepository<T> extends Repository<T> {
                 set.add(Chunk.getChunkKey(new Location(world, xx, y, zz)));
             }
         }
-        return Flux.fromIterable(set).flatMap(this::getChunk);
+        return Flux.fromIterable(set).filterWhen(this::hasChunk).flatMap(this::getChunk);
     }
 }

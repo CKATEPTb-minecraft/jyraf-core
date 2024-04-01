@@ -22,7 +22,6 @@ import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.plugin.Plugin;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -31,8 +30,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 @Component
-@RequiredArgsConstructor
 public class WorldRepositoryService implements Listener {
+    private final Jyraf plugin;
     private final AsyncCache<Tuple2<? extends Class<?>, UUID>, WorldRepository<?>> repositories = Caffeine.newBuilder().buildAsync();
     private final AsyncCache<Class<?>, Tuple2<Plugin, Function<World, ? extends WorldRepository<?>>>> registrations = Caffeine.newBuilder().buildAsync();
 
@@ -40,6 +39,7 @@ public class WorldRepositoryService implements Listener {
         this.register(plugin, Entity.class, AsynchronousEntityRepository::new);
         this.register(plugin, PacketEntity.class, PacketEntityRepository::new);
         this.register(plugin, PacketBlock.class, PacketBlockRepository::new);
+        this.plugin = plugin;
     }
 
     @Schedule(async = true, initialDelay = 0, fixedRate = 1)
@@ -63,13 +63,14 @@ public class WorldRepositoryService implements Listener {
     }
 
     private void setChunkLoaded(UUID world, long chunkKey, boolean loaded) {
-        Flux.defer(() -> Flux.fromIterable(this.repositories.asMap().values()))
-                .subscribeOn(Schedulers.boundedElastic())
-                .flatMap(Mono::fromFuture)
-                .filter(repository -> repository.getWorld().getUID().equals(world))
-                .flatMap(WorldRepository::getChunks)
-                .filter(chunkRepository -> chunkRepository.getChunkKey().equals(chunkKey))
-                .subscribe(chunkRepository -> chunkRepository.setLoaded(loaded));
+        Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
+            Flux.defer(() -> Flux.fromIterable(this.repositories.asMap().values()))
+                    .flatMap(Mono::fromFuture)
+                    .filter(repository -> repository.getWorld().getUID().equals(world))
+                    .flatMap(WorldRepository::getChunks)
+                    .filter(chunkRepository -> chunkRepository.getChunkKey().equals(chunkKey))
+                    .subscribe(chunkRepository -> chunkRepository.setLoaded(loaded));
+        });
     }
 
     public <T> void register(Plugin plugin, Class<T> clazz, Function<World, WorldRepository<T>> generator) {
