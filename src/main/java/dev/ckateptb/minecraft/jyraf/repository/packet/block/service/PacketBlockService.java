@@ -92,7 +92,7 @@ public class PacketBlockService extends PacketListenerAbstract {
                     .filterWhen(repository -> repository.hasChunk(chunkKey))
                     .flatMap(repository -> repository.getChunk(chunkKey))
                     .flatMapMany(Repository::get)
-                    .filter(packetBlock -> packetBlock.canView(player))
+                    .filter(packetBlock -> packetBlock.isViewed(player))
                     .subscribe(packetBlock -> {
                         Vector3i position = packetBlock.getPosition();
                         int x = position.getX() & 15;
@@ -100,6 +100,7 @@ public class PacketBlockService extends PacketListenerAbstract {
                         int z = position.getZ() & 15;
                         WrappedBlockState state = SpigotConversionUtil.fromBukkitBlockData(packetBlock.getData());
                         for (BaseChunk chunk : column.getChunks()) {
+                            if(chunk == null) continue;
                             chunk.set(x, y, z, state);
                         }
                     });
