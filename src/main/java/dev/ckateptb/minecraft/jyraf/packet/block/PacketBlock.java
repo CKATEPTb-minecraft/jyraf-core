@@ -62,9 +62,8 @@ public class PacketBlock {
                                     return true;
                                 });
                                 players.forEach(player -> {
-                                    if (this.currentViewers.add(player)) {
-                                        this.placeBlock(player, null);
-                                    }
+                                    if (!this.currentViewers.add(player)) return;
+                                    this.placeBlock(player, null);
                                 });
                             })
                             .subscribe();

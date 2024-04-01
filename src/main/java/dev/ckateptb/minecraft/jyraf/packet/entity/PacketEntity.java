@@ -69,6 +69,10 @@ public class PacketEntity {
     private PacketEntityInteractHandler interactHandler = (player, clickType) -> {
     };
 
+    public PacketEntity(int id, EntityType type, Location location) {
+        this(id, UUID.randomUUID(), type, location);
+    }
+
     public PacketEntity(int id, UUID uniqueId, EntityType type, Location location) {
         this.id = id;
         this.uniqueId = uniqueId;
@@ -175,8 +179,7 @@ public class PacketEntity {
     }
 
     public boolean canView(Player player) {
-        if (this.global) return true;
-        return this.allowedViewers.contains(player);
+        return this.global || this.allowedViewers.contains(player);
     }
 
     public boolean isDisplayed(Player player) {
@@ -187,8 +190,12 @@ public class PacketEntity {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.rotate(player, this, yaw, pitch));
     }
 
-    public void teleport(Player player, Location location) {
+    public void teleport(Location location) {
         this.location = location;
+        this.currentViewers.forEach(player -> this.teleport(player, location));
+    }
+
+    public void teleport(Player player, Location location) {
         this.teleport(player, ImmutableVector.of(location)
                 .getDistanceAboveGround(location.getWorld(), true) < 0.1);
     }

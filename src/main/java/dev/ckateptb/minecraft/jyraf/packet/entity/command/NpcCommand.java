@@ -16,8 +16,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
-import java.util.UUID;
-
 @Getter
 @Component
 @RequiredArgsConstructor
@@ -28,8 +26,7 @@ public class NpcCommand implements Command {
     @CommandPermission("jnpcs.admin")
     public void npc(Player sender, @Argument("type") EntityType type) {
         PacketEntity packetEntity =
-                new PacketEntity(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), type, sender.getLocation());
-        packetEntity.setGlobal(true);
+                new PacketEntity(SpigotReflectionUtil.generateEntityId(), type, sender.getLocation());
         packetEntity.setLookType(LookType.PER_PLAYER);
         packetEntity.setGravity(true);
         Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> packetEntity
