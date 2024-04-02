@@ -3,9 +3,11 @@ package dev.ckateptb.minecraft.jyraf.packet.entity;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
+import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
+import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
@@ -172,12 +174,13 @@ public class PacketEntity extends Interactable {
                                 }
                             })
                             .subscribe();
-//                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
-//                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
-//                        PacketTrait<PacketEntity> trait = (PacketTrait<PacketEntity>) unknownTrait;
-//                        if (trait.isCancelled()) continue;
-//                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
-//                    }
+                    // todo: cache traits in needed order
+                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
+                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
+                        PacketTrait<PacketEntity> trait = (PacketTrait<PacketEntity>) unknownTrait;
+                        if (trait.isCancelled()) continue;
+                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
+                    }
                 });
     }
 

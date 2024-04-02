@@ -6,6 +6,7 @@ import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
+import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -73,12 +74,13 @@ public class PacketBlock extends Interactable {
                                 });
                             })
                             .subscribe();
-//                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
-//                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
-//                        PacketTrait<PacketBlock> trait = (PacketTrait<PacketBlock>) unknownTrait;
-//                        if (trait.isCancelled()) continue;
-//                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
-//                    }
+                    // todo: cache traits in needed order
+                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
+                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
+                        PacketTrait<PacketBlock> trait = (PacketTrait<PacketBlock>) unknownTrait;
+                        if (trait.isCancelled()) continue;
+                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
+                    }
                 });
     }
 
