@@ -23,16 +23,6 @@ public class InteractionService implements Listener {
             .build();
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void on(PacketBlockInteractEvent event) {
-        event.getBlock().handleInput(event.getUser().getPlayer(), event.getButton());
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void on(PacketEntityInteractEvent event) {
-        event.getEntity().handleInput(event.getUser().getPlayer(), event.getButton());
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
     public void on(PacketBlockTryInteractEvent event) {
         Player player = event.getPlayer();
         MouseButton button = event.getButton();
@@ -40,6 +30,7 @@ public class InteractionService implements Listener {
         if (button == MouseButton.LEFT && System.currentTimeMillis() < interactableUser.getLastInteractionTime() + 500)
             return;
         interactableUser.setLastInteractionTime(System.currentTimeMillis());
+        event.getBlock().handleInput(player, event.getButton());
         new PacketBlockInteractEvent(interactableUser, event.getBlock(), button).callEvent();
     }
 
@@ -49,6 +40,7 @@ public class InteractionService implements Listener {
         MouseButton button = event.getButton();
         InteractableUser interactableUser = users.get(player.getUniqueId(), (uuid) -> new InteractableUser(uuid, player, button));
         interactableUser.setLastInteractionTime(System.currentTimeMillis());
+        event.getEntity().handleInput(player, event.getButton());
         new PacketEntityInteractEvent(interactableUser, event.getEntity(), button).callEvent();
     }
 
