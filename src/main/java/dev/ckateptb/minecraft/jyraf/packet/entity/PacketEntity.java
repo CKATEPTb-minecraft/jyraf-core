@@ -3,11 +3,9 @@ package dev.ckateptb.minecraft.jyraf.packet.entity;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
-import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
-import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
@@ -70,7 +68,10 @@ public class PacketEntity extends Interactable {
     }
 
     public PacketEntity(int id, UUID uniqueId, EntityType type, Location location) {
-        this(id, uniqueId, type, location, List.of());
+        super(location, true);
+        this.id = id;
+        this.uniqueId = uniqueId;
+        this.type = type;
     }
 
     public PacketEntity(int id, UUID uniqueId, EntityType type, Location location, Collection<Player> allowedViewers) {
@@ -171,12 +172,12 @@ public class PacketEntity extends Interactable {
                                 }
                             })
                             .subscribe();
-                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
-                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
-                        PacketTrait<PacketEntity> trait = (PacketTrait<PacketEntity>) unknownTrait;
-                        if (trait.isCancelled()) continue;
-                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
-                    }
+//                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
+//                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
+//                        PacketTrait<PacketEntity> trait = (PacketTrait<PacketEntity>) unknownTrait;
+//                        if (trait.isCancelled()) continue;
+//                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
+//                    }
                 });
     }
 
@@ -239,11 +240,13 @@ public class PacketEntity extends Interactable {
     public void display(Player player) {
         if (this.type == EntityType.PLAYER) this.spawnPlayer(player);
         else this.spawnEntity(player);
+        player.sendMessage("shown entity to u!");
     }
 
     @Override
     public void destroy(Player player) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.despawnEntity(player, this));
+        player.sendMessage("hidden entity from u!");
     }
 
 }

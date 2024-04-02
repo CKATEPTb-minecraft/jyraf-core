@@ -6,7 +6,6 @@ import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
-import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -27,11 +27,11 @@ public class PacketBlock extends Interactable {
     private final Vector3i position;
 
     public PacketBlock(@NotNull Location location, BlockData data) {
-        this(location, data, List.of());
+        this(location, data, true);
     }
 
     public PacketBlock(@NotNull Location location, BlockData data, boolean global) {
-        this(location, data, List.of());
+        this(location, data, new ArrayList<>());
         this.global = global;
     }
 
@@ -73,12 +73,12 @@ public class PacketBlock extends Interactable {
                                 });
                             })
                             .subscribe();
-                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
-                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
-                        PacketTrait<PacketBlock> trait = (PacketTrait<PacketBlock>) unknownTrait;
-                        if (trait.isCancelled()) continue;
-                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
-                    }
+//                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
+//                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
+//                        PacketTrait<PacketBlock> trait = (PacketTrait<PacketBlock>) unknownTrait;
+//                        if (trait.isCancelled()) continue;
+//                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
+//                    }
                 });
     }
 
@@ -119,11 +119,13 @@ public class PacketBlock extends Interactable {
     @Override
     public void display(Player player) {
         this.display(player, null);
+        player.sendMessage("shown to u block!");
     }
 
     @Override
     public void destroy(Player player) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.breakBlock(player, this));
+        player.sendMessage("hidden block from u");
     }
 
     @Override
