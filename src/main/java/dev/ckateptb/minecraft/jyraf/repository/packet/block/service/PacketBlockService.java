@@ -21,6 +21,7 @@ import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
+import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketBlockTryInteractEvent;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
@@ -43,13 +44,14 @@ public class PacketBlockService extends PacketListenerAbstract {
     private final WorldRepositoryService service;
 
     private void handleBlockInteract(Player player, PacketBlock block, boolean rightButton) {
-        block.handleInput(player, MouseButton.right(rightButton));
+        MouseButton button = MouseButton.right(rightButton);
+        new PacketBlockTryInteractEvent(player, block, button).callEvent();
     }
 
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
-        if (event.getPacketType() == PacketType.Play.Client.ANIMATION) { // LMB gm 2 todo fix handling when right click chest
+        if (event.getPacketType() == PacketType.Play.Client.ANIMATION) { // LMB gm 2
             if (player.getGameMode() != GameMode.ADVENTURE) return;
             WrapperPlayClientAnimation wrapper = new WrapperPlayClientAnimation(event);
             if (wrapper.getHand() != InteractionHand.MAIN_HAND) return;
@@ -97,11 +99,11 @@ public class PacketBlockService extends PacketListenerAbstract {
                         return repository.get()
                                 .filter(block -> block.isViewed(player))
                                 .doOnNext(block -> {
-                                    Vector3i position = block.getPosition();
+                                    Vector3i position = block.getVector();
                                     int x = position.getX() & 15;
                                     int y = position.getY() & 15;
                                     int z = position.getZ() & 15;
-                                    WrappedBlockState state = SpigotConversionUtil.fromBukkitBlockData(block.getData());
+                                    WrappedBlockState state = SpigotConversionUtil.fromBukkitBlockData(block.getBukkitData());
                                     cache.get().ifPresent(chunks -> {
                                         for (BaseChunk chunk : chunks) {
                                             if (chunk == null) continue;
@@ -117,13 +119,13 @@ public class PacketBlockService extends PacketListenerAbstract {
                     .flatMap(origin -> {
                         Vector3i position = new Vector3i(origin.getX(), origin.getY(), origin.getZ());
                         return this.findBlock(player, world, position)
-                                .doOnNext(block -> origin.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getData())));
+                                .doOnNext(block -> origin.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getBukkitData())));
                     })
                     .subscribe();
         } else if (type == PacketType.Play.Server.BLOCK_CHANGE) {
             WrapperPlayServerBlockChange wrapper = new WrapperPlayServerBlockChange(event);
             this.findBlock(player, world, wrapper.getBlockPosition()).subscribe(block ->
-                    wrapper.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getData())));
+                    wrapper.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getBukkitData())));
         }
     }
 
@@ -134,7 +136,7 @@ public class PacketBlockService extends PacketListenerAbstract {
                 .filterWhen(repository -> repository.hasChunk(chunkKey))
                 .flatMap(repository -> repository.getChunk(chunkKey))
                 .flatMapMany(Repository::get)
-                .filter(block -> block.getPosition().equals(position) && block.isViewed(player))
+                .filter(block -> block.getVector().equals(position) && block.isViewed(player))
                 .next();
     }
 }

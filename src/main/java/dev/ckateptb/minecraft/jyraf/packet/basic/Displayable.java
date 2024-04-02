@@ -32,8 +32,8 @@ public abstract class Displayable extends PacketEntry implements IDisplayable {
     }
 
     public Displayable(@NotNull Location location, @NotNull Collection<Player> allowedViewers) {
-        Objects.requireNonNull(location, "location cannot be null");
-        Objects.requireNonNull(allowedViewers, "allowedViewers cannot be null");
+        Objects.requireNonNull(location);
+        Objects.requireNonNull(allowedViewers);
         this.location = location;
         this.global = false;
         this.allowedViewers.addAll(allowedViewers);

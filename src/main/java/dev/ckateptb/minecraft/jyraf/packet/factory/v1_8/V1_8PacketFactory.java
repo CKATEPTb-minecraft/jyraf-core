@@ -111,12 +111,12 @@ public class V1_8PacketFactory {
     }
 
     public void placeBlock(Player player, PacketBlock block) {
-        player.sendBlockChange(block.getLocation(), block.getData());
+        player.sendBlockChange(block.getLocation(), block.getBukkitData());
     }
 
     public void playBlockAction(Player player, PacketBlock block, BlockAction action) {
-        WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(block.getPosition(), action.getId(), action.getParamId(),
-                SpigotConversionUtil.fromBukkitBlockData(block.getData()).getGlobalId());
+        WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(block.getVector(), action.getId(), action.getParamId(),
+                SpigotConversionUtil.fromBukkitBlockData(block.getBukkitData()).getGlobalId());
         this.sendPacket(player, packet);
     }
 

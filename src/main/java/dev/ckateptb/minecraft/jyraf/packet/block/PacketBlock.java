@@ -1,5 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.packet.block;
 
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
@@ -7,6 +8,7 @@ import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -23,9 +25,9 @@ import java.util.List;
 @Getter
 public class PacketBlock extends Interactable {
 
-    protected BlockData data;
+    protected WrappedBlockState data;
     private final World world;
-    private final Vector3i position;
+    private final Vector3i vector;
 
     public PacketBlock(@NotNull Location location, BlockData data) {
         this(location, data, true);
@@ -38,9 +40,9 @@ public class PacketBlock extends Interactable {
 
     public PacketBlock(@NotNull Location location, BlockData data, @NotNull Collection<Player> allowedViewers) {
         super(location, allowedViewers);
-        this.data = data.clone();
+        this.data = SpigotConversionUtil.fromBukkitBlockData(data.clone());
         this.world = location.getWorld();
-        this.position = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        this.vector = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         this.location = location;
     }
 
@@ -101,7 +103,7 @@ public class PacketBlock extends Interactable {
     }
 
     public void setData(BlockData data) {
-        this.data = data;
+        this.data = SpigotConversionUtil.fromBukkitBlockData(data);
         update();
     }
 
@@ -121,18 +123,28 @@ public class PacketBlock extends Interactable {
     @Override
     public void display(Player player) {
         this.display(player, null);
-        player.sendMessage("shown to u block!");
     }
 
     @Override
     public void destroy(Player player) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.breakBlock(player, this));
-        player.sendMessage("hidden block from u");
+    }
+
+    public Vector3i getVector() {
+        return new Vector3i(this.location.getBlockX(), this.location.getBlockY(), this.location.getBlockZ());
+    }
+
+    public WrappedBlockState getOriginalData() {
+        return SpigotConversionUtil.fromBukkitBlockData(this.location.getBlock().getBlockData());
+    }
+
+    public BlockData getBukkitData() {
+        return SpigotConversionUtil.toBukkitBlockData(this.data);
     }
 
     @Override
     public Location getLocation() {
-        return new Location(world, this.position.x, this.position.y, this.position.z);
+        return new Location(world, this.vector.x, this.vector.y, this.vector.z);
     }
 
 }

@@ -32,7 +32,7 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
 
     @Override
     protected Vector3i getKey(PacketBlock entry) {
-        return entry.getPosition();
+        return entry.getVector();
     }
 
     @Override
@@ -63,7 +63,7 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
 
         @Override
         protected Vector3i getKey(PacketBlock entry) {
-            return entry.getPosition();
+            return entry.getVector();
         }
 
         @Override
@@ -74,7 +74,7 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
 
         @Override
         public Mono<PacketBlock> add(PacketBlock entry) {
-            return Mono.justOrEmpty(this.entries.getIfPresent(entry.getPosition()))
+            return Mono.justOrEmpty(this.entries.getIfPresent(entry.getVector()))
                     .flatMap(Mono::fromFuture)
                     .map(this::remove)
                     .flatMap(ignored -> Mono.empty())
