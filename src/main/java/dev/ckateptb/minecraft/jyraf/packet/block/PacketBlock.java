@@ -3,44 +3,48 @@ package dev.ckateptb.minecraft.jyraf.packet.block;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
-import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
+import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
+import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
+import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
 import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 
-public class PacketBlock {
+@Getter
+public class PacketBlock extends Interactable {
 
-    private final Set<Player> allowedViewers = Collections.synchronizedSet(new HashSet<>());
-    private final Set<Player> currentViewers = Collections.synchronizedSet(new HashSet<>());
-    @Getter
-    @Setter
-    private boolean global = true;
-    @Getter
     protected BlockData data;
-    @Getter
     private final World world;
-    @Getter
     private final Vector3i position;
-    @Setter
-    @Getter
-    private PacketBlockInteractHandler interactHandler = (player, clickType) -> {
-    };
 
-    public PacketBlock(Location location, BlockData data) {
+    public PacketBlock(@NotNull Location location, BlockData data) {
+        this(location, data, List.of());
+    }
+
+    public PacketBlock(@NotNull Location location, BlockData data, boolean global) {
+        this(location, data, List.of());
+        this.global = global;
+    }
+
+    public PacketBlock(@NotNull Location location, BlockData data, @NotNull Collection<Player> allowedViewers) {
+        super(location, allowedViewers);
         this.data = data.clone();
         this.world = location.getWorld();
         this.position = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        this.location = location;
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
     public void tick() {
         Location location = this.getLocation();
         Colliders.sphere(location, 20)
@@ -54,61 +58,44 @@ public class PacketBlock {
                                 return (int) (first.distanceSquared(location) - second.distanceSquared(location));
                             });
                     if (!this.global) flux = flux.filter(this.allowedViewers::contains);
-                    flux.collectList()
-                            .doOnNext(players -> {
+                    Mono<List<Player>> mono = flux.collectList();
+                    // todo: move it to trait i think
+                    mono.doOnNext(players -> {
                                 this.currentViewers.removeIf(player -> {
                                     if (players.contains(player) && player.isOnline()) return false;
-                                    this.breakBlock(player);
+                                    this.destroy(player);
                                     return true;
                                 });
                                 players.forEach(player -> {
-                                    if (!this.currentViewers.add(player)) return;
-                                    this.placeBlock(player, null);
+                                    if (this.currentViewers.add(player)) {
+                                        this.display(player);
+                                    }
                                 });
                             })
                             .subscribe();
+                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
+                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
+                        PacketTrait<PacketBlock> trait = (PacketTrait<PacketBlock>) unknownTrait;
+                        if (trait.isCancelled()) continue;
+                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
+                    }
                 });
     }
 
-    // todo: make instead of actionId enum
-    //       params as well should be only pair depending on action
-    public void playAction(int actionId) {
-        this.playAction(actionId, 0);
+    public void playAction(BlockAction action) {
+        this.allowedViewers.forEach(player -> this.playAction(player, action));
     }
 
-    public void playAction(int actionId, int param) {
-        // todo: callback on it when player joins to area
-        //       and if player broke block (i.e. chest), then, it should still exists
-        this.currentViewers.forEach(viewer -> playAction(viewer, actionId, param));
+    public void playAction(Player player, BlockAction action) {
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.playBlockAction(player, this, action));
     }
 
-    public void playAction(Player player, int actionId) {
-        this.playAction(player, actionId, 0);
-    }
-
-    public void playAction(Player player, int actionId, int param) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.playBlockAction(player, this, actionId, param));
-    }
-
-    public boolean show(Player player) {
-        return this.allowedViewers.add(player);
-    }
-
-    public boolean hide(Player player) {
-        return this.allowedViewers.remove(player);
-    }
-
-    private void placeBlock(Player player, WrapperPlayClientPlayerDigging wrapper) {
+    private void display(Player player, WrapperPlayClientPlayerDigging wrapper) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> {
             factory.placeBlock(player, this);
-            if(wrapper != null) {
-                factory.acknowledgeBlockChanges(player, wrapper.getSequence());
-            }
+            if (wrapper == null) return;
+            factory.acknowledgeBlockChanges(player, wrapper.getSequence());
         });
-    }
-
-    private void breakBlock(Player player) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.breakBlock(player, this));
     }
 
     public void setData(BlockData data) {
@@ -126,26 +113,22 @@ public class PacketBlock {
 
     public void update(Player player, WrapperPlayClientPlayerDigging wrapper) {
         if (!this.currentViewers.contains(player)) return;
-        this.placeBlock(player, wrapper);
+        this.display(player, wrapper);
     }
 
-    public boolean canView(Player player) {
-        return this.global || this.allowedViewers.contains(player);
+    @Override
+    public void display(Player player) {
+        this.display(player, null);
     }
 
-    public boolean isViewed(Player player) {
-        return this.currentViewers.contains(player);
+    @Override
+    public void destroy(Player player) {
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.breakBlock(player, this));
     }
 
+    @Override
     public Location getLocation() {
         return new Location(world, this.position.x, this.position.y, this.position.z);
     }
 
-    public void remove() {
-        this.currentViewers.forEach(this::breakBlock);
-    }
-
-    public interface PacketBlockInteractHandler {
-        void handle(Player player, ClickType clickType);
-    }
 }

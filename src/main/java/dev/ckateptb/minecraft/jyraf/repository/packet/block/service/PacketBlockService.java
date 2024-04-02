@@ -20,7 +20,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMu
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
-import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
+import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
@@ -35,16 +35,15 @@ import org.bukkit.util.RayTraceResult;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+// todo: make all-in-one service for Displayable, Interactable, e.t.c.
 @Component
 @RequiredArgsConstructor
 public class PacketBlockService extends PacketListenerAbstract {
 
     private final WorldRepositoryService service;
 
-    private void handleBlockInteract(Player player, PacketBlock block, boolean rightClick) {
-        PacketBlock.PacketBlockInteractHandler handler = block.getInteractHandler();
-        if (handler == null) return;
-        handler.handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
+    private void handleBlockInteract(Player player, PacketBlock block, boolean rightButton) {
+        block.handleInput(player, MouseButton.right(rightButton));
     }
 
     @Override

@@ -15,6 +15,7 @@ import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
+import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -113,8 +114,8 @@ public class V1_8PacketFactory {
         player.sendBlockChange(block.getLocation(), block.getData());
     }
 
-    public void playBlockAction(Player player, PacketBlock block, int actionId, int param) {
-        WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(block.getPosition(), actionId, param,
+    public void playBlockAction(Player player, PacketBlock block, BlockAction action) {
+        WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(block.getPosition(), action.getId(), action.getParamId(),
                 SpigotConversionUtil.fromBukkitBlockData(block.getData()).getGlobalId());
         this.sendPacket(player, packet);
     }

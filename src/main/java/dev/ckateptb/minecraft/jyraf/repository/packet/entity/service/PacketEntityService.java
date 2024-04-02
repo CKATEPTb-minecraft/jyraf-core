@@ -8,7 +8,7 @@ import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
-import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
+import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import dev.ckateptb.minecraft.jyraf.repository.packet.entity.PacketEntityRepository;
@@ -26,10 +26,8 @@ public class PacketEntityService extends PacketListenerAbstract {
         this.service = service;
     }
 
-    private void handleEntityInteract(Player player, PacketEntity entity, boolean rightClick) {
-        PacketEntity.PacketEntityInteractHandler handler = entity.getInteractHandler();
-        if (handler == null) return;
-        handler.handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
+    private void handleEntityInteract(Player player, PacketEntity entity, boolean rightButton) {
+        entity.handleInput(player, MouseButton.right(rightButton));
     }
 
     @Override

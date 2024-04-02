@@ -31,8 +31,8 @@ public class NpcCommand implements Command {
         packetEntity.setGravity(true);
         Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> packetEntity
                 .moveTo(sender.getLocation()).subscribe(), 60);
-        packetEntity.setInteractHandler((player, clickType) -> player
-                .sendMessage(clickType.name()));
+        packetEntity.setInteractionHandler((player, button) -> player
+                .sendMessage(button.name()));
         this.service.getRepository(PacketEntity.class, sender.getWorld())
                 .flatMap(worldRepository -> worldRepository.add(packetEntity))
                 .subscribe();
