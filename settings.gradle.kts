@@ -6,4 +6,3 @@ pluginManagement {
 }
 
 rootProject.name = "Jyraf-Core"
-include("packetevents")
