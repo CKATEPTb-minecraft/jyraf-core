@@ -17,6 +17,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
+import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
@@ -85,25 +86,32 @@ public class PacketBlockService extends PacketListenerAbstract {
         PacketTypeCommon type = event.getPacketType();
         World world = player.getWorld();
         if (type == PacketType.Play.Server.CHUNK_DATA) {
-            WrapperPlayServerChunkData wrapper = new WrapperPlayServerChunkData(event);
-            Column column = wrapper.getColumn();
-            long chunkKey = Chunk.getChunkKey(column.getX(), column.getZ());
+            WrapperPlayServerChunkData clone = new WrapperPlayServerChunkData(event.clone());
+            Column cloneColumn = clone.getColumn();
+            long chunkKey = Chunk.getChunkKey(cloneColumn.getX(), cloneColumn.getZ());
             this.service.getRepository(PacketBlock.class, world)
                     .filterWhen(repository -> repository.hasChunk(chunkKey))
                     .flatMap(repository -> repository.getChunk(chunkKey))
-                    .flatMapMany(Repository::get)
-                    .filter(packetBlock -> packetBlock.isViewed(player))
-                    .subscribe(packetBlock -> {
-                        Vector3i position = packetBlock.getPosition();
-                        int x = position.getX() & 15;
-                        int y = position.getY() & 15;
-                        int z = position.getZ() & 15;
-                        WrappedBlockState state = SpigotConversionUtil.fromBukkitBlockData(packetBlock.getData());
-                        for (BaseChunk chunk : column.getChunks()) {
-                            if(chunk == null) continue;
-                            chunk.set(x, y, z, state);
-                        }
-                    });
+                    .flatMapMany(repository -> {
+                        CachedReference<BaseChunk[]> cache = new CachedReference<>(() ->
+                                new WrapperPlayServerChunkData(event).getColumn().getChunks());
+                        return repository.get()
+                                .filter(block -> block.isViewed(player))
+                                .doOnNext(block -> {
+                                    Vector3i position = block.getPosition();
+                                    int x = position.getX() & 15;
+                                    int y = position.getY() & 15;
+                                    int z = position.getZ() & 15;
+                                    WrappedBlockState state = SpigotConversionUtil.fromBukkitBlockData(block.getData());
+                                    cache.get().ifPresent(chunks -> {
+                                        for (BaseChunk chunk : chunks) {
+                                            if (chunk == null) continue;
+                                            chunk.set(x, y, z, state);
+                                        }
+                                    });
+                                });
+                    })
+                    .subscribe();
         } else if (type == PacketType.Play.Server.MULTI_BLOCK_CHANGE) {
             WrapperPlayServerMultiBlockChange wrapper = new WrapperPlayServerMultiBlockChange(event);
             Flux.fromArray(wrapper.getBlocks())
