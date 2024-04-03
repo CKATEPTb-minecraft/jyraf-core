@@ -117,6 +117,7 @@ public class ImmutableVector extends Vector {
     }
 
     @Override
+    @SuppressWarnings("UnstableApiUsage")
     public float angle(@NotNull Vector other) {
         double dot = Doubles.constrainToRange(dot(other) / (length() * other.length()), -1.0, 1.0);
 

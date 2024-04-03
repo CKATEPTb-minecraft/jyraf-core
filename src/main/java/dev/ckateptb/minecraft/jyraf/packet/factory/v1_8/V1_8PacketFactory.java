@@ -85,7 +85,7 @@ public class V1_8PacketFactory {
                 Text.of(" "), null, null,
                 WrapperPlayServerTeams.NameTagVisibility.NEVER,
                 WrapperPlayServerTeams.CollisionRule.NEVER,
-                Optional.ofNullable(entity.getTeamColor()).orElse(TeamColor.WHITE).getKyori(),
+                Optional.of(entity.getTeamColor()).orElse(TeamColor.WHITE).getKyori(),
                 WrapperPlayServerTeams.OptionData.NONE
         );
         this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.CREATE, info));

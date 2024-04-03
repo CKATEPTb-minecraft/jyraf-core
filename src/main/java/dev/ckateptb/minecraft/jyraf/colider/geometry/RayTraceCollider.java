@@ -15,6 +15,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -54,7 +55,7 @@ public class RayTraceCollider implements Collider {
     }
 
     @Override
-    public @NotNull RayTraceCollider scale(double amount) {
+    public @Nullable RayTraceCollider scale(double amount) {
         return null;
     }
 

@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
@@ -14,7 +15,7 @@ import java.util.function.Consumer;
 public interface Collider {
     @NotNull Collider at(@NotNull Vector center);
 
-    @NotNull Collider scale(double amount);
+    @Nullable Collider scale(double amount);
 
     @NotNull ImmutableVector getHalfExtents();
 

@@ -182,6 +182,7 @@ public class ItemBuilder implements Builder<ItemStack> {
     }
 
     public ItemBuilder unbreakable(boolean unbreakable) {
+        if (this.meta == null) return this;
         this.meta.setUnbreakable(unbreakable);
         return this;
     }
@@ -225,12 +226,14 @@ public class ItemBuilder implements Builder<ItemStack> {
     public class BookBuilder {
         public BookBuilder enchant(@NotNull Enchantment enchantment, int level) {
             Objects.requireNonNull(enchantment);
+            if (ItemBuilder.this.meta == null) return this;
             ((EnchantmentStorageMeta) ItemBuilder.this.meta).addStoredEnchant(enchantment, level, true);
             return this;
         }
 
         public BookBuilder unenchant(@NotNull Enchantment... enchantments) {
             Objects.requireNonNull(enchantments);
+            if (ItemBuilder.this.meta == null) return this;
             for (Enchantment enchantment : enchantments) {
                 ((EnchantmentStorageMeta) ItemBuilder.this.meta).removeStoredEnchant(enchantment);
             }
@@ -264,6 +267,7 @@ public class ItemBuilder implements Builder<ItemStack> {
         public SkullBuilder texture(@NotNull String texture, @NotNull UUID profileUUID) {
             Objects.requireNonNull(texture);
             Objects.requireNonNull(profileUUID);
+            if (ItemBuilder.this.meta == null) return this;
             PlayerProfile profile = Bukkit.createProfile(profileUUID);
             profile.getProperties().add(new ProfileProperty("textures", texture));
             ((SkullMeta) ItemBuilder.this.meta).setPlayerProfile(profile);
@@ -272,6 +276,7 @@ public class ItemBuilder implements Builder<ItemStack> {
 
         public SkullBuilder owner(@NotNull UUID uuid) {
             Objects.requireNonNull(uuid);
+            if (ItemBuilder.this.meta == null) return this;
             ((SkullMeta) ItemBuilder.this.meta).setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
             return this;
         }
@@ -280,12 +285,14 @@ public class ItemBuilder implements Builder<ItemStack> {
     public class PotionBuilder {
         public PotionBuilder color(@NotNull org.bukkit.Color color) {
             Objects.requireNonNull(color);
+            if (ItemBuilder.this.meta == null) return this;
             ((PotionMeta) ItemBuilder.this.meta).setColor(color);
             return this;
         }
 
         public PotionBuilder effect(@NotNull PotionEffect... effects) {
             Objects.requireNonNull(effects);
+            if (ItemBuilder.this.meta == null) return this;
             for (PotionEffect effect : effects) {
                 this.effect(effect, true);
             }
@@ -294,18 +301,21 @@ public class ItemBuilder implements Builder<ItemStack> {
 
         public PotionBuilder uneffect(@NotNull PotionEffectType type) {
             Objects.requireNonNull(type);
+            if (ItemBuilder.this.meta == null) return this;
             ((PotionMeta) ItemBuilder.this.meta).removeCustomEffect(type);
             return this;
         }
 
         public PotionBuilder effect(@NotNull PotionEffect effect, boolean overwrite) {
             Objects.requireNonNull(effect);
+            if (ItemBuilder.this.meta == null) return this;
             ((PotionMeta) ItemBuilder.this.meta).addCustomEffect(effect, overwrite);
             return this;
         }
 
         public PotionBuilder data(@NotNull PotionData baseData) {
             Objects.requireNonNull(baseData);
+            if (ItemBuilder.this.meta == null) return this;
             ((PotionMeta) ItemBuilder.this.meta).setBasePotionData(baseData);
             return this;
         }
