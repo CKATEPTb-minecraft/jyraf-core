@@ -9,7 +9,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientIn
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
-import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketEntityTryInteractEvent;
+import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketInteractEvent;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import dev.ckateptb.minecraft.jyraf.repository.packet.entity.PacketEntityRepository;
@@ -29,7 +29,7 @@ public class PacketEntityService extends PacketListenerAbstract {
 
     private void handleEntityInteract(Player player, PacketEntity entity, boolean rightButton) {
         MouseButton button = MouseButton.right(rightButton);
-        new PacketEntityTryInteractEvent(player, entity, button).callEvent();
+        new PacketInteractEvent(player, null, entity, button).callEvent();
     }
 
     @Override

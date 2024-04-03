@@ -21,7 +21,7 @@ import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
-import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketBlockTryInteractEvent;
+import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketInteractEvent;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
@@ -45,7 +45,7 @@ public class PacketBlockService extends PacketListenerAbstract {
 
     private void handleBlockInteract(Player player, PacketBlock block, boolean rightButton) {
         MouseButton button = MouseButton.right(rightButton);
-        new PacketBlockTryInteractEvent(player, block, button).callEvent();
+        new PacketInteractEvent(player, block, null, button).callEvent();
     }
 
     @Override

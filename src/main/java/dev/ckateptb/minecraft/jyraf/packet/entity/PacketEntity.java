@@ -197,7 +197,7 @@ public class PacketEntity extends Interactable {
                 .getDistanceAboveGround(location.getWorld(), true) < 0.1);
     }
 
-    public void teleport(Player player, boolean onGround) {
+    private void teleport(Player player, boolean onGround) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.teleport(player, this, onGround));
     }
 
@@ -241,13 +241,11 @@ public class PacketEntity extends Interactable {
     public void display(Player player) {
         if (this.type == EntityType.PLAYER) this.spawnPlayer(player);
         else this.spawnEntity(player);
-        player.sendMessage("shown entity to u!");
     }
 
     @Override
     public void destroy(Player player) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.despawnEntity(player, this));
-        player.sendMessage("hidden entity from u!");
     }
 
 }
