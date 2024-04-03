@@ -11,6 +11,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
@@ -22,34 +23,36 @@ public class SphereBoundingBoxCollider implements Collider {
     protected final ImmutableVector center;
     protected final double radius;
 
-    public SphereBoundingBoxCollider(World world, Vector center, double radius) {
+    public SphereBoundingBoxCollider(@NotNull World world, @NotNull Vector center, double radius) {
+        java.util.Objects.requireNonNull(world);
+        java.util.Objects.requireNonNull(center);
         this.world = world;
         this.center = ImmutableVector.of(center);
         this.radius = radius;
     }
 
     @Override
-    public SphereBoundingBoxCollider at(Vector center) {
+    public @NotNull SphereBoundingBoxCollider at(@NotNull Vector center) {
         return new SphereBoundingBoxCollider(world, center, radius);
     }
 
     @Override
-    public Collider grow(Vector vector) {
+    public @NotNull Collider grow(Vector vector) {
         return new SphereBoundingBoxCollider(world, center, radius + FastMath.max(FastMath.max(vector.getX(), vector.getY()), vector.getZ()));
     }
 
     @Override
-    public SphereBoundingBoxCollider scale(double amount) {
+    public @NotNull SphereBoundingBoxCollider scale(double amount) {
         return new SphereBoundingBoxCollider(world, center, radius * amount);
     }
 
     @Override
-    public ImmutableVector getHalfExtents() {
+    public @NotNull ImmutableVector getHalfExtents() {
         return new ImmutableVector(radius, radius, radius);
     }
 
     @Override
-    public boolean intersects(Collider other) {
+    public boolean intersects(@NotNull Collider other) {
         World otherWorld = other.getWorld();
         if (!otherWorld.equals(world)) return false;
         if (other instanceof SphereBoundingBoxCollider sphere) {
@@ -73,24 +76,24 @@ public class SphereBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public boolean contains(Vector vector) {
+    public boolean contains(@NotNull Vector vector) {
         return vector.isInSphere(center, radius);
     }
 
     @Override
-    public SphereBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
+    public @NotNull SphereBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
         this.wrapToAABB().affectEntities(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
         return this;
     }
 
     @Override
-    public SphereBoundingBoxCollider affectBlocks(Consumer<Flux<Block>> consumer) {
+    public @NotNull SphereBoundingBoxCollider affectBlocks(@NotNull Consumer<Flux<Block>> consumer) {
         this.wrapToAABB().affectBlocks(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
         return this;
     }
 
     @Override
-    public SphereBoundingBoxCollider affectLocations(Consumer<Flux<Location>> consumer) {
+    public @NotNull SphereBoundingBoxCollider affectLocations(@NotNull Consumer<Flux<Location>> consumer) {
         this.wrapToAABB().affectLocations(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
         return this;
     }
@@ -108,12 +111,12 @@ public class SphereBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public World getWorld() {
+    public @NotNull World getWorld() {
         return world;
     }
 
     @Override
-    public ImmutableVector getCenter() {
+    public @NotNull ImmutableVector getCenter() {
         return center;
     }
 

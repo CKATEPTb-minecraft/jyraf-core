@@ -6,34 +6,36 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
 
 public interface Collider {
-    Collider at(Vector center);
+    @NotNull Collider at(@NotNull Vector center);
 
-    Collider scale(double amount);
+    @NotNull Collider scale(double amount);
 
-    ImmutableVector getHalfExtents();
+    @NotNull ImmutableVector getHalfExtents();
 
-    <RT extends Collider> boolean intersects(RT collider);
+    <RT extends Collider> boolean intersects(@NotNull RT collider);
 
-    boolean contains(Vector vector);
+    boolean contains(@NotNull Vector vector);
 
-    Collider affectEntities(Consumer<Flux<Entity>> consumer);
+    @NotNull Collider affectEntities(Consumer<Flux<Entity>> consumer);
 
-    Collider affectBlocks(Consumer<Flux<Block>> consumer);
+    @NotNull Collider affectBlocks(@NotNull Consumer<Flux<Block>> consumer);
 
-    Collider affectLocations(Consumer<Flux<Location>> consumer);
+    @NotNull Collider affectLocations(@NotNull Consumer<Flux<Location>> consumer);
 
-    Collider grow(Vector vector);
+    @NotNull Collider grow(Vector vector);
 
-    World getWorld();
+    @NotNull World getWorld();
 
-    ImmutableVector getCenter();
+    @NotNull ImmutableVector getCenter();
 
     @SuppressWarnings("unchecked")
+    @NotNull
     default <T extends Collider> T at(Location location) {
         return (T) this.at(ImmutableVector.of(location));
     }
