@@ -8,6 +8,7 @@ import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
+import dev.ckateptb.minecraft.jyraf.packet.trait.implementation.DisplayableTrait;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
@@ -16,6 +17,7 @@ import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.patheloper.api.pathing.result.PathfinderResult;
 import org.patheloper.api.pathing.strategy.PathfinderStrategy;
 import org.patheloper.api.pathing.strategy.strategies.DirectPathfinderStrategy;
@@ -28,10 +30,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 // TODO Implement properties like a
@@ -44,11 +43,14 @@ public class PacketEntity extends Interactable {
     @Getter
     protected final int id;
     @Getter
+    @NotNull
     protected final UUID uniqueId;
     @Getter
+    @NotNull
     protected final EntityType type;
     @Getter
     @Setter
+    @NotNull
     private LookType lookType = LookType.FIXED;
     @Getter
     @Setter
@@ -58,29 +60,38 @@ public class PacketEntity extends Interactable {
     private double speed = 0.2;
     @Getter
     @Setter
+    @NotNull
     private PathfinderStrategy pathfinderStrategy = new DirectPathfinderStrategy();
+    @Getter
+    @Setter
+    @Nullable
     private Tuple2<Iterator<PathPosition>, CompletableFuture<Location>> destiny = null;
+    @Getter
+    @Setter
+    @Nullable
     private Location currentPath;
     @Getter
     @Setter
+    @NotNull
     private TeamColor teamColor = TeamColor.WHITE;
 
     public PacketEntity(int id, EntityType type, Location location) {
-        this(id, UUID.randomUUID(), type, location);
+        this(id, UUID.randomUUID(), type, location, true);
     }
 
-    public PacketEntity(int id, UUID uniqueId, EntityType type, Location location) {
-        super(location, true);
-        this.id = id;
-        this.uniqueId = uniqueId;
-        this.type = type;
+    public PacketEntity(int id, @NotNull UUID uniqueId, @NotNull EntityType type, Location location, boolean global) {
+        this(id, uniqueId, type, location, new ArrayList<>());
+        this.global = global;
     }
 
-    public PacketEntity(int id, UUID uniqueId, EntityType type, Location location, Collection<Player> allowedViewers) {
+    public PacketEntity(int id, @NotNull UUID uniqueId, @NotNull EntityType type, Location location, Collection<Player> allowedViewers) {
         super(location, allowedViewers);
+        Objects.requireNonNull(uniqueId);
+        Objects.requireNonNull(type);
         this.id = id;
         this.uniqueId = uniqueId;
         this.type = type;
+        addTrait(new DisplayableTrait<>(PacketBlock.class));
     }
 
     @Override
@@ -99,19 +110,6 @@ public class PacketEntity extends Interactable {
                     if (!this.global) flux = flux.filter(this.allowedViewers::contains);
                     Mono<List<Player>> mono = flux.collectList();
                     // todo: move it to trait i think
-                    mono.doOnNext(players -> {
-                                this.currentViewers.removeIf(player -> {
-                                    if (players.contains(player) && player.isOnline()) return false;
-                                    this.destroy(player);
-                                    return true;
-                                });
-                                players.forEach(player -> {
-                                    if (this.currentViewers.add(player)) {
-                                        this.display(player);
-                                    }
-                                });
-                            })
-                            .subscribe();
                     mono.doOnNext(players -> {
                                 World world = this.location.getWorld();
                                 if (this.destiny != null) { // MOVE
@@ -199,7 +197,7 @@ public class PacketEntity extends Interactable {
                 .getDistanceAboveGround(location.getWorld(), true) < 0.1);
     }
 
-    private void teleport(Player player, boolean onGround) {
+    public void teleport(Player player, boolean onGround) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.teleport(player, this, onGround));
     }
 

@@ -5,11 +5,15 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 @Getter
 @Setter
 public abstract class PacketTrait<T extends PacketEntry> {
 
+    @NotNull
     private final EventPriority priority;
     private boolean cancelled;
 
@@ -17,12 +21,13 @@ public abstract class PacketTrait<T extends PacketEntry> {
         this(EventPriority.NORMAL);
     }
 
-    public PacketTrait(EventPriority priority) {
+    public PacketTrait(@NotNull EventPriority priority) {
+        Objects.requireNonNull(priority);
         this.priority = priority;
     }
 
-    public abstract Class<T> getEntryClass();
+    public abstract @NotNull Class<T> getEntryClass();
 
-    public abstract void tick(Player player, T packetEntry);
+    public abstract void tick(@NotNull Player player, @NotNull T packetEntry);
 
 }

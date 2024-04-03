@@ -8,6 +8,7 @@ import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
+import dev.ckateptb.minecraft.jyraf.packet.trait.implementation.DisplayableTrait;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import org.bukkit.Location;
@@ -44,6 +45,7 @@ public class PacketBlock extends Interactable {
         this.world = location.getWorld();
         this.vector = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         this.location = location;
+        addTrait(new DisplayableTrait<>(PacketBlock.class));
     }
 
     @Override
@@ -62,26 +64,15 @@ public class PacketBlock extends Interactable {
                             });
                     if (!this.global) flux = flux.filter(this.allowedViewers::contains);
                     Mono<List<Player>> mono = flux.collectList();
-                    // todo: move it to trait i think
-                    mono.doOnNext(players -> {
-                                this.currentViewers.removeIf(player -> {
-                                    if (players.contains(player) && player.isOnline()) return false;
-                                    this.destroy(player);
-                                    return true;
-                                });
-                                players.forEach(player -> {
-                                    if (this.currentViewers.add(player)) {
-                                        this.display(player);
-                                    }
-                                });
-                            })
-                            .subscribe();
-                    // todo: cache traits in needed order
+                    // todo: cache traits in needed order,
+                    //       make traits ticking inside of some of parent classes
                     for (PacketTrait<?> unknownTrait : this.getTraits()) {
                         if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
                         PacketTrait<PacketBlock> trait = (PacketTrait<PacketBlock>) unknownTrait;
                         if (trait.isCancelled()) continue;
-                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
+                        mono.doOnNext(players ->
+                                players.forEach(player ->
+                                        trait.tick(player, this))).subscribe();
                     }
                 });
     }

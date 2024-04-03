@@ -49,6 +49,10 @@ public abstract class Displayable extends PacketEntry implements IDisplayable {
         return Flux.fromIterable(this.currentViewers);
     }
 
+    public @NotNull Set<Player> getOriginalCurrentViewers() {
+        return this.currentViewers;
+    }
+
     @Override
     public abstract void destroy(Player player);
 

@@ -13,15 +13,18 @@ import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
+import dev.ckateptb.minecraft.jyraf.packet.bossbar.PacketBossBar;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,10 +35,32 @@ public class V1_8PacketFactory {
             Jyraf.getPlugin().getPacketApi().getServerManager().getVersion().toClientVersion());
 
     public void sendMetadata(Player player, PacketEntity entity) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         // TODO implement
     }
 
-    public void teleport(Player player, PacketEntity entity, boolean onGround) {
+    public void showBossBar(@NotNull Player player, @NotNull PacketBossBar bossBar) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(bossBar);
+        // todo implement
+    }
+
+    public void hideBossBar(@NotNull Player player, @NotNull PacketBossBar bossBar) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(bossBar);
+        // todo implement
+    }
+
+    public void updateBossBar(@NotNull Player player, @NotNull PacketBossBar bossBar) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(bossBar);
+        // todo implement
+    }
+
+    public void teleport(@NotNull Player player, @NotNull PacketEntity entity, boolean onGround) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         int entityId = entity.getId();
         org.bukkit.Location location = entity.getLocation();
         this.sendPacket(player, new WrapperPlayServerEntityTeleport(entityId,
@@ -43,13 +68,17 @@ public class V1_8PacketFactory {
         this.sendPacket(player, new WrapperPlayServerEntityHeadLook(entityId, location.getYaw()));
     }
 
-    public void rotate(Player player, PacketEntity entity, float yaw, float pitch) {
+    public void rotate(@NotNull Player player, @NotNull PacketEntity entity, float yaw, float pitch) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         int entityId = entity.getId();
         this.sendPacket(player, new WrapperPlayServerEntityHeadLook(entityId, yaw));
         this.sendPacket(player, new WrapperPlayServerEntityRotation(entityId, yaw, pitch, true));
     }
 
-    public void createTeam(Player player, PacketEntity entity) {
+    public void createTeam(@NotNull Player player, @NotNull PacketEntity entity) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         String team = "npc-team-" + entity.getId();
         this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.REMOVE, (WrapperPlayServerTeams.ScoreBoardTeamInfo) null));
         WrapperPlayServerTeams.ScoreBoardTeamInfo info = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
@@ -65,7 +94,9 @@ public class V1_8PacketFactory {
                 (WrapperPlayServerTeams.ScoreBoardTeamInfo) null, id));
     }
 
-    public void addTabPlayer(Player player, PacketEntity entity) {
+    public void addTabPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         if (entity.getType() != org.bukkit.entity.EntityType.PLAYER) return;
         UUID uniqueId = entity.getUniqueId();
         int entityId = entity.getId();
@@ -78,14 +109,18 @@ public class V1_8PacketFactory {
                 profile, GameMode.CREATIVE, 1)));
     }
 
-    public void removeTabPlayer(Player player, PacketEntity entity) {
+    public void removeTabPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         if (entity.getType() != org.bukkit.entity.EntityType.PLAYER) return;
         this.sendPacket(player, new WrapperPlayServerPlayerInfo(
                 WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER, new WrapperPlayServerPlayerInfo.PlayerData(null,
                 new UserProfile(entity.getUniqueId(), null), null, -1)));
     }
 
-    public void spawnPlayer(Player player, PacketEntity entity) {
+    public void spawnPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         Mono.defer(() -> {
                     this.addTabPlayer(player, entity);
                     return Mono.just(true);
@@ -106,26 +141,35 @@ public class V1_8PacketFactory {
                 });
     }
 
-    public void acknowledgeBlockChanges(Player player, int sequence) {
+    public void acknowledgeBlockChanges(@NotNull Player player, int sequence) {
+        Objects.requireNonNull(player);
         this.sendPacket(player, new WrapperPlayServerAcknowledgeBlockChanges(sequence));
     }
 
-    public void placeBlock(Player player, PacketBlock block) {
+    public void placeBlock(@NotNull Player player, @NotNull PacketBlock block) {
+        Objects.requireNonNull(player);
         player.sendBlockChange(block.getLocation(), block.getBukkitData());
     }
 
-    public void playBlockAction(Player player, PacketBlock block, BlockAction action) {
+    public void playBlockAction(@NotNull Player player, @NotNull PacketBlock block, @NotNull BlockAction action) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(block);
+        Objects.requireNonNull(action);
         WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(block.getVector(), action.getId(), action.getParamId(),
                 SpigotConversionUtil.fromBukkitBlockData(block.getBukkitData()).getGlobalId());
         this.sendPacket(player, packet);
     }
 
-    public void breakBlock(Player player, PacketBlock block) {
+    public void breakBlock(@NotNull Player player, @NotNull PacketBlock block) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(block);
         org.bukkit.Location location = block.getLocation();
         player.sendBlockChange(location, location.getBlock().getBlockData());
     }
 
-    public void spawnEntity(Player player, PacketEntity entity) {
+    public void spawnEntity(@NotNull Player player, @NotNull PacketEntity entity) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         EntityType type = SpigotConversionUtil.fromBukkitEntityType(entity.getType());
         boolean legacy = type.getLegacyId(CLIENT_VERSION.force()) == -1;
         Location location = SpigotConversionUtil.fromBukkitLocation(entity.getLocation());
@@ -138,11 +182,15 @@ public class V1_8PacketFactory {
         this.createTeam(player, entity);
     }
 
-    public void despawnEntity(Player player, PacketEntity entity) {
+    public void despawnEntity(@NotNull Player player, @NotNull PacketEntity entity) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
         this.sendPacket(player, new WrapperPlayServerDestroyEntities(entity.getId()));
     }
 
-    public void sendPacket(Player player, PacketWrapper<?> packet) {
+    public void sendPacket(@NotNull Player player, @NotNull PacketWrapper<?> packet) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(packet);
         PACKET_MANAGER.get().ifPresent(playerManager -> playerManager.sendPacket(player, packet));
     }
 }

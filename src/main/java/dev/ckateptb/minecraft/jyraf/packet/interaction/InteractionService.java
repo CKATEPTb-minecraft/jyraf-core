@@ -9,6 +9,7 @@ import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketBlockTryInter
 import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketEntityInteractEvent;
 import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketEntityTryInteractEvent;
 import dev.ckateptb.minecraft.jyraf.packet.interaction.user.InteractableUser;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -27,7 +28,7 @@ public class InteractionService implements Listener {
         Player player = event.getPlayer();
         MouseButton button = event.getButton();
         InteractableUser interactableUser = users.get(player.getUniqueId(), (uuid) -> new InteractableUser(uuid, player, button));
-        if (button == MouseButton.LEFT && System.currentTimeMillis() < interactableUser.getLastInteractionTime() + 500)
+        if (button == MouseButton.LEFT && player.getGameMode() == GameMode.ADVENTURE && System.currentTimeMillis() < interactableUser.getLastInteractionTime() + 500)
             return;
         interactableUser.setLastInteractionTime(System.currentTimeMillis());
         event.getBlock().handleInput(player, event.getButton());
