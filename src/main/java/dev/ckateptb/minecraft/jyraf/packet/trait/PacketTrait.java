@@ -6,7 +6,9 @@ import lombok.Setter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.jetbrains.annotations.NotNull;
+import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -28,6 +30,12 @@ public abstract class PacketTrait<T extends PacketEntry> {
 
     public abstract @NotNull Class<T> getEntryClass();
 
-    public abstract void tick(@NotNull Player player, @NotNull T packetEntry);
+    public void tick(@NotNull Mono<List<Player>> players, @NotNull T packetEntry) {
+
+    }
+
+    public void tick(@NotNull Player player, @NotNull T packetEntry) {
+
+    }
 
 }

@@ -1,14 +1,11 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity;
 
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
-import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
-import dev.ckateptb.minecraft.jyraf.packet.trait.implementation.DisplayableTrait;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
@@ -16,6 +13,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.patheloper.api.pathing.result.PathfinderResult;
@@ -24,7 +22,6 @@ import org.patheloper.api.pathing.strategy.strategies.DirectPathfinderStrategy;
 import org.patheloper.api.wrapper.PathPosition;
 import org.patheloper.mapping.PatheticMapper;
 import org.patheloper.mapping.bukkit.BukkitMapper;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -39,38 +36,29 @@ import java.util.concurrent.CompletableFuture;
 //  Equipments, Poses, States
 //  Dropped Item, Item Display, Block Display, Text Display
 //  Implement 1.16.5 support
-public class PacketEntity extends Interactable {
-    @Getter
+@Getter
+public class PacketEntity extends Interactable<PacketEntity> {
     protected final int id;
-    @Getter
     @NotNull
     protected final UUID uniqueId;
-    @Getter
     @NotNull
     protected final EntityType type;
-    @Getter
     @Setter
     @NotNull
     private LookType lookType = LookType.FIXED;
-    @Getter
     @Setter
     private boolean gravity = false;
-    @Getter
     @Setter
     private double speed = 0.2;
-    @Getter
     @Setter
     @NotNull
     private PathfinderStrategy pathfinderStrategy = new DirectPathfinderStrategy();
-    @Getter
     @Setter
     @Nullable
     private Tuple2<Iterator<PathPosition>, CompletableFuture<Location>> destiny = null;
-    @Getter
     @Setter
     @Nullable
     private Location currentPath;
-    @Getter
     @Setter
     @NotNull
     private TeamColor teamColor = TeamColor.WHITE;
@@ -91,95 +79,9 @@ public class PacketEntity extends Interactable {
         this.id = id;
         this.uniqueId = uniqueId;
         this.type = type;
-        addTrait(new DisplayableTrait<>(PacketBlock.class));
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void tick() {
-        Colliders.sphere(this.location, 20)
-                .affectEntities(entities -> {
-                    Flux<Player> flux = entities
-                            .filter(entity -> entity instanceof Player)
-                            .cast(Player.class)
-                            .sort((o1, o2) -> {
-                                Location first = o1.getLocation();
-                                Location second = o2.getLocation();
-                                return (int) (first.distanceSquared(this.location) - second.distanceSquared(this.location));
-                            });
-                    if (!this.global) flux = flux.filter(this.allowedViewers::contains);
-                    Mono<List<Player>> mono = flux.collectList();
-                    // todo: move it to trait i think
-                    mono.doOnNext(players -> {
-                                World world = this.location.getWorld();
-                                if (this.destiny != null) { // MOVE
-                                    ImmutableVector origin = ImmutableVector.of(this.location);
-                                    CompletableFuture<Location> future = this.destiny.getT2();
-                                    if (this.currentPath == null || this.location.distance(this.currentPath) < 0.2) {
-                                        Iterator<PathPosition> iterator = this.destiny.getT1();
-                                        if (!iterator.hasNext()) {
-                                            this.destiny = null;
-                                            this.currentPath = null;
-                                            future.complete(this.location.clone());
-                                            return;
-                                        }
-                                        do {
-                                            this.currentPath = BukkitMapper.toLocation(iterator.next());
-                                        } while (this.location.distance(this.currentPath) < 1 && iterator.hasNext());
-                                    }
-                                    ImmutableVector destiny = ImmutableVector.of(this.currentPath);
-                                    ImmutableVector direction = destiny.subtract(origin).normalize();
-                                    ImmutableVector next = origin.add(direction.multiply(this.speed));
-                                    this.location = next.toLocation(world)
-                                            .setDirection(this.type == EntityType.ENDER_DRAGON ?
-                                                    direction.negative() : direction);
-                                    boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
-                                    players.forEach(player -> this.teleport(player, onGround));
-                                } else {
-                                    if (this.gravity) { // GRAVITY
-                                        ImmutableVector origin = ImmutableVector.of(this.location);
-                                        double distanceAboveGround = origin.getDistanceAboveGround(world, true);
-                                        if (distanceAboveGround >= 0.1) {
-                                            ImmutableVector destiny = origin.subtract(new ImmutableVector(0d, distanceAboveGround, 0d));
-                                            ImmutableVector direction = destiny.subtract(origin).normalize();
-                                            double delta = this.speed * distanceAboveGround;
-                                            double speed = FastMath.max(this.speed, FastMath.min(1, delta));
-                                            origin = origin.add(direction.multiply(speed));
-                                            this.location.set(origin.getX(), origin.getY(), origin.getZ());
-                                            boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
-                                            players.forEach(player -> this.teleport(player, onGround));
-                                        }
-                                    }
-                                    // LOOK
-                                    ImmutableVector original = ImmutableVector.of(this.location);
-                                    switch (this.lookType) {
-                                        case CLOSEST_PLAYER -> {
-                                            ImmutableVector destiny = ImmutableVector.of(players.get(0).getLocation());
-                                            ImmutableVector direction = destiny.subtract(original).normalize();
-                                            this.location.setDirection(this.type == EntityType.ENDER_DRAGON ?
-                                                    direction.negative() : direction);
-                                            players.forEach(player ->
-                                                    this.lookAt(player, this.location.getYaw(), this.location.getPitch()));
-                                        }
-                                        case PER_PLAYER -> players.forEach(player -> {
-                                            ImmutableVector destiny = ImmutableVector.of(player.getLocation());
-                                            ImmutableVector direction = destiny.subtract(original).normalize();
-                                            Location loc = this.location.clone().setDirection(this.type ==
-                                                    EntityType.ENDER_DRAGON ? direction.negative() : direction);
-                                            this.lookAt(player, loc.getYaw(), loc.getPitch());
-                                        });
-                                    }
-                                }
-                            })
-                            .subscribe();
-                    // todo: cache traits in needed order
-                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
-                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
-                        PacketTrait<PacketEntity> trait = (PacketTrait<PacketEntity>) unknownTrait;
-                        if (trait.isCancelled()) continue;
-                        mono.doOnNext(players -> players.forEach(player -> trait.tick(player, this))).subscribe();
-                    }
-                });
+        addTrait(new NPCMoveTrait());
+        addTrait(new NPCGravityTrait());
+        addTrait(new NPCLookTrait());
     }
 
     public void lookAt(Player player, float yaw, float pitch) {
@@ -246,6 +148,119 @@ public class PacketEntity extends Interactable {
     @Override
     public void destroy(Player player) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.despawnEntity(player, this));
+    }
+
+    static final class NPCLookTrait extends PacketTrait<PacketEntity> {
+
+        public NPCLookTrait() {
+            super(EventPriority.MONITOR);
+        }
+
+        @Override
+        public @NotNull Class<PacketEntity> getEntryClass() {
+            return PacketEntity.class;
+        }
+
+        @Override
+        public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull PacketEntity entity) {
+            playersMono.doOnNext(players -> {
+                        if (entity.destiny != null) return;
+                        ImmutableVector original = ImmutableVector.of(entity.location);
+                        switch (entity.lookType) {
+                            case CLOSEST_PLAYER -> {
+                                ImmutableVector destiny = ImmutableVector.of(players.get(0).getLocation());
+                                ImmutableVector direction = destiny.subtract(original).normalize();
+                                entity.location.setDirection(entity.type == EntityType.ENDER_DRAGON ?
+                                        direction.negative() : direction);
+                                players.forEach(player ->
+                                        entity.lookAt(player, entity.location.getYaw(), entity.location.getPitch()));
+                            }
+                            case PER_PLAYER -> players.forEach(player -> {
+                                ImmutableVector destiny = ImmutableVector.of(player.getLocation());
+                                ImmutableVector direction = destiny.subtract(original).normalize();
+                                Location loc = entity.location.clone().setDirection(entity.type ==
+                                        EntityType.ENDER_DRAGON ? direction.negative() : direction);
+                                entity.lookAt(player, loc.getYaw(), loc.getPitch());
+                            });
+                        }
+                    })
+                    .subscribe();
+        }
+    }
+
+    static final class NPCMoveTrait extends PacketTrait<PacketEntity> {
+
+        public NPCMoveTrait() {
+            super(EventPriority.MONITOR);
+        }
+
+        @Override
+        public @NotNull Class<PacketEntity> getEntryClass() {
+            return PacketEntity.class;
+        }
+
+        @Override
+        public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull PacketEntity entity) {
+            World world = entity.location.getWorld();
+            playersMono.doOnNext(players -> {
+                        if (entity.destiny == null) return;
+                        ImmutableVector origin = ImmutableVector.of(entity.location);
+                        CompletableFuture<Location> future = entity.destiny.getT2();
+                        if (entity.currentPath == null || entity.location.distance(entity.currentPath) < 0.2) {
+                            Iterator<PathPosition> iterator = entity.destiny.getT1();
+                            if (!iterator.hasNext()) {
+                                entity.destiny = null;
+                                entity.currentPath = null;
+                                future.complete(entity.location.clone());
+                                return;
+                            }
+                            do {
+                                entity.currentPath = BukkitMapper.toLocation(iterator.next());
+                            } while (entity.location.distance(entity.currentPath) < 1 && iterator.hasNext());
+                        }
+                        ImmutableVector destiny = ImmutableVector.of(entity.currentPath);
+                        ImmutableVector direction = destiny.subtract(origin).normalize();
+                        ImmutableVector next = origin.add(direction.multiply(entity.speed));
+                        entity.location = next.toLocation(world)
+                                .setDirection(entity.type == EntityType.ENDER_DRAGON ?
+                                        direction.negative() : direction);
+                        boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
+                        players.forEach(player -> entity.teleport(player, onGround));
+                    })
+                    .subscribe();
+        }
+    }
+
+    static final class NPCGravityTrait extends PacketTrait<PacketEntity> {
+
+        public NPCGravityTrait() {
+            super(EventPriority.MONITOR);
+        }
+
+        @Override
+        public @NotNull Class<PacketEntity> getEntryClass() {
+            return PacketEntity.class;
+        }
+
+        @Override
+        public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull PacketEntity entity) {
+            playersMono.doOnNext(players -> {
+                        if (!entity.gravity || entity.destiny != null) return;
+                        ImmutableVector origin = ImmutableVector.of(entity.location);
+                        double distanceAboveGround = origin.getDistanceAboveGround(entity.getWorld(), true);
+                        if (distanceAboveGround >= 0.1) {
+                            ImmutableVector destiny = origin.subtract(new ImmutableVector(0d, distanceAboveGround, 0d));
+                            ImmutableVector direction = destiny.subtract(origin).normalize();
+                            double delta = entity.speed * distanceAboveGround;
+                            double speed = FastMath.max(entity.speed, FastMath.min(1, delta));
+                            origin = origin.add(direction.multiply(speed));
+                            entity.location.set(origin.getX(), origin.getY(), origin.getZ());
+                            boolean onGround = origin.getDistanceAboveGround(entity.getWorld(), true) < 0.1;
+                            players.forEach(player -> entity.teleport(player, onGround));
+                        }
+                    })
+                    .subscribe();
+        }
     }
 
 }

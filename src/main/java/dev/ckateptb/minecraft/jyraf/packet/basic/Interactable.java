@@ -14,7 +14,7 @@ import java.util.Collection;
 
 @Setter
 @Getter
-public abstract class Interactable extends Displayable implements IInteractable {
+public abstract class Interactable<T extends Displayable<T>> extends Displayable<T> implements IInteractable {
 
     @Nullable
     protected InteractionHandler interactionHandler = (player, button) -> {

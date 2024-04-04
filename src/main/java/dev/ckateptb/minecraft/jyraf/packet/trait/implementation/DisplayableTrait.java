@@ -5,8 +5,11 @@ import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.jetbrains.annotations.NotNull;
+import reactor.core.publisher.Mono;
 
-public class DisplayableTrait<T extends Displayable> extends PacketTrait<T> {
+import java.util.List;
+
+public class DisplayableTrait<T extends Displayable<T>> extends PacketTrait<T> {
 
     private final Class<T> clazz;
 
@@ -21,16 +24,19 @@ public class DisplayableTrait<T extends Displayable> extends PacketTrait<T> {
     }
 
     @Override
-    public void tick(@NotNull Player player, @NotNull Displayable entry) {
-        // todo: fix this remove
-        entry.getOriginalCurrentViewers().removeIf(targetPlayer -> {
-            if (targetPlayer.isOnline() && player.equals(targetPlayer)) return false;
-            entry.destroy(targetPlayer);
-            return true;
-        });
-        if (entry.getOriginalCurrentViewers().add(player)) {
-            entry.display(player);
-        }
+    public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull T displayable) {
+        playersMono.doOnNext(players -> {
+            displayable.getOriginalCurrentViewers().removeIf(player -> {
+                if (players.contains(player) && player.isOnline()) return false;
+                displayable.destroy(player);
+                return true;
+            });
+            players.forEach(player -> {
+                if (displayable.getOriginalCurrentViewers().add(player)) {
+                    displayable.display(player);
+                }
+            });
+        }).subscribe();
     }
 
 }

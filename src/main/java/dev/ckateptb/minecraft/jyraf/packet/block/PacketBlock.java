@@ -3,12 +3,9 @@ package dev.ckateptb.minecraft.jyraf.packet.block;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
-import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
-import dev.ckateptb.minecraft.jyraf.packet.trait.implementation.DisplayableTrait;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import org.bukkit.Location;
@@ -16,15 +13,12 @@ import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @Getter
-public class PacketBlock extends Interactable {
+public class PacketBlock extends Interactable<PacketBlock> {
 
     protected WrappedBlockState data;
     private final World world;
@@ -45,36 +39,6 @@ public class PacketBlock extends Interactable {
         this.world = location.getWorld();
         this.vector = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         this.location = location;
-        addTrait(new DisplayableTrait<>(PacketBlock.class));
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void tick() {
-        Location location = this.getLocation();
-        Colliders.sphere(location, 20)
-                .affectEntities(entities -> {
-                    Flux<Player> flux = entities
-                            .filter(entity -> entity instanceof Player)
-                            .cast(Player.class)
-                            .sort((o1, o2) -> {
-                                Location first = o1.getLocation();
-                                Location second = o2.getLocation();
-                                return (int) (first.distanceSquared(location) - second.distanceSquared(location));
-                            });
-                    if (!this.global) flux = flux.filter(this.allowedViewers::contains);
-                    Mono<List<Player>> mono = flux.collectList();
-                    // todo: cache traits in needed order,
-                    //       make traits ticking inside of some of parent classes
-                    for (PacketTrait<?> unknownTrait : this.getTraits()) {
-                        if (unknownTrait.getEntryClass() != PacketBlock.class) continue;
-                        PacketTrait<PacketBlock> trait = (PacketTrait<PacketBlock>) unknownTrait;
-                        if (trait.isCancelled()) continue;
-                        mono.doOnNext(players ->
-                                players.forEach(player ->
-                                        trait.tick(player, this))).subscribe();
-                    }
-                });
     }
 
     public void playAction(BlockAction action) {
