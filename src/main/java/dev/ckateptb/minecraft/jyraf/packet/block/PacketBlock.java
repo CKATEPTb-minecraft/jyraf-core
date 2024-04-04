@@ -15,7 +15,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 
 @Getter
 public class PacketBlock extends Interactable {
@@ -24,21 +26,24 @@ public class PacketBlock extends Interactable {
     private final World world;
     private final Vector3i vector;
 
-    public PacketBlock(@NotNull Location location, BlockData data) {
+    public PacketBlock(@NotNull Location location, @NotNull BlockData data) {
         this(location, data, true);
     }
 
-    public PacketBlock(@NotNull Location location, BlockData data, boolean global) {
-        this(location, data, new ArrayList<>());
-        this.global = global;
+    public PacketBlock(@NotNull Location location, @NotNull BlockData data, boolean global) {
+        this(location, data, global, new ArrayList<>());
     }
 
-    public PacketBlock(@NotNull Location location, BlockData data, @NotNull Collection<Player> allowedViewers) {
+    public PacketBlock(@NotNull Location location, @NotNull BlockData data, boolean global, @NotNull Collection<Player> allowedViewers) {
         super(location, allowedViewers);
+        Objects.requireNonNull(data);
+        Objects.requireNonNull(allowedViewers);
         this.data = SpigotConversionUtil.fromBukkitBlockData(data.clone());
         this.world = location.getWorld();
+        this.global = global;
         this.vector = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         this.location = location;
+        this.allowedViewers.addAll(allowedViewers);
     }
 
     public void playAction(BlockAction action) {
@@ -100,6 +105,42 @@ public class PacketBlock extends Interactable {
     @Override
     public Location getLocation() {
         return new Location(world, this.vector.x, this.vector.y, this.vector.z);
+    }
+
+    public static final class Builder {
+        private final PacketBlock block;
+
+        public Builder(@NotNull Location location, @NotNull BlockData data) {
+            this.block = new PacketBlock(location, data, true);
+        }
+
+        public @NotNull Builder global(boolean global) {
+            this.block.setGlobal(global);
+            return this;
+        }
+
+        public @NotNull Builder interactionHandler(@NotNull InteractionHandler interactionHandler) {
+            Objects.requireNonNull(interactionHandler);
+            this.block.setInteractionHandler(interactionHandler);
+            return this;
+        }
+
+        public @NotNull Builder viewers(@NotNull Player... viewers) {
+            Objects.requireNonNull(viewers);
+            this.block.setGlobal(false);
+            this.block.allowedViewers.addAll(Arrays.stream(viewers).toList());
+            return this;
+        }
+
+        public @NotNull Builder data(@NotNull BlockData data) {
+            Objects.requireNonNull(data);
+            this.block.setData(data);
+            return this;
+        }
+
+        public @NotNull PacketBlock build() {
+            return this.block;
+        }
     }
 
 }

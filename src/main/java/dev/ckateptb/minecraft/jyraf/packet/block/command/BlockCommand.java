@@ -6,8 +6,6 @@ import cloud.commandframework.annotations.CommandPermission;
 import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
-import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
-import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.RayTraceResult;
+import reactor.core.scheduler.Schedulers;
 
 @Getter
 @Component
@@ -31,16 +30,11 @@ public class BlockCommand implements Command {
         Block block = result.getHitBlock();
         if (block == null) return;
         Location location = block.getLocation();
-        PacketBlock packetBlock = new PacketBlock(location, material.createBlockData());
-        packetBlock.setInteractionHandler((player, button) -> {
-            player.sendMessage(button.name());
-            BlockAction action = button == MouseButton.RIGHT ? BlockAction.OPEN : BlockAction.CLOSE;
-            if (material == Material.CHEST || material == Material.ENDER_CHEST ||
-                    material == Material.TRAPPED_CHEST || material == Material.SHULKER_BOX) {
-                packetBlock.playAction(action);
-            }
-        });
+        PacketBlock packetBlock = new PacketBlock.Builder(location, material.createBlockData())
+                .interactionHandler((player, button) -> player.sendMessage(button.name()))
+                .build();
         this.service.getRepository(PacketBlock.class, sender.getWorld())
+                .publishOn(Schedulers.boundedElastic())
                 .flatMap(worldRepository -> worldRepository.add(packetBlock))
                 .subscribe();
     }

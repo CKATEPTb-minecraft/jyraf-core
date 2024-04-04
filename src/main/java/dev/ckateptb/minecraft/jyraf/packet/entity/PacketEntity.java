@@ -6,6 +6,7 @@ import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
+import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.FastMath;
@@ -45,11 +46,11 @@ public class PacketEntity extends Interactable {
     protected final EntityType type;
     @Setter
     @NotNull
-    private LookType lookType = LookType.FIXED;
+    private LookType lookType;
     @Setter
-    private boolean gravity = false;
+    private boolean gravity;
     @Setter
-    private double speed = 0.2;
+    private double speed;
     @Setter
     @NotNull
     private PathfinderStrategy pathfinderStrategy = new DirectPathfinderStrategy();
@@ -61,23 +62,20 @@ public class PacketEntity extends Interactable {
     private Location currentPath;
     @Setter
     @NotNull
-    private TeamColor teamColor = TeamColor.WHITE;
+    private TeamColor teamColor;
 
-    public PacketEntity(int id, EntityType type, Location location) {
-        this(id, UUID.randomUUID(), type, location, true);
-    }
-
-    public PacketEntity(int id, @NotNull UUID uniqueId, @NotNull EntityType type, Location location, boolean global) {
-        this(id, uniqueId, type, location, new ArrayList<>());
-        this.global = global;
-    }
-
-    public PacketEntity(int id, @NotNull UUID uniqueId, @NotNull EntityType type, Location location, Collection<Player> allowedViewers) {
+    public PacketEntity(int id, @NotNull UUID uniqueId, @NotNull EntityType type, double speed, boolean gravity, @NotNull LookType lookType, @NotNull TeamColor teamColor, @NotNull Location location, boolean global, @NotNull Collection<Player> allowedViewers) {
         super(location, allowedViewers);
         Objects.requireNonNull(uniqueId);
         Objects.requireNonNull(type);
+        Objects.requireNonNull(allowedViewers);
         this.id = id;
         this.uniqueId = uniqueId;
+        this.speed = speed;
+        this.gravity = gravity;
+        this.lookType = lookType;
+        this.teamColor = teamColor;
+        this.global = global;
         this.type = type;
         addTrait(new NPCMoveTrait());
         addTrait(new NPCGravityTrait());
@@ -148,6 +146,63 @@ public class PacketEntity extends Interactable {
     @Override
     public void destroy(Player player) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> factory.despawnEntity(player, this));
+    }
+
+    public static final class Builder {
+        private final PacketEntity entity;
+
+        public Builder(@NotNull Location location, @NotNull EntityType type) {
+            this.entity = new PacketEntity(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), type, 0.2, false, LookType.FIXED, TeamColor.WHITE, location, true, new ArrayList<>());
+        }
+
+        public @NotNull Builder global(boolean global) {
+            this.entity.setGlobal(global);
+            return this;
+        }
+
+        public @NotNull Builder pathfinder(@NotNull PathfinderStrategy strategy) {
+            Objects.requireNonNull(strategy);
+            this.entity.setPathfinderStrategy(strategy);
+            return this;
+        }
+
+        public @NotNull Builder interactionHandler(@NotNull InteractionHandler interactionHandler) {
+            Objects.requireNonNull(interactionHandler);
+            this.entity.setInteractionHandler(interactionHandler);
+            return this;
+        }
+
+        public @NotNull Builder viewers(@NotNull Player... viewers) {
+            Objects.requireNonNull(viewers);
+            this.entity.setGlobal(false);
+            this.entity.allowedViewers.addAll(Arrays.stream(viewers).toList());
+            return this;
+        }
+
+        public @NotNull Builder location(@NotNull Location location) {
+            this.entity.teleport(location);
+            return this;
+        }
+
+        public Builder gravity(boolean gravity) {
+            this.entity.setGravity(gravity);
+            return this;
+        }
+
+        public @NotNull Builder speed(double speed) {
+            this.entity.setSpeed(speed);
+            return this;
+        }
+
+        public @NotNull Builder lookType(@NotNull LookType type) {
+            Objects.requireNonNull(type);
+            this.entity.setLookType(type);
+            return this;
+        }
+
+        public @NotNull PacketEntity build() {
+            return this.entity;
+        }
     }
 
     static final class NPCLookTrait extends PacketTrait<PacketEntity> {

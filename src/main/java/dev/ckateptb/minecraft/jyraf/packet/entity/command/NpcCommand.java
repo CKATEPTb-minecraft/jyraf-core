@@ -9,7 +9,6 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
-import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -25,14 +24,12 @@ public class NpcCommand implements Command {
     @CommandMethod("jyrafnpc <type>")
     @CommandPermission("jnpcs.admin")
     public void npc(Player sender, @Argument("type") EntityType type) {
-        PacketEntity packetEntity =
-                new PacketEntity(SpigotReflectionUtil.generateEntityId(), type, sender.getLocation());
-        packetEntity.setLookType(LookType.PER_PLAYER);
-        packetEntity.setGravity(true);
-        Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> packetEntity
-                .moveTo(sender.getLocation()).subscribe(), 60);
-        packetEntity.setInteractionHandler((player, button) -> player
-                .sendMessage(button.name()));
+        PacketEntity packetEntity = new PacketEntity.Builder(sender.getLocation(), type)
+                .lookType(LookType.PER_PLAYER)
+                .gravity(true)
+                .interactionHandler((player, button) -> player.sendMessage(button.name()))
+                .build();
+        Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> packetEntity.moveTo(sender.getLocation()).subscribe(), 60);
         this.service.getRepository(PacketEntity.class, sender.getWorld())
                 .flatMap(worldRepository -> worldRepository.add(packetEntity))
                 .subscribe();

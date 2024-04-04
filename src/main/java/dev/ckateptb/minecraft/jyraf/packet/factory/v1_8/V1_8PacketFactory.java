@@ -13,7 +13,6 @@ import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
-import dev.ckateptb.minecraft.jyraf.packet.bossbar.PacketBossBar;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
@@ -38,24 +37,6 @@ public class V1_8PacketFactory {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
         // TODO implement
-    }
-
-    public void showBossBar(@NotNull Player player, @NotNull PacketBossBar bossBar) {
-        Objects.requireNonNull(player);
-        Objects.requireNonNull(bossBar);
-        // todo implement
-    }
-
-    public void hideBossBar(@NotNull Player player, @NotNull PacketBossBar bossBar) {
-        Objects.requireNonNull(player);
-        Objects.requireNonNull(bossBar);
-        // todo implement
-    }
-
-    public void updateBossBar(@NotNull Player player, @NotNull PacketBossBar bossBar) {
-        Objects.requireNonNull(player);
-        Objects.requireNonNull(bossBar);
-        // todo implement
     }
 
     public void teleport(@NotNull Player player, @NotNull PacketEntity entity, boolean onGround) {

@@ -3,6 +3,8 @@ package dev.ckateptb.minecraft.jyraf.repository;
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
+import dev.ckateptb.minecraft.jyraf.bossbar.BossBar;
+import dev.ckateptb.minecraft.jyraf.bossbar.repository.BossBarRepository;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
@@ -11,7 +13,6 @@ import dev.ckateptb.minecraft.jyraf.repository.packet.block.PacketBlockRepositor
 import dev.ckateptb.minecraft.jyraf.repository.packet.entity.PacketEntityRepository;
 import dev.ckateptb.minecraft.jyraf.repository.world.WorldRepository;
 import dev.ckateptb.minecraft.jyraf.schedule.Schedule;
-import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -39,6 +40,7 @@ public class WorldRepositoryService implements Listener {
         this.register(plugin, Entity.class, AsynchronousEntityRepository::new);
         this.register(plugin, PacketEntity.class, PacketEntityRepository::new);
         this.register(plugin, PacketBlock.class, PacketBlockRepository::new);
+        this.register(plugin, BossBar.class, BossBarRepository::new);
         this.plugin = plugin;
     }
 
