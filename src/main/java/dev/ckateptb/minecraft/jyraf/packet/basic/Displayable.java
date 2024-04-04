@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 
-public abstract class Displayable<T extends Displayable<T>> extends PacketEntry implements IDisplayable {
+public abstract class Displayable extends PacketEntry implements IDisplayable {
 
     protected final Set<Player> allowedViewers = Collections.synchronizedSet(new HashSet<>());
     protected final Set<Player> currentViewers = Collections.synchronizedSet(new HashSet<>());
@@ -41,7 +41,7 @@ public abstract class Displayable<T extends Displayable<T>> extends PacketEntry 
         this.location = location;
         this.global = false;
         this.allowedViewers.addAll(allowedViewers);
-        addTrait(new DisplayableTrait<>(Displayable.class));
+        addTrait(new DisplayableTrait(Displayable.class));
     }
 
     @Override
@@ -62,12 +62,12 @@ public abstract class Displayable<T extends Displayable<T>> extends PacketEntry 
                     Mono<List<Player>> mono = flux.collectList();
                     for (PacketTrait<?> unknownTrait : this.getTraits()) {
                         if (!unknownTrait.getEntryClass().isAssignableFrom(getClass())) continue;
-                        PacketTrait<T> trait = (PacketTrait<T>) unknownTrait;
+                        PacketTrait<Displayable> trait = (PacketTrait<Displayable>) unknownTrait;
                         if (trait.isCancelled()) continue;
-                        trait.tick(mono, (T) this);
+                        trait.tick(mono, this);
                         mono.doOnNext(players ->
                                 players.forEach(player ->
-                                        trait.tick(player, (T) this))).subscribe();
+                                        trait.tick(player, this))).subscribe();
                     }
                 });
     }

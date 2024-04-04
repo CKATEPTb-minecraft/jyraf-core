@@ -2,7 +2,6 @@ package dev.ckateptb.minecraft.jyraf.packet.bossbar;
 
 import dev.ckateptb.minecraft.jyraf.packet.basic.Displayable;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
-import dev.ckateptb.minecraft.jyraf.packet.trait.implementation.DisplayableTrait;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PacketBossBar extends Displayable<PacketBossBar> {
+public class PacketBossBar extends Displayable {
 
     public PacketBossBar(@NotNull Location location) {
         this(location, true);
@@ -25,7 +24,6 @@ public class PacketBossBar extends Displayable<PacketBossBar> {
 
     public PacketBossBar(@NotNull Location location, @NotNull Collection<Player> allowedViewers) {
         super(location, allowedViewers);
-        addTrait(new DisplayableTrait<>(PacketBossBar.class));
     }
 
     @Override

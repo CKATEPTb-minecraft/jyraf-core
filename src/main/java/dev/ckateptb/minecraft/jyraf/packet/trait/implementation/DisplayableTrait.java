@@ -9,22 +9,22 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public class DisplayableTrait<T extends Displayable<T>> extends PacketTrait<T> {
+public class DisplayableTrait extends PacketTrait<Displayable> {
 
-    private final Class<T> clazz;
+    private final Class<Displayable> clazz;
 
-    public DisplayableTrait(Class<T> clazz) {
+    public DisplayableTrait(Class<Displayable> clazz) {
         super(EventPriority.MONITOR);
         this.clazz = clazz;
     }
 
     @Override
-    public @NotNull Class<T> getEntryClass() {
+    public @NotNull Class<Displayable> getEntryClass() {
         return clazz;
     }
 
     @Override
-    public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull T displayable) {
+    public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull Displayable displayable) {
         playersMono.doOnNext(players -> {
             displayable.getOriginalCurrentViewers().removeIf(player -> {
                 if (players.contains(player) && player.isOnline()) return false;

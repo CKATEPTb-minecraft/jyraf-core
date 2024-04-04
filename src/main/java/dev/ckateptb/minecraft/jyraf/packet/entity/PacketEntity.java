@@ -37,7 +37,7 @@ import java.util.concurrent.CompletableFuture;
 //  Dropped Item, Item Display, Block Display, Text Display
 //  Implement 1.16.5 support
 @Getter
-public class PacketEntity extends Interactable<PacketEntity> {
+public class PacketEntity extends Interactable {
     protected final int id;
     @NotNull
     protected final UUID uniqueId;

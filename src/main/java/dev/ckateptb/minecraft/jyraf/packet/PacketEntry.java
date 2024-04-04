@@ -6,7 +6,7 @@ import java.util.*;
 
 public class PacketEntry {
 
-    protected final Set<PacketTrait<?>> traits = Collections.synchronizedSet(new HashSet<>());
+    protected final Set<PacketTrait<? extends PacketEntry>> traits = Collections.synchronizedSet(new HashSet<>());
 
     public <T extends PacketEntry> void addTrait(PacketTrait<T> trait) {
         this.traits.add(trait);

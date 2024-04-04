@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @Getter
-public class PacketBlock extends Interactable<PacketBlock> {
+public class PacketBlock extends Interactable {
 
     protected WrappedBlockState data;
     private final World world;
