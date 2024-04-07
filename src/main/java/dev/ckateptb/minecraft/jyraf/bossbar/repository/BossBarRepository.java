@@ -1,7 +1,6 @@
-package dev.ckateptb.minecraft.jyraf.repository.packet.block;
+package dev.ckateptb.minecraft.jyraf.bossbar.repository;
 
-import com.github.retrooper.packetevents.util.Vector3i;
-import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
+import dev.ckateptb.minecraft.jyraf.bossbar.BossBar;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.world.AbstractWorldRepository;
 import dev.ckateptb.minecraft.jyraf.repository.world.chunk.AbstractChunkRepository;
@@ -11,38 +10,40 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import reactor.core.publisher.Mono;
 
-public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, PacketBlock> implements Repository.Tickable {
+import java.util.UUID;
 
-    public PacketBlockRepository(World world) {
+public class BossBarRepository extends AbstractWorldRepository<UUID, BossBar> implements Repository.Tickable {
+
+    public BossBarRepository(World world) {
         super(world);
     }
 
     @Override
     public void tick() {
         this.getChunks()
-                .cast(PacketBlockChunkRepository.class)
-                .filter(PacketBlockChunkRepository::shouldTick)
-                .subscribe(PacketBlockChunkRepository::tick);
+                .cast(BossBarChunkRepository.class)
+                .filter(BossBarChunkRepository::shouldTick)
+                .subscribe(BossBarChunkRepository::tick);
     }
 
     @Override
-    protected boolean isValid(PacketBlock entry) {
+    protected boolean isValid(BossBar entry) {
         return this.world.getUID().equals(entry.getWorld().getUID());
     }
 
     @Override
-    protected Vector3i getKey(PacketBlock entry) {
-        return entry.getVector();
+    protected UUID getKey(BossBar entry) {
+        return entry.getUid();
     }
 
     @Override
-    protected long getChunkKey(PacketBlock entry) {
+    protected long getChunkKey(BossBar entry) {
         return Chunk.getChunkKey(entry.getLocation());
     }
 
     @Override
-    protected ChunkRepository<PacketBlock> createChunkRepository(Long chunkKey) {
-        return new PacketBlockChunkRepository(chunkKey);
+    protected ChunkRepository<BossBar> createChunkRepository(Long chunkKey) {
+        return new BossBarChunkRepository(chunkKey);
     }
 
     @Override
@@ -55,41 +56,41 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
 
     }
 
-    public static class PacketBlockChunkRepository extends AbstractChunkRepository<Vector3i, PacketBlock> implements Tickable {
+    public static class BossBarChunkRepository extends AbstractChunkRepository<UUID, BossBar> implements Tickable {
 
-        public PacketBlockChunkRepository(Long chunkKey) {
+        public BossBarChunkRepository(Long chunkKey) {
             super(chunkKey);
         }
 
         @Override
-        protected Vector3i getKey(PacketBlock entry) {
-            return entry.getVector();
+        protected UUID getKey(BossBar entry) {
+            return entry.getUid();
         }
 
         @Override
         public void tick() {
             this.get()
-                    .subscribe(PacketBlock::tick);
+                    .subscribe(BossBar::tick);
         }
 
         @Override
-        public Mono<PacketBlock> add(PacketBlock entry) {
-            return Mono.justOrEmpty(this.entries.getIfPresent(entry.getVector()))
+        public Mono<BossBar> add(BossBar entry) {
+            return Mono.justOrEmpty(this.entries.getIfPresent(entry.getUid()))
                     .flatMap(Mono::fromFuture)
                     .map(this::remove)
                     .flatMap(ignored -> Mono.empty())
                     .switchIfEmpty(Mono.defer(() -> super.add(entry)))
-                    .cast(PacketBlock.class);
+                    .cast(BossBar.class);
         }
 
         @Override
-        public Mono<PacketBlock> remove(PacketBlock entry) {
+        public Mono<BossBar> remove(BossBar entry) {
             return super.remove(entry)
-                    .doOnNext(PacketBlock::remove);
+                    .doOnNext(BossBar::remove);
         }
 
         @Override
-        protected boolean isValid(PacketBlock entry) {
+        protected boolean isValid(BossBar entry) {
             Location location = entry.getLocation();
             long chunkKey = Chunk.getChunkKey(location);
             return this.chunkKey.equals(chunkKey);

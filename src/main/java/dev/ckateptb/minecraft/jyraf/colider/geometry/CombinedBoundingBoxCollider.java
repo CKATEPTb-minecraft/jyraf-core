@@ -8,51 +8,56 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class CombinedBoundingBoxCollider implements Collider {
-    private final World world;
-    private final CombinedIntersectsMode mode;
-    private final Collider[] colliders;
+    private final @NotNull World world;
+    private final @NotNull CombinedIntersectsMode mode;
+    private final @NotNull Collider[] colliders;
 
-    public CombinedBoundingBoxCollider(World world, CombinedIntersectsMode mode, Collider... colliders) {
+    public CombinedBoundingBoxCollider(@NotNull World world, @NotNull CombinedIntersectsMode mode, @NotNull Collider... colliders) {
+        Objects.requireNonNull(world);
+        Objects.requireNonNull(mode);
+        Objects.requireNonNull(colliders);
         this.world = world;
         this.mode = mode;
         this.colliders = colliders;
     }
 
     @Override
-    public CombinedBoundingBoxCollider at(Vector center) {
+    public @NotNull CombinedBoundingBoxCollider at(@NotNull Vector center) {
         return new CombinedBoundingBoxCollider(world, mode, this.getColliders().map(collider ->
                 collider.at(center)).toArray(Collider[]::new));
     }
 
     @Override
-    public CombinedBoundingBoxCollider grow(Vector vector) {
+    public @NotNull CombinedBoundingBoxCollider grow(Vector vector) {
         Collider[] colliders = Arrays.stream(this.colliders).map(collider ->
                 collider.grow(vector)).toArray(Collider[]::new);
         return new CombinedBoundingBoxCollider(world, mode, colliders);
     }
 
     @Override
-    public CombinedBoundingBoxCollider scale(double amount) {
+    public @NotNull CombinedBoundingBoxCollider scale(double amount) {
         return new CombinedBoundingBoxCollider(world, mode, this.getColliders().map(collider ->
                 collider.scale(amount)).toArray(Collider[]::new));
     }
 
     @Override
-    public ImmutableVector getHalfExtents() {
+    public @NotNull ImmutableVector getHalfExtents() {
         return this.getColliders().findFirst().map(Collider::getHalfExtents).orElse(ImmutableVector.ZERO);
     }
 
     @Override
-    public boolean intersects(Collider other) {
+    public boolean intersects(@NotNull Collider other) {
         return mode == CombinedIntersectsMode.ANY ? this.intersectsAny(other) : this.intersectsAll(other);
     }
 
@@ -65,7 +70,7 @@ public class CombinedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public boolean contains(Vector vector) {
+    public boolean contains(@NotNull Vector vector) {
         return mode == CombinedIntersectsMode.ANY ? this.containsAny(vector) : this.containsAll(vector);
     }
 
@@ -78,7 +83,7 @@ public class CombinedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public CombinedBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
+    public @NotNull CombinedBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
         consumer.accept(
                 this.applyFilter(
                         Flux.fromArray(this.colliders)
@@ -94,7 +99,7 @@ public class CombinedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public CombinedBoundingBoxCollider affectBlocks(Consumer<Flux<Block>> consumer) {
+    public @NotNull CombinedBoundingBoxCollider affectBlocks(@NotNull Consumer<Flux<Block>> consumer) {
         consumer.accept(
                 this.applyFilter(
                         Flux.fromArray(this.colliders)
@@ -110,7 +115,7 @@ public class CombinedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public CombinedBoundingBoxCollider affectLocations(Consumer<Flux<Location>> consumer) {
+    public @NotNull CombinedBoundingBoxCollider affectLocations(@NotNull Consumer<Flux<Location>> consumer) {
         consumer.accept(
                 this.applyFilter(
                         Flux.fromArray(this.colliders)
@@ -133,12 +138,12 @@ public class CombinedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public World getWorld() {
+    public @NotNull World getWorld() {
         return world;
     }
 
     @Override
-    public ImmutableVector getCenter() {
+    public @NotNull ImmutableVector getCenter() {
         return this.getColliders().findFirst().map(Collider::getCenter).orElse(ImmutableVector.ZERO);
     }
 

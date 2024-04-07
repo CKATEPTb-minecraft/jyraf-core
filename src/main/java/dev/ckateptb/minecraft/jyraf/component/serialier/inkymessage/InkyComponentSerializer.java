@@ -4,6 +4,9 @@ import dev.ckateptb.minecraft.jyraf.component.serialier.ComponentSerializer;
 import ink.glowing.text.InkyMessage;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 @RequiredArgsConstructor
 public class InkyComponentSerializer implements ComponentSerializer {
@@ -14,11 +17,13 @@ public class InkyComponentSerializer implements ComponentSerializer {
     }
 
 
-    public net.kyori.adventure.text.Component deserialize(String string) {
+    public net.kyori.adventure.text.@NotNull Component deserialize(@NotNull String string) {
+        Objects.requireNonNull(string);
         return this.serializer.deserialize(string);
     }
 
-    public String serialize(Component component) {
+    public @NotNull String serialize(@NotNull Component component) {
+        Objects.requireNonNull(component);
         return this.serializer.serialize(component);
     }
 }

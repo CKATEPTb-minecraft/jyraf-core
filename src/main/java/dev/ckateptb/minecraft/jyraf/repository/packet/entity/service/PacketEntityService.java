@@ -8,7 +8,8 @@ import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
-import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
+import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
+import dev.ckateptb.minecraft.jyraf.packet.interaction.event.PacketInteractEvent;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import dev.ckateptb.minecraft.jyraf.repository.packet.entity.PacketEntityRepository;
@@ -19,17 +20,16 @@ import reactor.core.publisher.Mono;
 @Component
 public class PacketEntityService extends PacketListenerAbstract {
 
-    private final WorldRepositoryService service;
+    private final WorldRepositoryService worldRepositoryService;
 
-    public PacketEntityService(WorldRepositoryService service) {
+    public PacketEntityService(WorldRepositoryService worldRepositoryService) {
         super(PacketListenerPriority.HIGHEST);
-        this.service = service;
+        this.worldRepositoryService = worldRepositoryService;
     }
 
-    private void handleEntityInteract(Player player, PacketEntity entity, boolean rightClick) {
-        PacketEntity.PacketEntityInteractHandler handler = entity.getInteractHandler();
-        if (handler == null) return;
-        handler.handle(player, rightClick ? ClickType.RIGHT : ClickType.LEFT);
+    private void handleEntityInteract(Player player, PacketEntity entity, boolean rightButton) {
+        MouseButton button = MouseButton.right(rightButton);
+        new PacketInteractEvent(player, null, entity, button).callEvent();
     }
 
     @Override
@@ -45,7 +45,7 @@ public class PacketEntityService extends PacketListenerAbstract {
     }
 
     private Mono<PacketEntity> findEntity(Player player, Location location, int id) {
-        return this.service.getRepository(PacketEntity.class, location.getWorld())
+        return this.worldRepositoryService.getRepository(PacketEntity.class, location.getWorld())
                 .cast(PacketEntityRepository.class)
                 .flatMapMany(entityRepository -> entityRepository.getNearbyChunks(location, 6.0D, 6.0D))
                 .flatMap(Repository::get)

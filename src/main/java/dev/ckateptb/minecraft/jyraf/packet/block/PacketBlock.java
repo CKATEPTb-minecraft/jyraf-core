@@ -1,119 +1,69 @@
 package dev.ckateptb.minecraft.jyraf.packet.block;
 
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
-import dev.ckateptb.minecraft.jyraf.packet.enums.ClickType;
+import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
+import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
-import reactor.core.publisher.Flux;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Objects;
 
-public class PacketBlock {
+@Getter
+public class PacketBlock extends Interactable {
 
-    private final Set<Player> allowedViewers = Collections.synchronizedSet(new HashSet<>());
-    private final Set<Player> currentViewers = Collections.synchronizedSet(new HashSet<>());
-    @Getter
-    @Setter
-    private boolean global = true;
-    @Getter
-    protected BlockData data;
-    @Getter
+    protected WrappedBlockState data;
     private final World world;
-    @Getter
-    private final Vector3i position;
-    @Setter
-    @Getter
-    private PacketBlockInteractHandler interactHandler = (player, clickType) -> {
-    };
+    private final Vector3i vector;
 
-    public PacketBlock(Location location, BlockData data) {
-        this.data = data.clone();
+    public PacketBlock(@NotNull Location location, @NotNull BlockData data) {
+        this(location, data, true);
+    }
+
+    public PacketBlock(@NotNull Location location, @NotNull BlockData data, boolean global) {
+        this(location, data, global, new ArrayList<>());
+    }
+
+    public PacketBlock(@NotNull Location location, @NotNull BlockData data, boolean global, @NotNull Collection<Player> allowedViewers) {
+        super(location, allowedViewers);
+        Objects.requireNonNull(data);
+        Objects.requireNonNull(allowedViewers);
+        this.data = SpigotConversionUtil.fromBukkitBlockData(data.clone());
         this.world = location.getWorld();
-        this.position = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        this.global = global;
+        this.vector = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        this.location = location;
+        this.allowedViewers.addAll(allowedViewers);
     }
 
-    public void tick() {
-        Location location = this.getLocation();
-        Colliders.sphere(location, 20)
-                .affectEntities(entities -> {
-                    Flux<Player> flux = entities
-                            .filter(entity -> entity instanceof Player)
-                            .cast(Player.class)
-                            .sort((o1, o2) -> {
-                                Location first = o1.getLocation();
-                                Location second = o2.getLocation();
-                                return (int) (first.distanceSquared(location) - second.distanceSquared(location));
-                            });
-                    if (!this.global) flux = flux.filter(this.allowedViewers::contains);
-                    flux.collectList()
-                            .doOnNext(players -> {
-                                this.currentViewers.removeIf(player -> {
-                                    if (players.contains(player) && player.isOnline()) return false;
-                                    this.breakBlock(player);
-                                    return true;
-                                });
-                                players.forEach(player -> {
-                                    if (this.currentViewers.add(player)) {
-                                        this.placeBlock(player, null);
-                                    }
-                                });
-                            })
-                            .subscribe();
-                });
+    public void playAction(BlockAction action) {
+        this.allowedViewers.forEach(player -> this.playAction(player, action));
     }
 
-    // todo: make instead of actionId enum
-    //       params as well should be only pair depending on action
-    public void playAction(int actionId) {
-        this.playAction(actionId, 0);
+    public void playAction(Player player, BlockAction action) {
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.playBlockAction(player, this, action));
     }
 
-    public void playAction(int actionId, int param) {
-        // todo: callback on it when player joins to area
-        //       and if player broke block (i.e. chest), then, it should still exists
-        this.currentViewers.forEach(viewer -> playAction(viewer, actionId, param));
-    }
-
-    public void playAction(Player player, int actionId) {
-        this.playAction(player, actionId, 0);
-    }
-
-    public void playAction(Player player, int actionId, int param) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.playBlockAction(player, this, actionId, param));
-    }
-
-    public boolean show(Player player) {
-        return this.allowedViewers.add(player);
-    }
-
-    public boolean hide(Player player) {
-        return this.allowedViewers.remove(player);
-    }
-
-    private void placeBlock(Player player, WrapperPlayClientPlayerDigging wrapper) {
+    private void display(Player player, WrapperPlayClientPlayerDigging wrapper) {
         PacketFactory.INSTANCE.get().ifPresent(factory -> {
             factory.placeBlock(player, this);
-            if(wrapper != null) {
-                factory.acknowledgeBlockChanges(player, wrapper.getSequence());
-            }
+            if (wrapper == null) return;
+            factory.acknowledgeBlockChanges(player, wrapper.getSequence());
         });
     }
 
-    private void breakBlock(Player player) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.breakBlock(player, this));
-    }
-
     public void setData(BlockData data) {
-        this.data = data;
+        this.data = SpigotConversionUtil.fromBukkitBlockData(data);
         update();
     }
 
@@ -127,26 +77,70 @@ public class PacketBlock {
 
     public void update(Player player, WrapperPlayClientPlayerDigging wrapper) {
         if (!this.currentViewers.contains(player)) return;
-        this.placeBlock(player, wrapper);
+        this.display(player, wrapper);
     }
 
-    public boolean canView(Player player) {
-        return this.global || this.allowedViewers.contains(player);
+    @Override
+    public void display(Player player) {
+        this.display(player, null);
     }
 
-    public boolean isViewed(Player player) {
-        return this.currentViewers.contains(player);
+    @Override
+    public void destroy(Player player) {
+        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.breakBlock(player, this));
     }
 
+    public Vector3i getVector() {
+        return new Vector3i(this.location.getBlockX(), this.location.getBlockY(), this.location.getBlockZ());
+    }
+
+    public WrappedBlockState getOriginalData() {
+        return SpigotConversionUtil.fromBukkitBlockData(this.location.getBlock().getBlockData());
+    }
+
+    public BlockData getBukkitData() {
+        return SpigotConversionUtil.toBukkitBlockData(this.data);
+    }
+
+    @Override
     public Location getLocation() {
-        return new Location(world, this.position.x, this.position.y, this.position.z);
+        return new Location(world, this.vector.x, this.vector.y, this.vector.z);
     }
 
-    public void remove() {
-        this.currentViewers.forEach(this::breakBlock);
+    public static final class Builder {
+        private final PacketBlock block;
+
+        public Builder(@NotNull Location location, @NotNull BlockData data) {
+            this.block = new PacketBlock(location, data, true);
+        }
+
+        public @NotNull Builder global(boolean global) {
+            this.block.setGlobal(global);
+            return this;
+        }
+
+        public @NotNull Builder interactionHandler(@NotNull InteractionHandler interactionHandler) {
+            Objects.requireNonNull(interactionHandler);
+            this.block.setInteractionHandler(interactionHandler);
+            return this;
+        }
+
+        public @NotNull Builder viewers(@NotNull Player... viewers) {
+            Objects.requireNonNull(viewers);
+            this.block.setGlobal(false);
+            this.block.allowedViewers.addAll(Arrays.stream(viewers).toList());
+            return this;
+        }
+
+        public @NotNull Builder data(@NotNull BlockData data) {
+            Objects.requireNonNull(data);
+            this.block.setData(data);
+            return this;
+        }
+
+        public @NotNull PacketBlock build() {
+            return this.block;
+        }
     }
 
-    public interface PacketBlockInteractHandler {
-        void handle(Player player, ClickType clickType);
-    }
 }

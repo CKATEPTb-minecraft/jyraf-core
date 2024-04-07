@@ -6,10 +6,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.InventoryHolder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface Menu extends InventoryHolder {
-    static MenuBuilder builder() {
+    static @NotNull MenuBuilder builder() {
         return new MenuBuilder();
     }
 

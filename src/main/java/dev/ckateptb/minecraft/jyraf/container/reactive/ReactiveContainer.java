@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -39,52 +40,52 @@ public class ReactiveContainer implements AsyncContainer {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Optional<Mono<T>> getBean(Class<T> beanClass, String qualifier) {
+    public <T> @NotNull Optional<Mono<T>> getBean(@NotNull Class<T> beanClass, @NotNull String qualifier) {
         return Optional.ofNullable(this.beans.getIfPresent(new BeanKey<>(beanClass, qualifier)))
                 .map(future -> Mono.fromFuture((CompletableFuture<T>) future));
     }
 
-    public <T> Optional<Mono<Plugin>> getOwner(Class<T> beanClass, String qualifier) {
+    public <T> @NotNull Optional<Mono<Plugin>> getOwner(@NotNull Class<T> beanClass, @NotNull String qualifier) {
         return Optional.ofNullable(this.owners.getIfPresent(new BeanKey<>(beanClass, qualifier)))
                 .map(Mono::fromFuture);
     }
 
     @Override
-    public void addComponentRegisterHandler(ComponentRegisterHandler handler) {
+    public void addComponentRegisterHandler(@NotNull ComponentRegisterHandler handler) {
         this.componentRegisterHandlers.add(handler);
     }
 
     @Override
-    public void removeComponentRegisterHandler(ComponentRegisterHandler handler) {
+    public void removeComponentRegisterHandler(@NotNull ComponentRegisterHandler handler) {
         this.componentRegisterHandlers.remove(handler);
     }
 
     @Override
-    public void addContainerInitializedHandler(ContainerInitializeHandler handler) {
+    public void addContainerInitializedHandler(@NotNull ContainerInitializeHandler handler) {
         this.containerInitializedHandlers.add(handler);
     }
 
     @Override
-    public void removeContainerInitializedHandler(ContainerInitializeHandler handler) {
+    public void removeContainerInitializedHandler(@NotNull ContainerInitializeHandler handler) {
         this.containerInitializedHandlers.remove(handler);
     }
 
     @Override
-    public <T> void registerBean(Plugin plugin, T bean, String qualifier) {
+    public <T> void registerBean(@NotNull Plugin plugin, @NotNull T bean, @NotNull String qualifier) {
         BeanKey<?> key = new BeanKey<>(bean.getClass(), qualifier);
         this.beans.put(key, CompletableFuture.completedFuture(bean));
         this.owners.put(key, CompletableFuture.completedFuture(plugin));
     }
 
     @Override
-    public <T> boolean containsBean(Class<T> beanClass, String qualifier) {
+    public <T> boolean containsBean(@NotNull Class<T> beanClass, @NotNull String qualifier) {
         return this.getBean(beanClass, qualifier).isPresent();
     }
 
     @Override
     @SneakyThrows
     @SuppressWarnings("UnstableApiUsage")
-    public <P extends Plugin> void scan(P plugin, Predicate<String> filter, String... packages) {
+    public <P extends Plugin> void scan(@NotNull P plugin, @NotNull Predicate<String> filter, String... packages) {
         this.registerBean(plugin, plugin);
         Class<? extends Plugin> pluginClass = plugin.getClass();
         ClassLoader classLoader = pluginClass.getClassLoader();
