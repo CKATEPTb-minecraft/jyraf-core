@@ -15,6 +15,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -28,30 +29,33 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
     public static final CachedReference<Mono<WorldRepositoryService>> WORLD_SERVICE_CACHED_REFERENCE =
             new CachedReference<>(() -> IoC.getBean(WorldRepositoryService.class).orElseGet(Mono::empty));
 
-    protected final World world;
-    protected final ImmutableVector min;
-    protected final ImmutableVector max;
+    protected final @NotNull World world;
+    protected final @NotNull ImmutableVector min;
+    protected final @NotNull ImmutableVector max;
 
-    public AxisAlignedBoundingBoxCollider(World world, ImmutableVector min, ImmutableVector max) {
+    public AxisAlignedBoundingBoxCollider(@NotNull World world, @NotNull ImmutableVector min, @NotNull ImmutableVector max) {
+        java.util.Objects.requireNonNull(world);
+        java.util.Objects.requireNonNull(min);
+        java.util.Objects.requireNonNull(max);
         this.world = world;
         this.min = min.min(max);
         this.max = max.max(min);
     }
 
     @Override
-    public AxisAlignedBoundingBoxCollider at(Vector center) {
+    public @NotNull AxisAlignedBoundingBoxCollider at(@NotNull Vector center) {
         ImmutableVector halfExtents = this.getHalfExtents();
         ImmutableVector immutableCenter = ImmutableVector.of(center);
         return new AxisAlignedBoundingBoxCollider(world, immutableCenter.add(halfExtents.negative()), immutableCenter.add(halfExtents));
     }
 
     @Override
-    public AxisAlignedBoundingBoxCollider grow(Vector vector) {
+    public @NotNull AxisAlignedBoundingBoxCollider grow(Vector vector) {
         return new AxisAlignedBoundingBoxCollider(world, min.subtract(vector), max.add(vector));
     }
 
     @Override
-    public AxisAlignedBoundingBoxCollider scale(double multiplier) {
+    public @NotNull AxisAlignedBoundingBoxCollider scale(double multiplier) {
         return this.scale(multiplier, multiplier, multiplier);
     }
 
@@ -65,17 +69,17 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public ImmutableVector getHalfExtents() {
+    public @NotNull ImmutableVector getHalfExtents() {
         return max.subtract(min).multiply(0.5).abs();
     }
 
     @Override
-    public ImmutableVector getCenter() {
+    public @NotNull ImmutableVector getCenter() {
         return min.add(max.subtract(min).multiply(0.5));
     }
 
     @Override
-    public boolean contains(Vector vector) {
+    public boolean contains(@NotNull Vector vector) {
         return vector.isInAABB(min, max);
     }
 
@@ -89,7 +93,7 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public boolean intersects(Collider other) {
+    public boolean intersects(@NotNull Collider other) {
         World otherWorld = other.getWorld();
         if (!otherWorld.equals(world)) return false;
         if (other instanceof AxisAlignedBoundingBoxCollider aabb) {
@@ -108,7 +112,7 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public AxisAlignedBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
+    public @NotNull AxisAlignedBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
         ImmutableVector center = this.getCenter();
         ImmutableVector vector = min.max(max).subtract(center);
         consumer.accept(Mono.defer(() -> Mono.just(center.toLocation(world)))
@@ -121,7 +125,7 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public AxisAlignedBoundingBoxCollider affectBlocks(Consumer<Flux<Block>> consumer) {
+    public @NotNull AxisAlignedBoundingBoxCollider affectBlocks(@NotNull Consumer<Flux<Block>> consumer) {
         this.affectLocations(flux ->
                 consumer.accept(flux
                         .map(Location::getBlock)
@@ -133,7 +137,7 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public AxisAlignedBoundingBoxCollider affectLocations(Consumer<Flux<Location>> consumer) {
+    public @NotNull AxisAlignedBoundingBoxCollider affectLocations(@NotNull Consumer<Flux<Location>> consumer) {
         ImmutableVector position = this.getCenter();
         double maxExtent = getHalfExtents().maxComponent();
         int radius = (int) (FastMath.ceil(maxExtent) + 1);
@@ -161,7 +165,7 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public World getWorld() {
+    public @NotNull World getWorld() {
         return this.world;
     }
 

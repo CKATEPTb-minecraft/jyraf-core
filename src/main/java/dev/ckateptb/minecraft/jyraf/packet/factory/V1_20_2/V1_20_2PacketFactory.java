@@ -6,11 +6,12 @@ import dev.ckateptb.minecraft.jyraf.packet.factory.V1_19_3.V1_19_3PacketFactory;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
 
 public class V1_20_2PacketFactory extends V1_19_3PacketFactory {
     @Override
-    public void spawnPlayer(Player player, PacketEntity entity) {
+    public void spawnPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
         Mono.defer(() -> {
                     this.addTabPlayer(player, entity);
                     return Mono.just(true);

@@ -13,6 +13,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
@@ -57,7 +58,7 @@ public class OrientedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public OrientedBoundingBoxCollider grow(Vector vector) {
+    public @NotNull OrientedBoundingBoxCollider grow(Vector vector) {
         return new OrientedBoundingBoxCollider(this, center, halfExtents.add(vector));
     }
 
@@ -79,7 +80,7 @@ public class OrientedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public boolean intersects(Collider other) {
+    public boolean intersects(@NotNull Collider other) {
         World otherWorld = other.getWorld();
         if (!otherWorld.equals(world)) return false;
         if (other instanceof OrientedBoundingBoxCollider obb) {
@@ -138,35 +139,35 @@ public class OrientedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public OrientedBoundingBoxCollider at(Vector center) {
+    public @NotNull OrientedBoundingBoxCollider at(@NotNull Vector center) {
         return new OrientedBoundingBoxCollider(this, ImmutableVector.of(center));
     }
 
     @Override
-    public OrientedBoundingBoxCollider scale(double amount) {
+    public @NotNull OrientedBoundingBoxCollider scale(double amount) {
         return new OrientedBoundingBoxCollider(this, center, halfExtents.multiply(amount));
     }
 
     @Override
-    public boolean contains(Vector vector) {
+    public boolean contains(@NotNull Vector vector) {
         ImmutableVector point = ImmutableVector.of(vector);
         return getClosestPosition(point).distanceSquared(point) <= 0.01;
     }
 
     @Override
-    public OrientedBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
+    public @NotNull OrientedBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
         this.wrapToAABB().affectEntities(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
         return this;
     }
 
     @Override
-    public OrientedBoundingBoxCollider affectBlocks(Consumer<Flux<Block>> consumer) {
+    public @NotNull OrientedBoundingBoxCollider affectBlocks(@NotNull Consumer<Flux<Block>> consumer) {
         this.wrapToAABB().affectBlocks(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
         return this;
     }
 
     @Override
-    public OrientedBoundingBoxCollider affectLocations(Consumer<Flux<Location>> consumer) {
+    public @NotNull OrientedBoundingBoxCollider affectLocations(@NotNull Consumer<Flux<Location>> consumer) {
         this.wrapToAABB().affectLocations(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
         return this;
     }
@@ -182,12 +183,12 @@ public class OrientedBoundingBoxCollider implements Collider {
     }
 
     @Override
-    public World getWorld() {
+    public @NotNull World getWorld() {
         return world;
     }
 
     @Override
-    public ImmutableVector getCenter() {
+    public @NotNull ImmutableVector getCenter() {
         return center;
     }
 

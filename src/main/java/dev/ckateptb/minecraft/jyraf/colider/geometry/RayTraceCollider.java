@@ -14,6 +14,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -42,50 +44,50 @@ public class RayTraceCollider implements Collider {
     }
 
     @Override
-    public RayTraceCollider at(Vector center) {
+    public @NotNull RayTraceCollider at(@NotNull Vector center) {
         return new RayTraceCollider(this.world, ImmutableVector.of(center), this.direction, this.distance, this.size);
     }
 
     @Override
-    public RayTraceCollider grow(Vector vector) {
+    public @NotNull RayTraceCollider grow(Vector vector) {
         return new RayTraceCollider(this.world, this.center, this.direction, this.distance + vector.getZ(),
                 this.size + FastMath.max(vector.getX(), vector.getY()));
     }
 
     @Override
-    public RayTraceCollider scale(double amount) {
+    public @Nullable RayTraceCollider scale(double amount) {
         return null;
     }
 
     @Override
-    public ImmutableVector getHalfExtents() {
+    public @NotNull ImmutableVector getHalfExtents() {
         return this.orientedBoundingBoxCollider.getHalfExtents();
     }
 
     @Override
-    public <RT extends Collider> boolean intersects(RT collider) {
+    public <RT extends Collider> boolean intersects(@NotNull RT collider) {
         return this.orientedBoundingBoxCollider.intersects(collider);
     }
 
     @Override
-    public boolean contains(Vector vector) {
+    public boolean contains(@NotNull Vector vector) {
         return this.orientedBoundingBoxCollider.contains(vector);
     }
 
     @Override
-    public RayTraceCollider affectEntities(Consumer<Flux<Entity>> consumer) {
+    public @NotNull RayTraceCollider affectEntities(Consumer<Flux<Entity>> consumer) {
         this.orientedBoundingBoxCollider.affectEntities(consumer);
         return this;
     }
 
     @Override
-    public RayTraceCollider affectBlocks(Consumer<Flux<Block>> consumer) {
+    public @NotNull RayTraceCollider affectBlocks(@NotNull Consumer<Flux<Block>> consumer) {
         this.orientedBoundingBoxCollider.affectBlocks(consumer);
         return this;
     }
 
     @Override
-    public RayTraceCollider affectLocations(Consumer<Flux<Location>> consumer) {
+    public @NotNull RayTraceCollider affectLocations(@NotNull Consumer<Flux<Location>> consumer) {
         this.orientedBoundingBoxCollider.affectLocations(consumer);
         return this;
     }

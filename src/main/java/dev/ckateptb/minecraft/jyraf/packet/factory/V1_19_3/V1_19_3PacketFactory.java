@@ -8,6 +8,7 @@ import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.factory.V1_17.V1_17PacketFactory;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 import java.util.UUID;
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class V1_19_3PacketFactory extends V1_17PacketFactory {
 
     @Override
-    public void addTabPlayer(Player player, PacketEntity entity) {
+    public void addTabPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
         if (entity.getType() != org.bukkit.entity.EntityType.PLAYER) return;
         UUID uniqueId = entity.getUniqueId();
         int entityId = entity.getId();
@@ -31,7 +32,7 @@ public class V1_19_3PacketFactory extends V1_17PacketFactory {
     }
 
     @Override
-    public void removeTabPlayer(Player player, PacketEntity entity) {
+    public void removeTabPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
         this.sendPacket(player, new WrapperPlayServerPlayerInfoRemove(entity.getUniqueId()));
     }
 }

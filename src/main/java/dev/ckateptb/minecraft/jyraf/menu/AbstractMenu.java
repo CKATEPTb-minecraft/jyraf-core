@@ -3,6 +3,7 @@ package dev.ckateptb.minecraft.jyraf.menu;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 @Getter
 @Setter
@@ -17,7 +18,7 @@ public abstract class AbstractMenu implements Menu {
     }
 
     @Override
-    public void open(Player target) {
+    public void open(@NotNull Player target) {
         target.openInventory(this.getInventory());
     }
 
