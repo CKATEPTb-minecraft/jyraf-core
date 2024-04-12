@@ -1,6 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.placeholder;
 
-import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
+import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PAPI {
-    private static final @NotNull CachedReference<Boolean> cache = new CachedReference<>(() ->
+    private static final @NotNull LazyLoader<Boolean> cache = LazyLoader.of(() ->
             Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")
     );
 
@@ -17,8 +17,8 @@ public class PAPI {
     }
 
     public static @NotNull String setPlaceholders(@Nullable Player player, @NotNull String text) {
-        return cache.get().filter(enabled -> enabled)
-                .map(enabled -> PlaceholderAPI.setPlaceholders(player, text))
-                .orElse(text);
+        boolean enable = cache.get();
+        if(!enable) return text;
+        return PlaceholderAPI.setPlaceholders(player, text);
     }
 }

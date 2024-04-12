@@ -1,13 +1,13 @@
 package dev.ckateptb.minecraft.jyraf.colider.geometry;
 
 import com.google.common.base.Objects;
-import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.colider.Collider;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import dev.ckateptb.minecraft.jyraf.repository.entity.EntityRepository;
+import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
 import lombok.Getter;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
@@ -26,8 +26,8 @@ import java.util.function.Consumer;
 
 @Getter
 public class AxisAlignedBoundingBoxCollider implements Collider {
-    public static final CachedReference<Mono<WorldRepositoryService>> WORLD_SERVICE_CACHED_REFERENCE =
-            new CachedReference<>(() -> IoC.getBean(WorldRepositoryService.class).orElseGet(Mono::empty));
+    public static final LazyLoader<Mono<WorldRepositoryService>> WORLD_SERVICE_CACHED_REFERENCE =
+            LazyLoader.of(() -> IoC.getBean(WorldRepositoryService.class).orElseGet(Mono::empty));
 
     protected final @NotNull World world;
     protected final @NotNull ImmutableVector min;
@@ -116,7 +116,7 @@ public class AxisAlignedBoundingBoxCollider implements Collider {
         ImmutableVector center = this.getCenter();
         ImmutableVector vector = min.max(max).subtract(center);
         consumer.accept(Mono.defer(() -> Mono.just(center.toLocation(world)))
-                .flatMapMany(location -> WORLD_SERVICE_CACHED_REFERENCE.get().orElseGet(Mono::empty)
+                .flatMapMany(location -> WORLD_SERVICE_CACHED_REFERENCE.get()
                         .flatMap(worldService -> worldService.getRepository(Entity.class, world))
                         .cast(EntityRepository.class)
                         .flatMapMany(worldRepository -> worldRepository.getNearbyEntities(location, vector.maxComponent())))

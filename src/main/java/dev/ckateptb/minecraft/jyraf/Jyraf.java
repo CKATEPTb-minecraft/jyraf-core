@@ -6,7 +6,6 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
-import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.closable.inject.ClosableInjection;
 import dev.ckateptb.minecraft.jyraf.command.inject.CommandInjection;
 import dev.ckateptb.minecraft.jyraf.config.inject.ConfigurationInjection;
@@ -30,6 +29,7 @@ import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
 import dev.ckateptb.minecraft.jyraf.packet.inject.PacketInjection;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
+import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
 import org.bson.types.ObjectId;
@@ -62,7 +62,7 @@ import java.util.function.Supplier;
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
 
-    private final static CachedReference<GsonConfigurationLoader> GSON_MAPPER = new CachedReference<>(() ->
+    private final static LazyLoader<GsonConfigurationLoader> GSON_MAPPER = LazyLoader.of(() ->
             GsonConfigurationLoader.builder().defaultOptions(ConfigurationOptions.defaults()
                     .shouldCopyDefaults(true)
                     .implicitInitialization(true)
@@ -76,7 +76,7 @@ public class Jyraf extends JavaPlugin {
 
     @Getter
     private static Jyraf plugin;
-    private final CachedReference<PacketEventsAPI<Plugin>> packetAPI = new CachedReference<>(() -> {
+    private final LazyLoader<PacketEventsAPI<Plugin>> packetAPI = LazyLoader.of(() -> {
         PacketEventsAPI<Plugin> packetAPI = SpigotPacketEventsBuilder.build(this);
         packetAPI.getSettings()
                 .bStats(false)
@@ -123,13 +123,13 @@ public class Jyraf extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        this.packetAPI.get().ifPresent(PacketEvents::setAPI);
+        this.packetAPI.consume(PacketEvents::setAPI);
     }
 
     @Override
     public void onEnable() {
         PatheticMapper.initialize(this);
-        this.packetAPI.get().ifPresent(PacketEventsAPI::init);
+        this.packetAPI.consume(PacketEventsAPI::init);
         Bukkit.getPluginManager().registerEvents(new PluginStatusChangeListener(), this);
         IoC.initialize();
     }
@@ -137,7 +137,7 @@ public class Jyraf extends JavaPlugin {
     @Override
     public void onDisable() {
         PatheticMapper.shutdown();
-        this.packetAPI.get().ifPresent(PacketEventsAPI::terminate);
+        this.packetAPI.consume(PacketEventsAPI::terminate);
     }
 
     public Scheduler syncScheduler() {
@@ -145,11 +145,11 @@ public class Jyraf extends JavaPlugin {
     }
 
     public PacketEventsAPI<Plugin> getPacketApi() {
-        return this.packetAPI.getIfPresent();
+        return this.packetAPI.get();
     }
 
     public static GsonConfigurationLoader getGsonMapper() {
-        return GSON_MAPPER.get().orElse(null);
+        return GSON_MAPPER.get();
     }
 
     public static <T> Flux<T> synchronizedFlux(Supplier<Iterable<T>> supplier) {

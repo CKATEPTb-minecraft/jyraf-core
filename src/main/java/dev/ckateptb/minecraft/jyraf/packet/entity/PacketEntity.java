@@ -83,7 +83,7 @@ public class PacketEntity extends Interactable {
     }
 
     public void lookAt(Player player, float yaw, float pitch) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.rotate(player, this, yaw, pitch));
+        PacketFactory.INSTANCE.consume(factory -> factory.rotate(player, this, yaw, pitch));
     }
 
     public void teleport(Location location) {
@@ -98,7 +98,7 @@ public class PacketEntity extends Interactable {
     }
 
     private void teleport(Player player, boolean onGround) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.teleport(player, this, onGround));
+        PacketFactory.INSTANCE.consume(factory -> factory.teleport(player, this, onGround));
     }
 
     public Mono<Location> moveTo(Location location) {
@@ -121,15 +121,15 @@ public class PacketEntity extends Interactable {
     }
 
     protected void setTeam(Player player, TeamColor color) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.createTeam(player, this));
+        PacketFactory.INSTANCE.consume(factory -> factory.createTeam(player, this));
     }
 
     private void spawnPlayer(Player player) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.spawnPlayer(player, this));
+        PacketFactory.INSTANCE.consume(factory -> factory.spawnPlayer(player, this));
     }
 
     private void spawnEntity(Player player) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.spawnEntity(player, this));
+        PacketFactory.INSTANCE.consume(factory -> factory.spawnEntity(player, this));
     }
 
     @Override
@@ -145,7 +145,7 @@ public class PacketEntity extends Interactable {
 
     @Override
     public void destroy(Player player) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.despawnEntity(player, this));
+        PacketFactory.INSTANCE.consume(factory -> factory.despawnEntity(player, this));
     }
 
     public static final class Builder {
