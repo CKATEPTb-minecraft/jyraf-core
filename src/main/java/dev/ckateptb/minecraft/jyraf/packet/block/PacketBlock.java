@@ -25,6 +25,7 @@ public class PacketBlock extends Interactable {
     protected WrappedBlockState data;
     private final World world;
     private final Vector3i vector;
+    private BlockAction lastAction = null;
 
     public PacketBlock(@NotNull Location location, @NotNull BlockData data) {
         this(location, data, true);
@@ -47,7 +48,9 @@ public class PacketBlock extends Interactable {
     }
 
     public void playAction(BlockAction action) {
-        this.allowedViewers.forEach(player -> this.playAction(player, action));
+        if (action != null) this.lastAction = action;
+        this.getCurrentViewers()
+                .subscribe(player -> this.playAction(player, action));
     }
 
     public void playAction(Player player, BlockAction action) {
@@ -57,6 +60,7 @@ public class PacketBlock extends Interactable {
     private void display(Player player, WrapperPlayClientPlayerDigging wrapper) {
         PacketFactory.INSTANCE.consume(factory -> {
             factory.placeBlock(player, this);
+            if (this.lastAction != null) playAction(player, this.lastAction);
             if (wrapper == null) return;
             factory.acknowledgeBlockChanges(player, wrapper.getSequence());
         });
