@@ -8,6 +8,7 @@ import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
@@ -25,6 +26,7 @@ public class PacketBlock extends Interactable {
     protected WrappedBlockState data;
     private final World world;
     private final Vector3i vector;
+    @Setter
     private BlockAction lastAction = null;
 
     public PacketBlock(@NotNull Location location, @NotNull BlockData data) {
@@ -48,9 +50,9 @@ public class PacketBlock extends Interactable {
     }
 
     public void playAction(BlockAction action) {
-        if (action != null) this.lastAction = action;
-        this.getCurrentViewers()
-                .subscribe(player -> this.playAction(player, action));
+        this.lastAction = action;
+        if (action == null) return;
+        this.getCurrentViewers().subscribe(player -> this.playAction(player, action));
     }
 
     public void playAction(Player player, BlockAction action) {
