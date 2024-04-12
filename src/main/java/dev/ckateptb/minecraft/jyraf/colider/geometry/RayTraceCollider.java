@@ -169,7 +169,7 @@ public class RayTraceCollider implements Collider {
         Vector startPos = this.center.toBukkitVector();
         Vector dir = this.direction.clone().normalize().multiply(distance);
         BoundingBox aabb = BoundingBox.of(startPos, startPos).expandDirectional(dir).expand(this.size);
-        return AxisAlignedBoundingBoxCollider.WORLD_SERVICE_CACHED_REFERENCE.get().orElseGet(Mono::empty)
+        return AxisAlignedBoundingBoxCollider.WORLD_SERVICE_CACHED_REFERENCE.get()
                 .flatMap(service -> service.getRepository(Entity.class, this.world))
                 .cast(EntityRepository.class)
                 .flatMapMany(worldRepository -> {
