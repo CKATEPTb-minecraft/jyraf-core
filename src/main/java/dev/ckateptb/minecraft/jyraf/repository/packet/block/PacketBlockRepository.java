@@ -85,7 +85,7 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
         @Override
         public Mono<PacketBlock> remove(PacketBlock entry) {
             return super.remove(entry)
-                    .doOnNext(PacketBlock::remove);
+                    .doOnNext(PacketBlock::destroy);
         }
 
         @Override

@@ -86,7 +86,7 @@ public class BossBarRepository extends AbstractWorldRepository<UUID, BossBar> im
         @Override
         public Mono<BossBar> remove(BossBar entry) {
             return super.remove(entry)
-                    .doOnNext(BossBar::remove);
+                    .doOnNext(BossBar::destroy);
         }
 
         @Override

@@ -26,8 +26,8 @@ public interface IDisplayable {
 
     boolean isViewed(Player player);
 
-    default void remove() {
-        this.getAllowedViewers().subscribe(this::destroy);
+    default void destroy() {
+        this.getCurrentViewers().subscribe(this::destroy);
     }
 
 }
