@@ -59,7 +59,7 @@ import java.util.function.Supplier;
 //  Packet boss bar
 //  Packet scoreboard
 //  Split by subprojects for better dependency control
-//  Разобраться почему Entity repository плохо работает и починить PacketBlock
+//  Починить PacketBlock
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
 
