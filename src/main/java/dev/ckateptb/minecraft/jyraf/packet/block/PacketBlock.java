@@ -47,7 +47,7 @@ public class PacketBlock extends Interactable {
     }
 
     public void playAction(BlockAction action) {
-        this.allowedViewers.forEach(player -> this.playAction(player, action));
+        this.currentViewers.forEach(player -> this.playAction(player, action));
     }
 
     public void playAction(Player player, BlockAction action) {
