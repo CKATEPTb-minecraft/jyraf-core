@@ -43,8 +43,9 @@ public abstract class AbstractWorldRepository<K, T> implements WorldRepository<T
 
     @Override
     public Mono<T> remove(T entry) {
-        long chunkKey = this.getChunkKey(entry);
-        return this.getChunk(chunkKey)
+        return this.getCachedChunkKey(this.getKey(entry))
+                .switchIfEmpty(Mono.defer(() -> Mono.just(this.getChunkKey(entry))))
+                .flatMap(this::getChunk)
                 .flatMap(chunkRepository -> Mono.justOrEmpty(this.cache.asMap().remove(this.getKey(entry)))
                         .flatMap(Mono::fromFuture)
                         .flatMap(ignored -> chunkRepository.remove(entry)));

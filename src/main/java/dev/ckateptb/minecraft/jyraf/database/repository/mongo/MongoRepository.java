@@ -10,8 +10,8 @@ import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
-import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.database.repository.Repository;
+import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.bson.Document;
@@ -35,7 +35,7 @@ public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
     protected final String database;
     private MongoClient client;
     private MongoCollection<Document> collection;
-    private CachedReference<MongoCollection<Entity>> dao;
+    private final LazyLoader.Later<MongoCollection<Entity>> dao = LazyLoader.later();
     private String idField;
     private Class<Entity> entityClass;
 
@@ -56,7 +56,7 @@ public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
         String name = annotation.tableName();
         this.idField = this.getIdField();
         this.collection = database.getCollection(name);
-        this.dao = new CachedReference<>(() -> database.getCollection(name, entityClass));
+        this.dao.defer(() -> database.getCollection(name, entityClass));
     }
 
     private String getIdField() {
@@ -124,7 +124,7 @@ public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
     }
 
     public MongoCollection<Entity> dao() {
-        return this.dao.get().orElse(null);
+        return this.dao.get();
     }
 
     public MongoCollection<Document> document() {

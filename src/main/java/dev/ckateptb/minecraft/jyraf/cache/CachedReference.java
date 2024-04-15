@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+@Deprecated
 public class CachedReference<T> {
     @Nullable
     private final Supplier<T> supplier;

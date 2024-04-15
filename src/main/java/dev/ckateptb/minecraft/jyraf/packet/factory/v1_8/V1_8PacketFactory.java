@@ -10,12 +10,12 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
-import dev.ckateptb.minecraft.jyraf.cache.CachedReference;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
+import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -28,9 +28,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class V1_8PacketFactory {
-    private final static CachedReference<PlayerManager> PACKET_MANAGER = new CachedReference<>(() ->
+    private final static LazyLoader<PlayerManager> PACKET_MANAGER = LazyLoader.of(() ->
             Jyraf.getPlugin().getPacketApi().getPlayerManager());
-    private final static CachedReference<ClientVersion> CLIENT_VERSION = new CachedReference<>(() ->
+    private final static LazyLoader<ClientVersion> CLIENT_VERSION = LazyLoader.of(() ->
             Jyraf.getPlugin().getPacketApi().getServerManager().getVersion().toClientVersion());
 
     public void sendMetadata(Player player, PacketEntity entity) {
@@ -152,7 +152,7 @@ public class V1_8PacketFactory {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
         EntityType type = SpigotConversionUtil.fromBukkitEntityType(entity.getType());
-        boolean legacy = type.getLegacyId(CLIENT_VERSION.force()) == -1;
+        boolean legacy = type.getLegacyId(CLIENT_VERSION.get()) == -1;
         Location location = SpigotConversionUtil.fromBukkitLocation(entity.getLocation());
         this.sendPacket(player, legacy ?
                 new WrapperPlayServerSpawnLivingEntity(entity.getId(), entity.getUniqueId(), type, location.getPosition(),
@@ -172,6 +172,6 @@ public class V1_8PacketFactory {
     public void sendPacket(@NotNull Player player, @NotNull PacketWrapper<?> packet) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(packet);
-        PACKET_MANAGER.get().ifPresent(playerManager -> playerManager.sendPacket(player, packet));
+        PACKET_MANAGER.consume(playerManager -> playerManager.sendPacket(player, packet));
     }
 }

@@ -47,15 +47,15 @@ public class PacketBlock extends Interactable {
     }
 
     public void playAction(BlockAction action) {
-        this.allowedViewers.forEach(player -> this.playAction(player, action));
+        this.currentViewers.forEach(player -> this.playAction(player, action));
     }
 
     public void playAction(Player player, BlockAction action) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.playBlockAction(player, this, action));
+        PacketFactory.INSTANCE.consume(factory -> factory.playBlockAction(player, this, action));
     }
 
     private void display(Player player, WrapperPlayClientPlayerDigging wrapper) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> {
+        PacketFactory.INSTANCE.consume(factory -> {
             factory.placeBlock(player, this);
             if (wrapper == null) return;
             factory.acknowledgeBlockChanges(player, wrapper.getSequence());
@@ -87,7 +87,7 @@ public class PacketBlock extends Interactable {
 
     @Override
     public void destroy(Player player) {
-        PacketFactory.INSTANCE.get().ifPresent(factory -> factory.breakBlock(player, this));
+        PacketFactory.INSTANCE.consume(factory -> factory.breakBlock(player, this));
     }
 
     public Vector3i getVector() {
