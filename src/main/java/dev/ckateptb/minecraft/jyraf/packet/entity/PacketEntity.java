@@ -15,11 +15,13 @@ import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 import java.util.Collection;
 import java.util.UUID;
 
 // TODO Entity пропадают когда меняют чанк, разобраться и исправить.
+//    Разобраться с DisplayBlock и ему подобными
 @Getter
 public class PacketEntity extends RepositoryManaged {
     private final int id;
@@ -27,6 +29,7 @@ public class PacketEntity extends RepositoryManaged {
     private final EntityType type;
     private final EntityMeta meta;
     private final Location location;
+
     protected PacketEntity(int id, UUID uuid, EntityType type, EntityMeta meta, Location location) {
         meta.getMetadata().getEntity().defer(() -> this);
         this.id = id;
@@ -60,6 +63,15 @@ public class PacketEntity extends RepositoryManaged {
         PacketFactory.INSTANCE.consume(factory -> {
             for (Player player : players) {
                 factory.rotateEntity(player, this, yaw, pitch);
+            }
+        });
+    }
+
+    public void velocity(Vector vector, Collection<Player> players) {
+        PacketFactory.INSTANCE.consume(factory -> {
+            for (Player player : players) {
+                factory.velocityEntity(player, this, vector);
+                this.location.add(vector);
             }
         });
     }

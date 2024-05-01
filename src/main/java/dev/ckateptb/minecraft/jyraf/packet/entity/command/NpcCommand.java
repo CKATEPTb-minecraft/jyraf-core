@@ -4,7 +4,6 @@ import cloud.commandframework.annotations.Argument;
 import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.CommandPermission;
 import com.github.retrooper.packetevents.protocol.player.TextureProperty;
-import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
@@ -12,19 +11,20 @@ import dev.ckateptb.minecraft.jyraf.packet.entity.PacketPlayer;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.entity.goal.FallEntityGoal;
 import dev.ckateptb.minecraft.jyraf.packet.entity.goal.LookEntityGoal;
-import dev.ckateptb.minecraft.jyraf.packet.entity.goal.MoveEntityGoal;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.EntityMeta;
+import dev.ckateptb.minecraft.jyraf.packet.entity.meta.display.BlockDisplayMeta;
+import dev.ckateptb.minecraft.jyraf.packet.entity.meta.other.FallingBlockMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.PlayerMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.skin.Skin;
 import dev.ckateptb.minecraft.jyraf.packet.goal.PacketGoal;
 import dev.ckateptb.minecraft.jyraf.packet.property.Property;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.patheloper.api.pathing.strategy.strategies.JumpablePathfinderStrategy;
 
 import java.util.List;
 
@@ -46,6 +46,13 @@ public class NpcCommand implements Command {
             List<TextureProperty> textureProperties = Skin.from(sender).block();
             player.setSkin(textureProperties);
         }
+        if (meta instanceof FallingBlockMeta fallingBlockMeta) {
+            fallingBlockMeta.setBlockStateId(SpigotConversionUtil.fromBukkitBlockData(Material.STONE.createBlockData()).getGlobalId());
+            fallingBlockMeta.setHasNoGravity(true);
+        }
+        if (meta instanceof BlockDisplayMeta blockDisplayMeta) {
+            blockDisplayMeta.setBlockId(SpigotConversionUtil.fromBukkitBlockData(Material.SAND.createBlockData()).getGlobalId());
+        }
         if (meta instanceof PlayerMeta playerMeta) {
             playerMeta.setCapeEnabled(true);
             playerMeta.setHatEnabled(true);
@@ -60,9 +67,5 @@ public class NpcCommand implements Command {
         this.service.getRepository(PacketEntity.class, sender.getWorld())
                 .flatMap(repository -> repository.add(entity))
                 .subscribe();
-
-        Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () -> {
-            entity.addGoal(new MoveEntityGoal(sender.getLocation(), new JumpablePathfinderStrategy()));
-        }, 60);
     }
 }
