@@ -19,12 +19,12 @@ public class PacketEntityRepository extends AbstractWorldRepository<UUID, Packet
 
     @Override
     protected boolean isValid(PacketEntity entry) {
-        return this.world.getUID().equals(entry.getWorld().getUID());
+        return this.world.getUID().equals(entry.getLocation().getWorld().getUID());
     }
 
     @Override
     protected UUID getKey(PacketEntity entry) {
-        return entry.getUniqueId();
+        return entry.getUuid();
     }
 
     @Override
@@ -44,7 +44,7 @@ public class PacketEntityRepository extends AbstractWorldRepository<UUID, Packet
                 .filter(PacketEntityChunkRepository::shouldTick)
                 .doOnNext(PacketEntityChunkRepository::tick)
                 .flatMap(Repository::get)
-                .filterWhen(entity -> this.getCachedChunkKey(entity.getUniqueId())
+                .filterWhen(entity -> this.getCachedChunkKey(entity.getUuid())
                         .map(chunkKey -> !chunkKey.equals(Chunk.getChunkKey(entity.getLocation()))))
                 .flatMap(this::remove)
                 .flatMap(this::add)
@@ -68,7 +68,7 @@ public class PacketEntityRepository extends AbstractWorldRepository<UUID, Packet
 
         @Override
         protected UUID getKey(PacketEntity entry) {
-            return entry.getUniqueId();
+            return entry.getUuid();
         }
 
         @Override
@@ -86,7 +86,7 @@ public class PacketEntityRepository extends AbstractWorldRepository<UUID, Packet
         @Override
         public Mono<PacketEntity> remove(PacketEntity entry) {
             return super.remove(entry)
-                    .doOnNext(PacketEntity::destroy);
+                    .doOnNext(entity -> entity.despawn(entity.getCurrentViewers()));
         }
 
         @Override

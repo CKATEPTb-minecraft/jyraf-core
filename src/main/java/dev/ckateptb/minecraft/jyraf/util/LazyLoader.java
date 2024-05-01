@@ -42,6 +42,10 @@ public class LazyLoader<T> {
             this.supplier = supplier;
         }
 
+        public boolean isDefined() {
+            return this.supplier != null;
+        }
+
         @Override
         public T get() {
             Validate.notNull(this.supplier, "Later, the lazy loader has not yet been initialized. " +

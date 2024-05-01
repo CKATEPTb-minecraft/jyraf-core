@@ -1,6 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.packet.factory.V1_17;
 
-import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.factory.v1_8.V1_8PacketFactory;
@@ -13,12 +12,10 @@ public class V1_17PacketFactory extends V1_8PacketFactory {
     @Override
     public void spawnEntity(@NotNull Player player, @NotNull PacketEntity entity) {
         Location location = entity.getLocation();
-        this.sendPacket(player, new WrapperPlayServerSpawnEntity(entity.getId(), entity.getUniqueId(),
+        this.sendPacket(player, new WrapperPlayServerSpawnEntity(entity.getId(), entity.getUuid(),
                 SpigotConversionUtil.fromBukkitEntityType(entity.getType()),
                 SpigotConversionUtil.fromBukkitLocation(location),
-                location.getYaw(), 0, new Vector3d()
+                location.getYaw(), 0, null
         ));
-        this.sendMetadata(player, entity);
-        this.createTeam(player, entity);
     }
 }

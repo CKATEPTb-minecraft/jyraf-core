@@ -2,9 +2,8 @@ package dev.ckateptb.minecraft.jyraf.packet.factory.v1_8;
 
 import com.github.retrooper.packetevents.manager.player.PlayerManager;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import com.github.retrooper.packetevents.protocol.player.GameMode;
-import com.github.retrooper.packetevents.protocol.player.UserProfile;
+import com.github.retrooper.packetevents.protocol.player.*;
+import com.github.retrooper.packetevents.protocol.potion.PotionType;
 import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
@@ -13,19 +12,19 @@ import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
+import dev.ckateptb.minecraft.jyraf.packet.entity.PacketLivingEntity;
+import dev.ckateptb.minecraft.jyraf.packet.entity.PacketPlayer;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class V1_8PacketFactory {
     private final static LazyLoader<PlayerManager> PACKET_MANAGER = LazyLoader.of(() ->
@@ -33,13 +32,27 @@ public class V1_8PacketFactory {
     private final static LazyLoader<ClientVersion> CLIENT_VERSION = LazyLoader.of(() ->
             Jyraf.getPlugin().getPacketApi().getServerManager().getVersion().toClientVersion());
 
-    public void sendMetadata(Player player, PacketEntity entity) {
+    public void metadataEntity(Player player, PacketEntity entity) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
-        // TODO implement
+        this.sendPacket(player, entity.getMeta().createPacket());
     }
 
-    public void teleport(@NotNull Player player, @NotNull PacketEntity entity, boolean onGround) {
+    public void potionEntity(@NotNull Player player, @NotNull PacketLivingEntity entity, PotionType type, int amplifier, int duration, byte flags) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
+        int entityId = entity.getId();
+        this.sendPacket(player, new WrapperPlayServerEntityEffect(entityId, type, amplifier, duration, flags));
+    }
+
+    public void animationEntity(@NotNull Player player, @NotNull PacketLivingEntity entity, WrapperPlayServerEntityAnimation.EntityAnimationType animation) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
+        int entityId = entity.getId();
+        this.sendPacket(player, new WrapperPlayServerEntityAnimation(entityId, animation));
+    }
+
+    public void teleportEntity(@NotNull Player player, @NotNull PacketEntity entity, boolean onGround) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
         int entityId = entity.getId();
@@ -49,7 +62,7 @@ public class V1_8PacketFactory {
         this.sendPacket(player, new WrapperPlayServerEntityHeadLook(entityId, location.getYaw()));
     }
 
-    public void rotate(@NotNull Player player, @NotNull PacketEntity entity, float yaw, float pitch) {
+    public void rotateEntity(@NotNull Player player, @NotNull PacketEntity entity, float yaw, float pitch) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
         int entityId = entity.getId();
@@ -57,7 +70,7 @@ public class V1_8PacketFactory {
         this.sendPacket(player, new WrapperPlayServerEntityRotation(entityId, yaw, pitch, true));
     }
 
-    public void createTeam(@NotNull Player player, @NotNull PacketEntity entity) {
+    public void createEntityTeam(@NotNull Player player, @NotNull PacketEntity entity, @Nullable TeamColor teamColor) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
         String team = "npc-team-" + entity.getId();
@@ -66,60 +79,40 @@ public class V1_8PacketFactory {
                 Text.of(" "), null, null,
                 WrapperPlayServerTeams.NameTagVisibility.NEVER,
                 WrapperPlayServerTeams.CollisionRule.NEVER,
-                Optional.of(entity.getTeamColor()).orElse(TeamColor.WHITE).getKyori(),
+                Optional.ofNullable(teamColor).orElse(TeamColor.WHITE).getKyori(),
                 WrapperPlayServerTeams.OptionData.NONE
         );
         this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.CREATE, info));
-        String id = entity.getType() == org.bukkit.entity.EntityType.PLAYER ? Integer.toString(entity.getId()) : entity.getUniqueId().toString();
+        String id = entity.getType() == org.bukkit.entity.EntityType.PLAYER ? Integer.toString(entity.getId()) : entity.getUuid().toString();
         this.sendPacket(player, new WrapperPlayServerTeams(team, WrapperPlayServerTeams.TeamMode.ADD_ENTITIES,
                 (WrapperPlayServerTeams.ScoreBoardTeamInfo) null, id));
     }
 
-    public void addTabPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
+    public void addPlayerToTab(@NotNull Player player, @NotNull PacketPlayer entity) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
-        if (entity.getType() != org.bukkit.entity.EntityType.PLAYER) return;
-        UUID uniqueId = entity.getUniqueId();
-        int entityId = entity.getId();
-        UserProfile profile = new UserProfile(uniqueId, Integer.toString(entityId));
-        // TODO APPLY SKIN
-//        profile.setTextureProperties();
         this.sendPacket(player, new WrapperPlayServerPlayerInfo(
                 WrapperPlayServerPlayerInfo.Action.ADD_PLAYER, new WrapperPlayServerPlayerInfo.PlayerData(
-                Text.of("NPC" + entityId),
-                profile, GameMode.CREATIVE, 1)));
+                Text.of("NPC" + entity.getId()),
+                entity.getProfile(), GameMode.CREATIVE, 1)));
     }
 
-    public void removeTabPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
+    public void removePlayerFromTab(@NotNull Player player, @NotNull PacketPlayer entity) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
         if (entity.getType() != org.bukkit.entity.EntityType.PLAYER) return;
         this.sendPacket(player, new WrapperPlayServerPlayerInfo(
                 WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER, new WrapperPlayServerPlayerInfo.PlayerData(null,
-                new UserProfile(entity.getUniqueId(), null), null, -1)));
+                entity.getProfile(), null, -1)));
     }
 
-    public void spawnPlayer(@NotNull Player player, @NotNull PacketEntity entity) {
+    public void spawnPlayer(@NotNull Player player, @NotNull PacketPlayer entity) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
-        Mono.defer(() -> {
-                    this.addTabPlayer(player, entity);
-                    return Mono.just(true);
-                })
-                .doFinally((signalType) -> Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(),
-                        () -> this.removeTabPlayer(player, entity), 60))
-                .subscribe(ignored -> {
-                    this.createTeam(player, entity);
-                    org.bukkit.Location location = entity.getLocation();
-                    int entityId = entity.getId();
-                    float yaw = location.getYaw();
-                    this.sendPacket(player, new WrapperPlayServerSpawnPlayer(entityId, entity.getUniqueId(),
-                            SpigotConversionUtil.fromBukkitLocation(location).getPosition(),
-                            yaw, location.getPitch(), Collections.emptyList()));
-                    this.sendPacket(player, new WrapperPlayServerEntityHeadLook(entityId, yaw));
-                    this.sendMetadata(player, entity);
-                    this.createTeam(player, entity);
-                });
+        org.bukkit.Location location = entity.getLocation();
+        this.sendPacket(player, new WrapperPlayServerSpawnPlayer(entity.getId(), entity.getUuid(),
+                SpigotConversionUtil.fromBukkitLocation(location).getPosition(),
+                location.getYaw(), location.getPitch(), Collections.emptyList()));
     }
 
     public void acknowledgeBlockChanges(@NotNull Player player, int sequence) {
@@ -152,21 +145,32 @@ public class V1_8PacketFactory {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
         EntityType type = SpigotConversionUtil.fromBukkitEntityType(entity.getType());
-        boolean legacy = type.getLegacyId(CLIENT_VERSION.get()) == -1;
         Location location = SpigotConversionUtil.fromBukkitLocation(entity.getLocation());
-        this.sendPacket(player, legacy ?
-                new WrapperPlayServerSpawnLivingEntity(entity.getId(), entity.getUniqueId(), type, location.getPosition(),
+        this.sendPacket(player, type.getLegacyId(CLIENT_VERSION.get()) == -1 ?
+                new WrapperPlayServerSpawnLivingEntity(entity.getId(), entity.getUuid(), type, location.getPosition(),
                         location.getYaw(), location.getPitch(), location.getYaw(), new Vector3d(), Collections.emptyList()) :
-                new WrapperPlayServerSpawnEntity(entity.getId(), Optional.of(entity.getUniqueId()), type, location.getPosition(),
+                new WrapperPlayServerSpawnEntity(entity.getId(), Optional.of(entity.getUuid()), type, location.getPosition(),
                         location.getPitch(), location.getYaw(), location.getYaw(), 0, Optional.empty()));
-        this.sendMetadata(player, entity);
-        this.createTeam(player, entity);
     }
 
     public void despawnEntity(@NotNull Player player, @NotNull PacketEntity entity) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(entity);
         this.sendPacket(player, new WrapperPlayServerDestroyEntities(entity.getId()));
+    }
+
+    public void equipEntity(@NotNull Player player, @NotNull PacketLivingEntity entity) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
+        List<Equipment> equipment = Arrays.stream(EquipmentSlot.values())
+                .map(slot -> {
+                    ItemStack item = entity.getItem(slot);
+                    if (item.getType().isAir()) return null;
+                    return new Equipment(slot, SpigotConversionUtil.fromBukkitItemStack(item));
+                })
+                .filter(Objects::nonNull)
+                .toList();
+        this.sendPacket(player, new WrapperPlayServerEntityEquipment(entity.getId(), equipment));
     }
 
     public void sendPacket(@NotNull Player player, @NotNull PacketWrapper<?> packet) {

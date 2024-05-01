@@ -66,3 +66,10 @@ authors: ...
 description: ...
 ```
 * The capabilities of jyraf-core are so great that you will have to wait until I make a wiki or figure it out yourself.
+
+# Credits
+- The [contributors](https://github.com/CKATEPTb-minecraft/jyraf-core/graphs/contributors) of the project
+- [Tofaa2](https://github.com/Tofaa2/) for [EntityMeta](https://github.com/Tofaa2/EntityLib)
+
+# License
+This project is licensed under the [GPL-3.0 license](https://github.com/CKATEPTb-minecraft/jyraf-core/blob/development/LICENSE.md).
