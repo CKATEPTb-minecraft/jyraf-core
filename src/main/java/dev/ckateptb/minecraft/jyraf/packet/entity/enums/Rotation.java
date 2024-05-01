@@ -9,6 +9,6 @@ public enum Rotation {
     FLIPPED,
     FLIPPED_45,
     COUNTER_CLOCKWISE,
-    COUNTER_CLOCKWISE_45;
+    COUNTER_CLOCKWISE_45
 
 }

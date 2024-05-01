@@ -29,7 +29,7 @@ public class PlayerInteractService {
     }
 
     public boolean fireInteract(Player player, MouseButton button, Block block, Entity entity,
-                             PacketBlock packetBlock, PacketEntity packetEntity) {
+                                PacketBlock packetBlock, PacketEntity packetEntity) {
         return new PlayerInteractEvent(player, button, block, entity,
                 packetBlock, packetEntity).callEvent();
     }

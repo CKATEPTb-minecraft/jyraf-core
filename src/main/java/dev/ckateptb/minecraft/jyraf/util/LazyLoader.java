@@ -13,6 +13,14 @@ public class LazyLoader<T> {
         this.supplier = supplier;
     }
 
+    public static <T> LazyLoader<T> of(Supplier<T> supplier) {
+        return new LazyLoader<>(supplier);
+    }
+
+    public static <T> Later<T> later() {
+        return new Later<>();
+    }
+
     public T get() {
         if (this.value == null) this.value = this.supplier.get();
         return this.value;
@@ -22,14 +30,6 @@ public class LazyLoader<T> {
         T value = this.get();
         action.accept(value);
         return this;
-    }
-
-    public static <T> LazyLoader<T> of(Supplier<T> supplier) {
-        return new LazyLoader<>(supplier);
-    }
-
-    public static <T> Later<T> later() {
-        return new Later<>();
     }
 
     public static class Later<T> extends LazyLoader<T> {

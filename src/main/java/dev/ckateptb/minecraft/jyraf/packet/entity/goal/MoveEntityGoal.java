@@ -15,10 +15,8 @@ import org.patheloper.mapping.PatheticMapper;
 import org.patheloper.mapping.bukkit.BukkitMapper;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class MoveEntityGoal extends PacketGoal<PacketEntity> {

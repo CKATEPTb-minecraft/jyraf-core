@@ -33,9 +33,9 @@ import java.util.Map;
 public class MongoRepository<Entity, Id> implements Repository<Entity, Id> {
     protected final String url;
     protected final String database;
+    private final LazyLoader.Later<MongoCollection<Entity>> dao = LazyLoader.later();
     private MongoClient client;
     private MongoCollection<Document> collection;
-    private final LazyLoader.Later<MongoCollection<Entity>> dao = LazyLoader.later();
     private String idField;
     private Class<Entity> entityClass;
 

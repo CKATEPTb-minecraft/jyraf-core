@@ -12,10 +12,10 @@ import reactor.core.publisher.Mono;
 public abstract class AbstractChunkRepository<K, T> implements ChunkRepository<T> {
     @Getter
     protected final Long chunkKey;
+    protected final AsyncCache<K, T> entries = Caffeine.newBuilder().buildAsync();
     @Getter
     @Setter
     private boolean loaded = true;
-    protected final AsyncCache<K, T> entries = Caffeine.newBuilder().buildAsync();
 
     protected abstract K getKey(T entry);
 

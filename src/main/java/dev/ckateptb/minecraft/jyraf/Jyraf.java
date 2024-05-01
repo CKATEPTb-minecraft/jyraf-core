@@ -122,6 +122,15 @@ public class Jyraf extends JavaPlugin {
         return SCHEDULER_CACHE.get(plugin, SyncScheduler::new);
     }
 
+    public static GsonConfigurationLoader getGsonMapper() {
+        return GSON_MAPPER.get();
+    }
+
+    public static <T> Flux<T> synchronizedFlux(Supplier<Iterable<T>> supplier) {
+        return Flux.defer(() -> Flux.fromIterable(supplier.get()))
+                .subscribeOn(Jyraf.getPlugin().syncScheduler());
+    }
+
     @Override
     public void onLoad() {
         this.packetAPI.consume(PacketEvents::setAPI);
@@ -147,14 +156,5 @@ public class Jyraf extends JavaPlugin {
 
     public PacketEventsAPI<Plugin> getPacketApi() {
         return this.packetAPI.get();
-    }
-
-    public static GsonConfigurationLoader getGsonMapper() {
-        return GSON_MAPPER.get();
-    }
-
-    public static <T> Flux<T> synchronizedFlux(Supplier<Iterable<T>> supplier) {
-        return Flux.defer(() -> Flux.fromIterable(supplier.get()))
-                .subscribeOn(Jyraf.getPlugin().syncScheduler());
     }
 }

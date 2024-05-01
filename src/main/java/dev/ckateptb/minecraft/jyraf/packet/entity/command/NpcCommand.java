@@ -25,7 +25,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.patheloper.api.pathing.strategy.strategies.JumpablePathfinderStrategy;
-import org.patheloper.api.pathing.strategy.strategies.PlayerWalkableStrategy;
 
 import java.util.List;
 

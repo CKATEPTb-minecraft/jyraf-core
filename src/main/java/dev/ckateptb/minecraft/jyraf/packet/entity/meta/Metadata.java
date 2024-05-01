@@ -20,9 +20,9 @@ public class Metadata {
     private final int entityId;
     private final Map<Byte, EntityData> notNotifiedChanges = new HashMap<>();
     private final Map<Byte, EntityData> metadataMap = new ConcurrentHashMap<>();
-    private volatile boolean notifyAboutChanges = true;
     @Getter
     private final LazyLoader.Later<PacketEntity> entity = LazyLoader.later();
+    private volatile boolean notifyAboutChanges = true;
 
     public Metadata(int entityId) {
         this.entityId = entityId;

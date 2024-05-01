@@ -30,7 +30,8 @@ public interface Menu extends InventoryHolder {
 
     void onClick(InventoryClickEvent event);
 
-    @Nullable CloseHandler getCloseHandler();
+    @Nullable
+    CloseHandler getCloseHandler();
 
     void setCloseHandler(CloseHandler handler);
 

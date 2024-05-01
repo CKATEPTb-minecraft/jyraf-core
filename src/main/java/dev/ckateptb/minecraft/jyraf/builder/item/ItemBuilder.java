@@ -223,6 +223,29 @@ public class ItemBuilder implements Builder<ItemStack> {
         return this.item;
     }
 
+    public enum Color {
+        WHITE,
+        ORANGE,
+        MAGENTA,
+        LIGHT_BLUE,
+        YELLOW,
+        LIME,
+        PINK,
+        GRAY,
+        LIGHT_GRAY,
+        CYAN,
+        PURPLE,
+        BLUE,
+        BROWN,
+        GREEN,
+        RED,
+        BLACK;
+
+        short data() {
+            return (short) this.ordinal();
+        }
+    }
+
     public class BookBuilder {
         public BookBuilder enchant(@NotNull Enchantment enchantment, int level) {
             Objects.requireNonNull(enchantment);
@@ -309,29 +332,6 @@ public class ItemBuilder implements Builder<ItemStack> {
             Objects.requireNonNull(baseData);
             ((PotionMeta) ItemBuilder.this.meta).setBasePotionData(baseData);
             return this;
-        }
-    }
-
-    public enum Color {
-        WHITE,
-        ORANGE,
-        MAGENTA,
-        LIGHT_BLUE,
-        YELLOW,
-        LIME,
-        PINK,
-        GRAY,
-        LIGHT_GRAY,
-        CYAN,
-        PURPLE,
-        BLUE,
-        BROWN,
-        GREEN,
-        RED,
-        BLACK;
-
-        short data() {
-            return (short) this.ordinal();
         }
     }
 

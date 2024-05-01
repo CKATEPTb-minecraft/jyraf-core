@@ -18,7 +18,7 @@ public class PAPI {
 
     public static @NotNull String setPlaceholders(@Nullable Player player, @NotNull String text) {
         boolean enable = cache.get();
-        if(!enable) return text;
+        if (!enable) return text;
         return PlaceholderAPI.setPlaceholders(player, text);
     }
 }

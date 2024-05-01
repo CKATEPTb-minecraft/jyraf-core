@@ -1,12 +1,10 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity;
 
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.EntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.LivingEntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
-import dev.ckateptb.minecraft.jyraf.packet.goal.PacketGoal;
 import dev.ckateptb.minecraft.jyraf.packet.goal.view.ViewGoal;
 import dev.ckateptb.minecraft.jyraf.packet.managed.RepositoryManaged;
 import dev.ckateptb.minecraft.jyraf.packet.property.Property;
@@ -24,6 +22,21 @@ import java.util.UUID;
 // TODO Entity пропадают когда меняют чанк, разобраться и исправить.
 @Getter
 public class PacketEntity extends RepositoryManaged {
+    private final int id;
+    private final UUID uuid;
+    private final EntityType type;
+    private final EntityMeta meta;
+    private final Location location;
+    protected PacketEntity(int id, UUID uuid, EntityType type, EntityMeta meta, Location location) {
+        meta.getMetadata().getEntity().defer(() -> this);
+        this.id = id;
+        this.uuid = uuid;
+        this.type = type;
+        this.meta = meta;
+        this.location = location;
+        this.addGoal(new ViewGoal());
+    }
+
     public static PacketEntity entity(EntityType type, Location location) {
         if (type.isAlive()) return living(type, location);
         int id = SpigotReflectionUtil.generateEntityId();
@@ -41,22 +54,6 @@ public class PacketEntity extends RepositoryManaged {
 
     public static PacketPlayer player(Location location) {
         return new PacketPlayer(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), location);
-    }
-
-    private final int id;
-    private final UUID uuid;
-    private final EntityType type;
-    private final EntityMeta meta;
-    private final Location location;
-
-    protected PacketEntity(int id, UUID uuid, EntityType type, EntityMeta meta, Location location) {
-        meta.getMetadata().getEntity().defer(() -> this);
-        this.id = id;
-        this.uuid = uuid;
-        this.type = type;
-        this.meta = meta;
-        this.location = location;
-        this.addGoal(new ViewGoal());
     }
 
     public void rotate(float yaw, float pitch, Collection<Player> players) {

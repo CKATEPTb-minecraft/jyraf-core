@@ -35,6 +35,11 @@ public class PlayerInteractEvent extends Event {
         this.clickedPacketEntity = clickedPacketEntity;
     }
 
+    @NotNull
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
+    }
+
     public Optional<Block> getClickedBlock() {
         return Optional.ofNullable(this.clickedBlock);
     }
@@ -49,11 +54,6 @@ public class PlayerInteractEvent extends Event {
 
     public Optional<PacketEntity> getClickedPacketEntity() {
         return Optional.ofNullable(this.clickedPacketEntity);
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return HANDLERS;
     }
 
     @Override
