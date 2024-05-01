@@ -13,27 +13,36 @@ import reactor.core.publisher.Flux;
 import java.util.function.Consumer;
 
 public interface Collider {
-    @NotNull Collider at(@NotNull Vector center);
+    @NotNull
+    Collider at(@NotNull Vector center);
 
-    @Nullable Collider scale(double amount);
+    @Nullable
+    Collider scale(double amount);
 
-    @NotNull ImmutableVector getHalfExtents();
+    @NotNull
+    ImmutableVector getHalfExtents();
 
     <RT extends Collider> boolean intersects(@NotNull RT collider);
 
     boolean contains(@NotNull Vector vector);
 
-    @NotNull Collider affectEntities(Consumer<Flux<Entity>> consumer);
+    @NotNull
+    Collider affectEntities(Consumer<Flux<Entity>> consumer);
 
-    @NotNull Collider affectBlocks(@NotNull Consumer<Flux<Block>> consumer);
+    @NotNull
+    Collider affectBlocks(@NotNull Consumer<Flux<Block>> consumer);
 
-    @NotNull Collider affectLocations(@NotNull Consumer<Flux<Location>> consumer);
+    @NotNull
+    Collider affectLocations(@NotNull Consumer<Flux<Location>> consumer);
 
-    @NotNull Collider grow(Vector vector);
+    @NotNull
+    Collider grow(Vector vector);
 
-    @NotNull World getWorld();
+    @NotNull
+    World getWorld();
 
-    @NotNull ImmutableVector getCenter();
+    @NotNull
+    ImmutableVector getCenter();
 
     @SuppressWarnings("unchecked")
     @NotNull

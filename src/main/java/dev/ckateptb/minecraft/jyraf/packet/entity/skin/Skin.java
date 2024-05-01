@@ -5,12 +5,11 @@ import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import com.google.common.io.CharStreams;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.SneakyThrows;
 import org.bukkit.entity.Player;
 import org.joor.Reflect;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -18,15 +17,19 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class Skin {
+    private static final Gson gson = new Gson();
     private static final AsyncCache<String, List<TextureProperty>> CACHE = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofMinutes(1))
             .buildAsync();
@@ -37,9 +40,9 @@ public class Skin {
             return profile.getGameProfile().getProperties().values().stream()
                     .map(property -> {
                         Reflect reflect = Reflect.on(property);
-                        String name = reflect.field("name").as(String.class);
-                        String value = reflect.field("value").as(String.class);
-                        String signature = reflect.field("signature").as(String.class);
+                        String name = reflect.get("name");
+                        String value = reflect.get("value");
+                        String signature = reflect.get("signature");
                         return new TextureProperty(name, value, signature);
                     })
                     .collect(Collectors.toList());
@@ -53,22 +56,29 @@ public class Skin {
 
     @SneakyThrows
     public static Mono<List<TextureProperty>> from(File file, boolean slim) {
+        byte[] bytes = Files.readAllBytes(file.toPath());
+        byte[] hash = MessageDigest.getInstance("MD5").digest(bytes);
+        String checksum = new BigInteger(1, hash).toString(16);
+        CompletableFuture<List<TextureProperty>> future = CACHE.getIfPresent(checksum);
+        if (future != null) return Mono.fromFuture(future);
         return Mono.defer(() -> {
                     HttpURLConnection connection = postConnection(
                             "https://api.mineskin.org/generate/upload" + (slim ? "?model=slim" : "")
                     );
                     writeFile(connection, file, slim);
-                    JSONObject data = readResponse(connection);
+                    JsonObject data = readResponse(connection);
                     connection.disconnect();
                     return Mono.justOrEmpty(data);
                 })
                 .publishOn(Schedulers.single())
                 .subscribeOn(Schedulers.single())
                 .flatMap(jsonObject -> {
-                    JSONObject texture = (JSONObject) jsonObject.get("texture");
-                    String textureEncoded = (String) texture.get("value");
-                    String signature = (String) texture.get("signature");
-                    return from(textureEncoded, signature);
+                    JsonObject texture = jsonObject.getAsJsonObject("texture");
+                    String textureEncoded = texture.get("value").getAsString();
+                    String signature = texture.get("signature").getAsString();
+                    return from(textureEncoded, signature).doOnNext(textureProperties -> {
+                        CACHE.put(checksum, CompletableFuture.completedFuture(textureProperties));
+                    });
                 });
     }
 
@@ -109,15 +119,15 @@ public class Skin {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    private static JSONObject readResponse(HttpURLConnection connection) {
+    private static JsonObject readResponse(HttpURLConnection connection) {
         try (InputStreamReader reader = new InputStreamReader(connection.getInputStream())) {
             String str = CharStreams.toString(reader);
             if (connection.getResponseCode() != 200) {
                 throw new RuntimeException("Failed to fetch skin.");
             }
-            JSONObject output = (JSONObject) new JSONParser().parse(str);
-            return (JSONObject) output.get("data");
-        } catch (IOException | ParseException e) {
+            JsonObject output = gson.fromJson(str, JsonObject.class);
+            return output.getAsJsonObject("data");
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

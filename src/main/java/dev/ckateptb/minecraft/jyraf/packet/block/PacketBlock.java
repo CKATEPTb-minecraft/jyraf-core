@@ -22,9 +22,9 @@ import java.util.Objects;
 @Getter
 public class PacketBlock extends Interactable {
 
-    protected WrappedBlockState data;
     private final World world;
     private final Vector3i vector;
+    protected WrappedBlockState data;
 
     public PacketBlock(@NotNull Location location, @NotNull BlockData data) {
         this(location, data, true);

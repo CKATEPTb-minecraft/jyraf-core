@@ -18,11 +18,11 @@ public class BossBar extends Displayable {
 
     private final UUID uid = UUID.randomUUID();
     private final @NotNull net.kyori.adventure.bossbar.BossBar kyoriBossBar;
+    private final @NotNull Set<net.kyori.adventure.bossbar.BossBar.Flag> flags = Collections.synchronizedSet(new HashSet<>());
     private @NotNull Component title;
     private int progress;
     private @NotNull net.kyori.adventure.bossbar.BossBar.Overlay overlay;
     private @NotNull net.kyori.adventure.bossbar.BossBar.Color color;
-    private final @NotNull Set<net.kyori.adventure.bossbar.BossBar.Flag> flags = Collections.synchronizedSet(new HashSet<>());
     private @Nullable net.kyori.adventure.bossbar.BossBar.Listener listener;
 
     public BossBar(@NotNull Component title, int progress, @NotNull net.kyori.adventure.bossbar.BossBar.Overlay overlay, @NotNull net.kyori.adventure.bossbar.BossBar.Color color, @NotNull Set<net.kyori.adventure.bossbar.BossBar.Flag> flags, @NotNull Location location, boolean global, @NotNull Collection<Player> allowedViewers) {

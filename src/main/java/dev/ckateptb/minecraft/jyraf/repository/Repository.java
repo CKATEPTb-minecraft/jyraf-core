@@ -10,7 +10,7 @@ public interface Repository<T> {
 
     Flux<T> get();
 
-    public interface Tickable {
+    interface Tickable {
         void tick();
 
         boolean shouldTick();

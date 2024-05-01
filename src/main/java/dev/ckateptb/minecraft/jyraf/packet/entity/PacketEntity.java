@@ -1,321 +1,122 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity;
 
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
-import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
-import dev.ckateptb.minecraft.jyraf.packet.entity.enums.LookType;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
+import dev.ckateptb.minecraft.jyraf.packet.entity.meta.EntityMeta;
+import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.LivingEntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
-import dev.ckateptb.minecraft.jyraf.packet.trait.PacketTrait;
+import dev.ckateptb.minecraft.jyraf.packet.goal.view.ViewGoal;
+import dev.ckateptb.minecraft.jyraf.packet.managed.RepositoryManaged;
+import dev.ckateptb.minecraft.jyraf.packet.property.Property;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
-import lombok.Setter;
-import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventPriority;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.patheloper.api.pathing.result.PathfinderResult;
-import org.patheloper.api.pathing.strategy.PathfinderStrategy;
-import org.patheloper.api.pathing.strategy.strategies.DirectPathfinderStrategy;
-import org.patheloper.api.wrapper.PathPosition;
-import org.patheloper.mapping.PatheticMapper;
-import org.patheloper.mapping.bukkit.BukkitMapper;
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.Collection;
+import java.util.UUID;
 
-// TODO Implement properties like a
-//  skin, glow, entity type data (villager type etc.)
-//  Holograms, Multiple NameTags (based on Holograms)
-//  Equipments, Poses, States
-//  Dropped Item, Item Display, Block Display, Text Display
-//  Implement 1.16.5 support
+// TODO Entity пропадают когда меняют чанк, разобраться и исправить.
 @Getter
-public class PacketEntity extends Interactable {
-    protected final int id;
-    @NotNull
-    protected final UUID uniqueId;
-    @NotNull
-    protected final EntityType type;
-    @Setter
-    @NotNull
-    private LookType lookType;
-    @Setter
-    private boolean gravity;
-    @Setter
-    private double speed;
-    @Setter
-    @NotNull
-    private PathfinderStrategy pathfinderStrategy = new DirectPathfinderStrategy();
-    @Setter
-    @Nullable
-    private Tuple2<Iterator<PathPosition>, CompletableFuture<Location>> destiny = null;
-    @Setter
-    @Nullable
-    private Location currentPath;
-    @Setter
-    @NotNull
-    private TeamColor teamColor;
-
-    public PacketEntity(int id, @NotNull UUID uniqueId, @NotNull EntityType type, double speed, boolean gravity, @NotNull LookType lookType, @NotNull TeamColor teamColor, @NotNull Location location, boolean global, @NotNull Collection<Player> allowedViewers) {
-        super(location, allowedViewers);
-        Objects.requireNonNull(uniqueId);
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(allowedViewers);
+public class PacketEntity extends RepositoryManaged {
+    private final int id;
+    private final UUID uuid;
+    private final EntityType type;
+    private final EntityMeta meta;
+    private final Location location;
+    protected PacketEntity(int id, UUID uuid, EntityType type, EntityMeta meta, Location location) {
+        meta.getMetadata().getEntity().defer(() -> this);
         this.id = id;
-        this.uniqueId = uniqueId;
-        this.speed = speed;
-        this.gravity = gravity;
-        this.lookType = lookType;
-        this.teamColor = teamColor;
-        this.global = global;
+        this.uuid = uuid;
         this.type = type;
-        addTrait(new NPCMoveTrait());
-        addTrait(new NPCGravityTrait());
-        addTrait(new NPCLookTrait());
-    }
-
-    public void lookAt(Player player, float yaw, float pitch) {
-        PacketFactory.INSTANCE.consume(factory -> factory.rotate(player, this, yaw, pitch));
-    }
-
-    public void teleport(Location location) {
+        this.meta = meta;
         this.location = location;
-        this.currentViewers.forEach(player -> this.teleport(player, location));
+        this.addGoal(new ViewGoal());
     }
 
-    public void teleport(Player player, Location location) {
-        this.location = location;
-        this.teleport(player, ImmutableVector.of(location)
-                .getDistanceAboveGround(location.getWorld(), true) < 0.1);
+    public static PacketEntity entity(EntityType type, Location location) {
+        if (type.isAlive()) return living(type, location);
+        int id = SpigotReflectionUtil.generateEntityId();
+        EntityMeta meta = EntityMeta.createMeta(id, SpigotConversionUtil.fromBukkitEntityType(type));
+        return new PacketEntity(id, UUID.randomUUID(), type, meta, location);
     }
 
-    private void teleport(Player player, boolean onGround) {
-        PacketFactory.INSTANCE.consume(factory -> factory.teleport(player, this, onGround));
+    public static PacketLivingEntity living(EntityType type, Location location) {
+        if (type == EntityType.PLAYER) return player(location);
+        Validate.isTrue(type.isAlive(), "entity type is not alive");
+        int id = SpigotReflectionUtil.generateEntityId();
+        EntityMeta meta = EntityMeta.createMeta(id, SpigotConversionUtil.fromBukkitEntityType(type));
+        return new PacketLivingEntity(id, UUID.randomUUID(), type, (LivingEntityMeta) meta, location);
     }
 
-    public Mono<Location> moveTo(Location location) {
-        return Mono.just(PatheticMapper.newPathfinder())
-                .flatMap(pathfinder -> Mono.fromFuture(pathfinder.findPath(
-                        BukkitMapper.toPathPosition(this.location),
-                        BukkitMapper.toPathPosition(location),
-                        this.pathfinderStrategy
-                ).toCompletableFuture()))
-                .filter(PathfinderResult::successful)
-                .flatMap(result -> {
-                    CompletableFuture<Location> future = new CompletableFuture<>();
-                    this.destiny = Tuples.of(result.getPath().iterator(), future);
-                    return Mono.fromFuture(future);
-                })
-                .switchIfEmpty(Mono.defer(() -> {
-                    this.currentViewers.forEach(player -> this.teleport(player, location));
-                    return Mono.just(this.location).delayElement(Duration.ofSeconds(1));
-                }));
+    public static PacketPlayer player(Location location) {
+        return new PacketPlayer(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), location);
     }
 
-    protected void setTeam(Player player, TeamColor color) {
-        PacketFactory.INSTANCE.consume(factory -> factory.createTeam(player, this));
+    public void rotate(float yaw, float pitch, Collection<Player> players) {
+        PacketFactory.INSTANCE.consume(factory -> {
+            for (Player player : players) {
+                factory.rotateEntity(player, this, yaw, pitch);
+            }
+        });
     }
 
-    private void spawnPlayer(Player player) {
-        PacketFactory.INSTANCE.consume(factory -> factory.spawnPlayer(player, this));
+    public void teleport(Location location, Collection<Player> players) {
+        Validate.isTrue(this.location.getWorld().equals(location.getWorld()), "World does not match");
+        this.location.set(location.getX(), location.getY(), location.getZ());
+        this.location.setYaw(location.getYaw());
+        this.location.setPitch(location.getPitch());
+        PacketFactory.INSTANCE.consume(factory -> {
+            boolean onGround = this.isOnGround();
+            for (Player player : players) {
+                factory.teleportEntity(player, this, onGround);
+            }
+        });
     }
 
-    private void spawnEntity(Player player) {
-        PacketFactory.INSTANCE.consume(factory -> factory.spawnEntity(player, this));
+    public void spawn(Collection<Player> players) {
+        this.getGoals().forEach(goal -> goal.beforeSpawn(this, players.toArray(new Player[0])));
+        PacketFactory.INSTANCE.consume(factory -> {
+            for (Player player : players) {
+                factory.spawnEntity(player, this);
+                factory.metadataEntity(player, this);
+                factory.createEntityTeam(player, this, Property.ENTITY_TEAM.parse(this, TeamColor.class));
+            }
+        });
+        this.getGoals().forEach(goal -> goal.onSpawn(this, players.toArray(new Player[0])));
     }
 
-    @Override
-    public @NotNull Location getLocation() {
+    public void refresh(Collection<Player> players) {
+        this.metadata(players);
+    }
+
+    public void metadata(Collection<Player> players) {
+        PacketFactory.INSTANCE.consume(factory -> {
+            for (Player player : players) {
+                factory.metadataEntity(player, this);
+            }
+        });
+    }
+
+    public void despawn(Collection<Player> players) {
+        this.getGoals().forEach(goal -> goal.beforeDespawn(this, players.toArray(new Player[0])));
+        PacketFactory.INSTANCE.consume(factory -> {
+            for (Player player : players) {
+                factory.despawnEntity(player, this);
+            }
+        });
+        this.getGoals().forEach(goal -> goal.onDespawn(this, players.toArray(new Player[0])));
+    }
+
+    public Location getLocation() {
         return this.location.clone();
     }
 
-    @Override
-    public void display(Player player) {
-        if (this.type == EntityType.PLAYER) this.spawnPlayer(player);
-        else this.spawnEntity(player);
+    public boolean isOnGround() {
+        return ImmutableVector.of(this.location)
+                .getDistanceAboveGround(this.location.getWorld(), true) < 0.1;
     }
-
-    @Override
-    public void destroy(Player player) {
-        PacketFactory.INSTANCE.consume(factory -> factory.despawnEntity(player, this));
-    }
-
-    public static final class Builder {
-        private final PacketEntity entity;
-
-        public Builder(@NotNull Location location, @NotNull EntityType type) {
-            this.entity = new PacketEntity(SpigotReflectionUtil.generateEntityId(), UUID.randomUUID(), type, 0.2, false, LookType.FIXED, TeamColor.WHITE, location, true, new ArrayList<>());
-        }
-
-        public @NotNull Builder global(boolean global) {
-            this.entity.setGlobal(global);
-            return this;
-        }
-
-        public @NotNull Builder pathfinder(@NotNull PathfinderStrategy strategy) {
-            Objects.requireNonNull(strategy);
-            this.entity.setPathfinderStrategy(strategy);
-            return this;
-        }
-
-        public @NotNull Builder interactionHandler(@NotNull InteractionHandler interactionHandler) {
-            Objects.requireNonNull(interactionHandler);
-            this.entity.setInteractionHandler(interactionHandler);
-            return this;
-        }
-
-        public @NotNull Builder viewers(@NotNull Player... viewers) {
-            Objects.requireNonNull(viewers);
-            this.entity.setGlobal(false);
-            this.entity.allowedViewers.addAll(Arrays.stream(viewers).toList());
-            return this;
-        }
-
-        public @NotNull Builder location(@NotNull Location location) {
-            this.entity.teleport(location);
-            return this;
-        }
-
-        public Builder gravity(boolean gravity) {
-            this.entity.setGravity(gravity);
-            return this;
-        }
-
-        public @NotNull Builder speed(double speed) {
-            this.entity.setSpeed(speed);
-            return this;
-        }
-
-        public @NotNull Builder lookType(@NotNull LookType type) {
-            Objects.requireNonNull(type);
-            this.entity.setLookType(type);
-            return this;
-        }
-
-        public @NotNull PacketEntity build() {
-            return this.entity;
-        }
-    }
-
-    static final class NPCLookTrait extends PacketTrait<PacketEntity> {
-
-        public NPCLookTrait() {
-            super(EventPriority.MONITOR);
-        }
-
-        @Override
-        public @NotNull Class<PacketEntity> getEntryClass() {
-            return PacketEntity.class;
-        }
-
-        @Override
-        public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull PacketEntity entity) {
-            playersMono.doOnNext(players -> {
-                        if (entity.destiny != null) return;
-                        ImmutableVector original = ImmutableVector.of(entity.location);
-                        switch (entity.lookType) {
-                            case CLOSEST_PLAYER -> {
-                                ImmutableVector destiny = ImmutableVector.of(players.get(0).getLocation());
-                                ImmutableVector direction = destiny.subtract(original).normalize();
-                                entity.location.setDirection(entity.type == EntityType.ENDER_DRAGON ?
-                                        direction.negative() : direction);
-                                players.forEach(player ->
-                                        entity.lookAt(player, entity.location.getYaw(), entity.location.getPitch()));
-                            }
-                            case PER_PLAYER -> players.forEach(player -> {
-                                ImmutableVector destiny = ImmutableVector.of(player.getLocation());
-                                ImmutableVector direction = destiny.subtract(original).normalize();
-                                Location loc = entity.location.clone().setDirection(entity.type ==
-                                        EntityType.ENDER_DRAGON ? direction.negative() : direction);
-                                entity.lookAt(player, loc.getYaw(), loc.getPitch());
-                            });
-                        }
-                    })
-                    .subscribe();
-        }
-    }
-
-    static final class NPCMoveTrait extends PacketTrait<PacketEntity> {
-
-        public NPCMoveTrait() {
-            super(EventPriority.MONITOR);
-        }
-
-        @Override
-        public @NotNull Class<PacketEntity> getEntryClass() {
-            return PacketEntity.class;
-        }
-
-        @Override
-        public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull PacketEntity entity) {
-            World world = entity.location.getWorld();
-            playersMono.doOnNext(players -> {
-                        if (entity.destiny == null) return;
-                        ImmutableVector origin = ImmutableVector.of(entity.location);
-                        CompletableFuture<Location> future = entity.destiny.getT2();
-                        if (entity.currentPath == null || entity.location.distance(entity.currentPath) < 0.2) {
-                            Iterator<PathPosition> iterator = entity.destiny.getT1();
-                            if (!iterator.hasNext()) {
-                                entity.destiny = null;
-                                entity.currentPath = null;
-                                future.complete(entity.location.clone());
-                                return;
-                            }
-                            do {
-                                entity.currentPath = BukkitMapper.toLocation(iterator.next());
-                            } while (entity.location.distance(entity.currentPath) < 1 && iterator.hasNext());
-                        }
-                        ImmutableVector destiny = ImmutableVector.of(entity.currentPath);
-                        ImmutableVector direction = destiny.subtract(origin).normalize();
-                        ImmutableVector next = origin.add(direction.multiply(entity.speed));
-                        entity.location = next.toLocation(world)
-                                .setDirection(entity.type == EntityType.ENDER_DRAGON ?
-                                        direction.negative() : direction);
-                        boolean onGround = origin.getDistanceAboveGround(world, true) < 0.1;
-                        players.forEach(player -> entity.teleport(player, onGround));
-                    })
-                    .subscribe();
-        }
-    }
-
-    static final class NPCGravityTrait extends PacketTrait<PacketEntity> {
-
-        public NPCGravityTrait() {
-            super(EventPriority.MONITOR);
-        }
-
-        @Override
-        public @NotNull Class<PacketEntity> getEntryClass() {
-            return PacketEntity.class;
-        }
-
-        @Override
-        public void tick(@NotNull Mono<List<Player>> playersMono, @NotNull PacketEntity entity) {
-            playersMono.doOnNext(players -> {
-                        if (!entity.gravity || entity.destiny != null) return;
-                        ImmutableVector origin = ImmutableVector.of(entity.location);
-                        double distanceAboveGround = origin.getDistanceAboveGround(entity.getWorld(), true);
-                        if (distanceAboveGround >= 0.1) {
-                            ImmutableVector destiny = origin.subtract(new ImmutableVector(0d, distanceAboveGround, 0d));
-                            ImmutableVector direction = destiny.subtract(origin).normalize();
-                            double delta = entity.speed * distanceAboveGround;
-                            double speed = FastMath.max(entity.speed, FastMath.min(1, delta));
-                            origin = origin.add(direction.multiply(speed));
-                            entity.location.set(origin.getX(), origin.getY(), origin.getZ());
-                            boolean onGround = origin.getDistanceAboveGround(entity.getWorld(), true) < 0.1;
-                            players.forEach(player -> entity.teleport(player, onGround));
-                        }
-                    })
-                    .subscribe();
-        }
-    }
-
 }
