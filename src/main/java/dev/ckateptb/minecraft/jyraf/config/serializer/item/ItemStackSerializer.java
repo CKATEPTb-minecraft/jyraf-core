@@ -54,11 +54,11 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                 .amount(node.node("amount").getInt());
 
         if (node.hasChild("name")) {
-            builder.name(node.node("name").getString());
+            builder.name(Objects.requireNonNull(node.node("name").getString()));
         }
 
         if (node.hasChild("lore")) {
-            builder.lore(node.node("lore").getList(String.class));
+            builder.lore(Objects.requireNonNull(node.node("lore").getList(String.class)));
         }
 
         if (node.hasChild("attributes")) {
@@ -93,7 +93,16 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
         }
 
         if (node.hasChild("skull")) {
-            builder.skull(node.node("skull").getString());
+            ConfigurationNode skull = node.node("skull");
+            if (skull.hasChild("texture")) {
+                String texture = Objects.requireNonNull(skull.node("texture").getString());
+                if (skull.hasChild("uuid")) {
+                    UUID uuid = Objects.requireNonNull(skull.node("uuid").get(UUID.class));
+                    builder.skull(skullBuilder -> skullBuilder.texture(texture, uuid));
+                } else {
+                    builder.skull(skullBuilder -> skullBuilder.texture(texture));
+                }
+            }
         }
 
         if (node.hasChild("unbreakable")) {
@@ -124,14 +133,14 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
             builder.potion(potion -> {
                 if (potionNode.hasChild("color")) {
                     try {
-                        potion.color(potionNode.node("color").get(Color.class));
+                        potion.color(Objects.requireNonNull(potionNode.node("color").get(Color.class)));
                     } catch (SerializationException e) {
                         throw new RuntimeException(e);
                     }
                 }
                 if (potionNode.hasChild("data")) {
                     try {
-                        potion.data(potionNode.node("data").get(PotionData.class));
+                        potion.data(Objects.requireNonNull(potionNode.node("data").get(PotionData.class)));
                     } catch (SerializationException e) {
                         throw new RuntimeException(e);
                     }
@@ -151,7 +160,7 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
         if (node.hasChild("tags")) {
             ConfigurationNode tags = node.node("tags");
-            builder.tag(tags.getString());
+            builder.tag(Objects.requireNonNull(tags.getString()));
         }
         return builder.build();
     }
@@ -232,7 +241,9 @@ public class ItemStackSerializer implements TypeSerializer<ItemStack> {
                         Iterator<Property> iterator = properties.get("textures").iterator();
                         if (iterator.hasNext()) {
                             Property property = iterator.next();
-                            node.node("skull").set(Reflect.on(property)
+                            ConfigurationNode skull = node.node("skull");
+                            skull.node("uuid").set(playerProfile.getId());
+                            skull.node("texture").set(Reflect.on(property)
                                     .as(PropertyProxy.class)
                                     .value());
                         }
