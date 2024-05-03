@@ -48,6 +48,7 @@ import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.threeten.extra.PeriodDuration;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -148,6 +149,9 @@ public class Jyraf extends JavaPlugin {
     public void onDisable() {
         PatheticMapper.shutdown();
         this.packetAPI.consume(PacketEventsAPI::terminate);
+        
+        // DO LAST
+        Schedulers.shutdownNow();
     }
 
     public Scheduler syncScheduler() {
