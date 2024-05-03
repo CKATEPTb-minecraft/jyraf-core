@@ -63,7 +63,7 @@ We use [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html) to manag
     - [X] Other collider
 - [X] Text to Component mapper
   - [X] MiniMessage (with [addon](https://github.com/CKATEPTb-minecraft/jMessage))
-  - [X] InkyMessage
+  - [X] InkyMessage (java 17 and above)
   - [X] MineDown
 - [X] Frame-based inventory user interfaces
   - [X] Anvil
@@ -75,6 +75,8 @@ We use [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html) to manag
 - [X] Immutable vector implementation with great functionality
 - [X] World Repository for optimized and thread-safe lookups
   - [X] Entity
+    - [X] Async
+    - [X] Sync (with [addon](https://github.com/CKATEPTb-minecraft/jaser), not recommended)
   - [X] Packet entity
     - [X] All types
     - [X] All meta
