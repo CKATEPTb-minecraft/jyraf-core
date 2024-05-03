@@ -3,6 +3,7 @@ package dev.ckateptb.minecraft.jyraf.packet.block;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
@@ -36,6 +37,8 @@ public class PacketBlock extends Interactable {
 
     public PacketBlock(@NotNull Location location, @NotNull BlockData data, boolean global, @NotNull Collection<Player> allowedViewers) {
         super(location, allowedViewers);
+        Jyraf.getPlugin().getSLF4JLogger().warn("Uses unstable API for PacketBlock." +
+                " At this time, it is not recommended to use batch blocks, since they are not fully implemented.");
         Objects.requireNonNull(data);
         Objects.requireNonNull(allowedViewers);
         this.data = SpigotConversionUtil.fromBukkitBlockData(data.clone());
