@@ -2,6 +2,7 @@ package dev.ckateptb.minecraft.jyraf.packet.entity;
 
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
+import dev.ckateptb.minecraft.jyraf.packet.entity.goal.MoveEntityGoal;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.EntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.LivingEntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
@@ -16,6 +17,10 @@ import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
+import org.patheloper.api.pathing.strategy.PathfinderStrategy;
+import org.patheloper.api.pathing.strategy.strategies.DirectPathfinderStrategy;
+import org.patheloper.api.pathing.strategy.strategies.JumpablePathfinderStrategy;
+import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -121,6 +126,16 @@ public class PacketEntity extends RepositoryManaged {
             }
         });
         this.getGoals().forEach(goal -> goal.onDespawn(this, players.toArray(new Player[0])));
+    }
+
+    public Mono<Boolean> moveTo(Location location) {
+        return this.moveTo(location, new DirectPathfinderStrategy());
+    }
+
+    public Mono<Boolean> moveTo(Location location, PathfinderStrategy strategy) {
+        MoveEntityGoal move = new MoveEntityGoal(location, strategy);
+        this.addGoal(move);
+        return move.getCompleted();
     }
 
     public Location getLocation() {
