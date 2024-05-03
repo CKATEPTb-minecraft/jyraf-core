@@ -4,7 +4,6 @@ import com.google.common.base.Objects;
 import dev.ckateptb.minecraft.jyraf.colider.Collider;
 import dev.ckateptb.minecraft.jyraf.colider.Colliders;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
-import dev.ckateptb.minecraft.jyraf.math.MathUtils;
 import lombok.Getter;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
@@ -14,6 +13,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Math;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
@@ -73,7 +73,7 @@ public class OrientedBoundingBoxCollider implements Collider {
                 default -> throw new IllegalStateException("Unexpected value: " + i);
             };
             double halfComponent = halfExtents.getComponent(i);
-            double dist = MathUtils.clamp(destination.dot(axis), -halfComponent, halfComponent);
+            double dist = Math.clamp(-halfComponent, halfComponent, destination.dot(axis));
             closest = closest.add(axis.multiply(dist));
         }
         return closest;
