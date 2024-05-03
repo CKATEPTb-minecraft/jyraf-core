@@ -19,14 +19,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.patheloper.api.pathing.strategy.PathfinderStrategy;
 import org.patheloper.api.pathing.strategy.strategies.DirectPathfinderStrategy;
-import org.patheloper.api.pathing.strategy.strategies.JumpablePathfinderStrategy;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.UUID;
 
-// TODO Entity пропадают когда меняют чанк, разобраться и исправить.
-//    Разобраться с DisplayBlock и ему подобными
+// BlockDisplay doesn't work in packetevents use ItemDisplay instead
 @Getter
 public class PacketEntity extends RepositoryManaged {
     private final int id;
