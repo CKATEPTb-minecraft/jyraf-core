@@ -11,6 +11,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.patheloper.api.pathing.strategy.strategies.WalkablePathfinderStrategy;
+import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,6 +40,11 @@ public class PacketLivingEntity extends PacketEntity {
     @Override
     public LivingEntityMeta getMeta() {
         return (LivingEntityMeta) super.getMeta();
+    }
+
+    @Override
+    public Mono<Boolean> moveTo(Location location) {
+        return this.moveTo(location, new WalkablePathfinderStrategy());
     }
 
     public void setItem(@NotNull EquipmentSlot slot, @NotNull org.bukkit.inventory.ItemStack itemStack) {

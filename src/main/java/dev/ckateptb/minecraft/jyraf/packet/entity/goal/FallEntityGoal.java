@@ -12,6 +12,10 @@ import org.bukkit.entity.Player;
 import java.util.Arrays;
 
 public class FallEntityGoal extends PacketGoal<PacketEntity> {
+    public FallEntityGoal() {
+        this(Priority.NORMAL);
+    }
+
     public FallEntityGoal(Priority priority) {
         super(priority);
     }
@@ -28,6 +32,9 @@ public class FallEntityGoal extends PacketGoal<PacketEntity> {
             Double entitySpeed = Property.ENTITY_SPEED.parse(entry, Double.class);
             double delta = entitySpeed * distanceAboveGround;
             double speed = FastMath.max(entitySpeed, FastMath.min(1, delta));
+            if (distanceAboveGround > 1) {
+                entry.velocity(direction.multiply(speed), Arrays.asList(players));
+            }
             origin = origin.add(direction.multiply(speed));
             location.set(origin.getX(), origin.getY(), origin.getZ());
             entry.teleport(location, Arrays.asList(players));

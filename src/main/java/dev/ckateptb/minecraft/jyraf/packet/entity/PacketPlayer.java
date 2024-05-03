@@ -14,6 +14,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.patheloper.api.pathing.strategy.strategies.JumpablePathfinderStrategy;
+import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,6 +46,11 @@ public class PacketPlayer extends PacketLivingEntity {
             }
         });
         this.getGoals().forEach(goal -> goal.onSpawn(this, players.toArray(new Player[0])));
+    }
+
+    @Override
+    public Mono<Boolean> moveTo(Location location) {
+        return this.moveTo(location, new JumpablePathfinderStrategy());
     }
 
     public List<TextureProperty> getSkin() {

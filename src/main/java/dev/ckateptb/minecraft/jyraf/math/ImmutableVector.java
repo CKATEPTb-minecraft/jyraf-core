@@ -9,6 +9,7 @@ import org.bukkit.World;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Math;
 
 public class ImmutableVector extends Vector {
     public static final @NotNull ImmutableVector ZERO = new ImmutableVector(0, 0, 0);
@@ -330,6 +331,13 @@ public class ImmutableVector extends Vector {
         double yaw = FastMath.atan2(z, x);
         double pitch = FastMath.atan2(FastMath.sqrt(FastMath.pow(z, 2) + FastMath.pow(x, 2)), y) + Math.PI;
         return new EulerAngle(-pitch + FastMath.toRadians(90), yaw + FastMath.toRadians(90), 0);
+    }
+
+    public @NotNull ImmutableVector lerp(Vector to, double step) {
+        double x = Math.lerp(this.x, to.getX(), step);
+        double y = Math.lerp(this.y, to.getY(), step);
+        double z = Math.lerp(this.z, to.getZ(), step);
+        return new ImmutableVector(x, y, z);
     }
 
     public double getDistanceAboveGround(World world, boolean ignoreLiquids) {

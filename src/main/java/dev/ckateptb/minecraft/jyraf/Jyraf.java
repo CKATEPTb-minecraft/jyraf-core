@@ -24,12 +24,12 @@ import dev.ckateptb.minecraft.jyraf.config.serializer.world.WorldSerializer;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.database.inject.RepositoryInjection;
 import dev.ckateptb.minecraft.jyraf.database.types.inject.PersisterInjection;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import dev.ckateptb.minecraft.jyraf.listener.ListenerInjection;
 import dev.ckateptb.minecraft.jyraf.listener.PluginStatusChangeListener;
 import dev.ckateptb.minecraft.jyraf.packet.inject.PacketInjection;
 import dev.ckateptb.minecraft.jyraf.schedule.SyncScheduler;
 import dev.ckateptb.minecraft.jyraf.schedule.inject.ScheduleInjection;
-import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
 import org.bson.types.ObjectId;
@@ -47,7 +47,9 @@ import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.threeten.extra.PeriodDuration;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -148,6 +150,10 @@ public class Jyraf extends JavaPlugin {
     public void onDisable() {
         PatheticMapper.shutdown();
         this.packetAPI.consume(PacketEventsAPI::terminate);
+
+        // DO LAST
+        Hooks.onErrorDropped(throwable -> {});
+        Schedulers.shutdownNow();
     }
 
     public Scheduler syncScheduler() {

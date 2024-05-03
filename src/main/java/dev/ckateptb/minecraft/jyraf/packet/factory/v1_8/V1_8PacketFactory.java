@@ -18,11 +18,13 @@ import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketLivingEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketPlayer;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
+import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.ObjectData;
 import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
-import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +64,12 @@ public class V1_8PacketFactory {
         this.sendPacket(player, new WrapperPlayServerEntityTeleport(entityId,
                 SpigotConversionUtil.fromBukkitLocation(location), onGround));
         this.sendPacket(player, new WrapperPlayServerEntityHeadLook(entityId, location.getYaw()));
+    }
+
+    public void velocityEntity(@NotNull Player player, @NotNull PacketEntity entity, Vector vector) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(entity);
+        this.sendPacket(player, new WrapperPlayServerEntityVelocity(entity.getId(), new Vector3d(vector.getX(), vector.getY(), vector.getZ())));
     }
 
     public void rotateEntity(@NotNull Player player, @NotNull PacketEntity entity, float yaw, float pitch) {
@@ -148,11 +156,12 @@ public class V1_8PacketFactory {
         Objects.requireNonNull(entity);
         EntityType type = SpigotConversionUtil.fromBukkitEntityType(entity.getType());
         Location location = SpigotConversionUtil.fromBukkitLocation(entity.getLocation());
+        int data = entity.getMeta() instanceof ObjectData objectData ? objectData.getObjectData() : 0;
         this.sendPacket(player, type.getLegacyId(CLIENT_VERSION.get()) == -1 ?
                 new WrapperPlayServerSpawnLivingEntity(entity.getId(), entity.getUuid(), type, location.getPosition(),
                         location.getYaw(), location.getPitch(), location.getYaw(), new Vector3d(), Collections.emptyList()) :
                 new WrapperPlayServerSpawnEntity(entity.getId(), Optional.of(entity.getUuid()), type, location.getPosition(),
-                        location.getPitch(), location.getYaw(), location.getYaw(), 0, Optional.empty()));
+                        location.getPitch(), location.getYaw(), location.getYaw(), data, Optional.empty()));
     }
 
     public void despawnEntity(@NotNull Player player, @NotNull PacketEntity entity) {

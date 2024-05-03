@@ -13,7 +13,7 @@ plugins {
 //    id("io.papermc.paperweight.userdev").version("1.5.11")
 }
 group = "dev.ckateptb.minecraft"
-version = "1.22.0-SNAPSHOT"
+version = "1.23.0-SNAPSHOT"
 
 val rootPackage = "${project.group}.${project.name.toLowerCase().split('-')[0]}"
 val internal = "${rootPackage}.internal"
@@ -75,6 +75,8 @@ dependencies {
     implementation("com.github.patheloper.pathetic:pathetic-mapping:2.4")
     // PersistentDataContainerSerializer
     implementation("com.jeff-media:persistent-data-serializer:1.0")
+    // OpenGL Math
+    implementation("org.joml:joml:1.10.5")
     // PlaceholderAPI
     compileOnly("me.clip:placeholderapi:2.11.5")
     // Packets
@@ -104,6 +106,7 @@ tasks {
         relocate("com.mongodb", "${internal}.mongo")
         relocate("org.bson", "${internal}.bson")
         relocate("org.json", "${internal}.json")
+        relocate("org.joml", "${internal}.joml")
         relocate("de.themoep.minedown.adventure", "${internal}.minedown")
         relocate("org.patheloper", "${internal}.pathetic")
         relocate("com.jeff_media.persistentdataserializer", "${internal}.persistentdataserializer")

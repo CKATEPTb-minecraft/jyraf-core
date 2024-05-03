@@ -85,8 +85,7 @@ public class PacketEntityRepository extends AbstractWorldRepository<UUID, Packet
 
         @Override
         public Mono<PacketEntity> remove(PacketEntity entry) {
-            return super.remove(entry)
-                    .doOnNext(entity -> entity.despawn(entity.getCurrentViewers()));
+            return super.remove(entry);
         }
 
         @Override

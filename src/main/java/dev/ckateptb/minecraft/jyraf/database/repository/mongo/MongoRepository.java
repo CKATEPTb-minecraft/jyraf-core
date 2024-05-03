@@ -11,7 +11,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.database.repository.Repository;
-import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.bson.Document;

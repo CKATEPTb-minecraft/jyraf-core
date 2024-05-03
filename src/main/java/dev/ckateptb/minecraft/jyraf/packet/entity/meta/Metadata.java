@@ -5,7 +5,7 @@ import com.github.retrooper.packetevents.protocol.entity.data.EntityDataType;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
-import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;

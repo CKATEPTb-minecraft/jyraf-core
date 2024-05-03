@@ -1,6 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.placeholder;
 
-import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

@@ -12,6 +12,10 @@ import java.util.List;
 public class LookEntityGoal extends PacketGoal<PacketEntity> {
     private final Mode mode;
 
+    public LookEntityGoal(Mode mode) {
+        this(Priority.NORMAL, mode);
+    }
+
     public LookEntityGoal(Priority priority, Mode mode) {
         super(priority);
         this.mode = mode;

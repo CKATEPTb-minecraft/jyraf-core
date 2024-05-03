@@ -7,7 +7,7 @@ import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import dev.ckateptb.minecraft.jyraf.repository.entity.EntityRepository;
-import dev.ckateptb.minecraft.jyraf.util.LazyLoader;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import lombok.Getter;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;

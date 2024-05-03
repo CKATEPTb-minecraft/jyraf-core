@@ -1,4 +1,4 @@
-package dev.ckateptb.minecraft.jyraf.util;
+package dev.ckateptb.minecraft.jyraf.lazy;
 
 import org.apache.commons.lang3.Validate;
 
