@@ -47,6 +47,7 @@ import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 import org.threeten.extra.PeriodDuration;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
@@ -151,6 +152,7 @@ public class Jyraf extends JavaPlugin {
         this.packetAPI.consume(PacketEventsAPI::terminate);
 
         // DO LAST
+        Hooks.onErrorDropped(throwable -> {});
         Schedulers.shutdownNow();
     }
 
