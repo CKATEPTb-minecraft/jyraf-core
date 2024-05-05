@@ -54,7 +54,7 @@ public class PlayerInteractListener extends PacketListenerAbstract {
     public void onPacketReceive(PacketReceiveEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
         PacketTypeCommon packetType = event.getPacketType();
-        if (packetType == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) { // RMB
+        if (packetType == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) {
             WrapperPlayClientPlayerBlockPlacement wrapper = new WrapperPlayClientPlayerBlockPlacement(event);
             if (wrapper.getHand() != InteractionHand.MAIN_HAND) return;
             this.findBlock(player, wrapper.getBlockPosition())
