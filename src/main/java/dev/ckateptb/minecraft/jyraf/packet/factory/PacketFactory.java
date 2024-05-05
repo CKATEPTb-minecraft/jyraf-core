@@ -3,11 +3,11 @@ package dev.ckateptb.minecraft.jyraf.packet.factory;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import dev.ckateptb.minecraft.jyraf.packet.factory.V1_17.V1_17PacketFactory;
 import dev.ckateptb.minecraft.jyraf.packet.factory.V1_19_3.V1_19_3PacketFactory;
 import dev.ckateptb.minecraft.jyraf.packet.factory.V1_20_2.V1_20_2PacketFactory;
 import dev.ckateptb.minecraft.jyraf.packet.factory.v1_8.V1_8PacketFactory;
-import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import lombok.experimental.Delegate;
 
 import java.util.HashMap;

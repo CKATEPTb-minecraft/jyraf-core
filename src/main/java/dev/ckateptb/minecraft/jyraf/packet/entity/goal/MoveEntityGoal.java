@@ -1,10 +1,10 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity.goal;
 
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.goal.PacketGoal;
 import dev.ckateptb.minecraft.jyraf.packet.property.Property;
-import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;

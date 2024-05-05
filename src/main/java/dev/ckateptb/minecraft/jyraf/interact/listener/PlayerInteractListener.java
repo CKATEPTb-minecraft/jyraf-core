@@ -14,9 +14,9 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.interact.PlayerInteractService;
+import dev.ckateptb.minecraft.jyraf.interact.enums.MouseButton;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
-import dev.ckateptb.minecraft.jyraf.interact.enums.MouseButton;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
@@ -86,7 +86,7 @@ public class PlayerInteractListener extends PacketListenerAbstract {
                         // PacketBlockService - START
                         if (packet != null) {
                             event.setCancelled(true);
-                            if(packet.isViewed(player)) {
+                            if (packet.isViewed(player)) {
                                 this.factory.acknowledgeBlockChanges(player, wrapper.getSequence());
                             }
                         }
