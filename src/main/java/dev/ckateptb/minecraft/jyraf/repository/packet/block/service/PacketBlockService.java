@@ -18,7 +18,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import reactor.core.publisher.Mono;
 
-// todo: make all-in-one service for Displayable, Interactable, e.t.c.
 @Component
 @RequiredArgsConstructor
 public class PacketBlockService extends PacketListenerAbstract {
