@@ -33,7 +33,7 @@ public class PacketBlockService extends PacketListenerAbstract {
         if (type == PacketType.Play.Server.BLOCK_CHANGE) {
             WrapperPlayServerBlockChange wrapper = new WrapperPlayServerBlockChange(event);
             this.findBlock(player, world, wrapper.getBlockPosition()).subscribe(block ->
-                    wrapper.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getBukkitData())));
+                    wrapper.setBlockState(SpigotConversionUtil.fromBukkitBlockData(block.getData())));
         }
     }
 
@@ -44,7 +44,7 @@ public class PacketBlockService extends PacketListenerAbstract {
                 .filterWhen(repository -> repository.hasChunk(chunkKey))
                 .flatMap(repository -> repository.getChunk(chunkKey))
                 .flatMapMany(Repository::get)
-                .filter(block -> block.getVector().equals(position) && block.isViewed(player))
+                .filter(block -> block.getVector3i().equals(position) && block.isViewed(player))
                 .next();
     }
 }

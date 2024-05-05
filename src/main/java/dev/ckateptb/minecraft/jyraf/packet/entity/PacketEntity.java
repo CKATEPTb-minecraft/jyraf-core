@@ -39,7 +39,7 @@ public class PacketEntity extends RepositoryManaged {
         this.uuid = uuid;
         this.type = type;
         this.meta = meta;
-        this.location = location;
+        this.location = location.clone();
         this.addGoal(new ViewGoal());
     }
 

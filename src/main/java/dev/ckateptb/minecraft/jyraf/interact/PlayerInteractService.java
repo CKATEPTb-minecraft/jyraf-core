@@ -6,7 +6,7 @@ import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.interact.event.PlayerInteractEvent;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
-import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
+import dev.ckateptb.minecraft.jyraf.interact.enums.MouseButton;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;

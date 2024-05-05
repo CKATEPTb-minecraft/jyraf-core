@@ -2,7 +2,7 @@ package dev.ckateptb.minecraft.jyraf.interact.event;
 
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
-import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
+import dev.ckateptb.minecraft.jyraf.interact.enums.MouseButton;
 import lombok.Getter;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;

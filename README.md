@@ -87,7 +87,7 @@ We use [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html) to manag
       - [X] Move
       - [ ] Passengers
   - [ ] Packet hologram
-  - [ ] Packet block
+  - [X] Packet block
 - [ ] Packet scoreboards
 - [ ] Packet boss bars 
 - [ ] Reversible system of temporary mechanics with a return queue.
