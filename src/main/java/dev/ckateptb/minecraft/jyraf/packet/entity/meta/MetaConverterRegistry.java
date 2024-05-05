@@ -49,6 +49,7 @@ final class MetaConverterRegistry {
         put(SNIFFER, SnifferMeta.class, SnifferMeta::new);
         put(INTERACTION, InteractionMeta.class, InteractionMeta::new);
         put(BLOCK_DISPLAY, BlockDisplayMeta.class, BlockDisplayMeta::new);
+        put(ITEM, ItemEntityMeta.class, ItemEntityMeta::new);
         put(ITEM_DISPLAY, ItemDisplayMeta.class, ItemDisplayMeta::new);
         put(TEXT_DISPLAY, TextDisplayMeta.class, TextDisplayMeta::new);
         put(AREA_EFFECT_CLOUD, AreaEffectCloudMeta.class, AreaEffectCloudMeta::new);
