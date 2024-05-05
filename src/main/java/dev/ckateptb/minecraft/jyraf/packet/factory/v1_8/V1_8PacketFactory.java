@@ -9,18 +9,18 @@ import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.protocol.potion.PotionType;
 import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.component.Text;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketLivingEntity;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketPlayer;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.ObjectData;
-import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
-import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -132,15 +132,15 @@ public class V1_8PacketFactory {
 
     public void placeBlock(@NotNull Player player, @NotNull PacketBlock block) {
         Objects.requireNonNull(player);
-        player.sendBlockChange(block.getLocation(), block.getBukkitData());
+        player.sendBlockChange(block.getLocation(), block.getData());
     }
 
-    public void playBlockAction(@NotNull Player player, @NotNull PacketBlock block, @NotNull BlockAction action) {
+    public void playBlockAction(@NotNull Player player, @NotNull PacketBlock block, int action, int param) {
         Objects.requireNonNull(player);
         Objects.requireNonNull(block);
-        Objects.requireNonNull(action);
-        WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(block.getVector(), action.getId(), action.getParamId(),
-                SpigotConversionUtil.fromBukkitBlockData(block.getBukkitData()).getGlobalId());
+        int data = SpigotConversionUtil.fromBukkitBlockData(block.getData()).getGlobalId();
+        Vector3i position = block.getVector3i();
+        WrapperPlayServerBlockAction packet = new WrapperPlayServerBlockAction(position, action, param, data);
         this.sendPacket(player, packet);
     }
 

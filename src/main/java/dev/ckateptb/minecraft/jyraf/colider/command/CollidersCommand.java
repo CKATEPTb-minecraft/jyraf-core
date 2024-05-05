@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+// TODO Remove. We don't need debugging commands in production
 @Getter
 //@Component // debug colliders
 @RequiredArgsConstructor

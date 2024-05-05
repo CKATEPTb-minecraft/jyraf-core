@@ -1,149 +1,80 @@
 package dev.ckateptb.minecraft.jyraf.packet.block;
 
-import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.util.Vector3i;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
-import dev.ckateptb.minecraft.jyraf.Jyraf;
-import dev.ckateptb.minecraft.jyraf.packet.basic.Interactable;
-import dev.ckateptb.minecraft.jyraf.packet.enums.BlockAction;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import dev.ckateptb.minecraft.jyraf.packet.goal.view.ViewGoal;
+import dev.ckateptb.minecraft.jyraf.packet.managed.RepositoryManaged;
 import lombok.Getter;
 import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.EnderChest;
+import org.bukkit.block.data.type.Piston;
+import org.bukkit.block.data.type.TechnicalPiston;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Objects;
 
 @Getter
-public class PacketBlock extends Interactable {
+public class PacketBlock extends RepositoryManaged {
+    protected final BlockData data;
+    protected final Location location;
 
-    private final World world;
-    private final Vector3i vector;
-    protected WrappedBlockState data;
-
-    public PacketBlock(@NotNull Location location, @NotNull BlockData data) {
-        this(location, data, true);
+    protected PacketBlock(Location location, BlockData data) {
+        this.location = location.clone();
+        this.data = data;
+        this.addGoal(new ViewGoal());
     }
 
-    public PacketBlock(@NotNull Location location, @NotNull BlockData data, boolean global) {
-        this(location, data, global, new ArrayList<>());
-    }
-
-    public PacketBlock(@NotNull Location location, @NotNull BlockData data, boolean global, @NotNull Collection<Player> allowedViewers) {
-        super(location, allowedViewers);
-        Jyraf.getPlugin().getSLF4JLogger().warn("Uses unstable API for PacketBlock." +
-                " At this time, it is not recommended to use batch blocks, since they are not fully implemented.");
-        Objects.requireNonNull(data);
-        Objects.requireNonNull(allowedViewers);
-        this.data = SpigotConversionUtil.fromBukkitBlockData(data.clone());
-        this.world = location.getWorld();
-        this.global = global;
-        this.vector = new Vector3i(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-        this.location = location;
-        this.allowedViewers.addAll(allowedViewers);
-    }
-
-    public void playAction(BlockAction action) {
-        this.currentViewers.forEach(player -> this.playAction(player, action));
-    }
-
-    public void playAction(Player player, BlockAction action) {
-        PacketFactory.INSTANCE.consume(factory -> factory.playBlockAction(player, this, action));
-    }
-
-    private void display(Player player, WrapperPlayClientPlayerDigging wrapper) {
-        PacketFactory.INSTANCE.consume(factory -> {
-            factory.placeBlock(player, this);
-            if (wrapper == null) return;
-            factory.acknowledgeBlockChanges(player, wrapper.getSequence());
-        });
-    }
-
-    public void setData(BlockData data) {
-        this.data = SpigotConversionUtil.fromBukkitBlockData(data);
-        update();
-    }
-
-    public void update() {
-        this.currentViewers.forEach(this::update);
-    }
-
-    public void update(Player player) {
-        this.update(player, null);
-    }
-
-    public void update(Player player, WrapperPlayClientPlayerDigging wrapper) {
-        if (!this.currentViewers.contains(player)) return;
-        this.display(player, wrapper);
-    }
-
-    @Override
-    public void display(Player player) {
-        this.display(player, null);
-    }
-
-    @Override
-    public void destroy(Player player) {
-        PacketFactory.INSTANCE.consume(factory -> factory.breakBlock(player, this));
-    }
-
-    public Vector3i getVector() {
-        return new Vector3i(this.location.getBlockX(), this.location.getBlockY(), this.location.getBlockZ());
-    }
-
-    public WrappedBlockState getOriginalData() {
-        return SpigotConversionUtil.fromBukkitBlockData(this.location.getBlock().getBlockData());
-    }
-
-    public BlockData getBukkitData() {
-        return SpigotConversionUtil.toBukkitBlockData(this.data);
+    public static PacketBlock of(BlockData data, Location location) {
+        if (data instanceof Chest || data instanceof EnderChest) {
+            return new PacketChestBlock(location, data);
+        }
+        if (data instanceof Piston || data instanceof TechnicalPiston) {
+            return new PacketPistonBlock(location, data);
+        }
+        Material material = data.getMaterial();
+        if (material.name().contains("SHULKER_BOX")) {
+            return new PacketShulkerBlock(location, data);
+        }
+        return switch (material) {
+            case BELL -> new PacketBellBlock(location, data);
+            case NOTE_BLOCK -> new PacketNoteBlock(location, data);
+            case END_GATEWAY -> new PacketGatewayBlock(location, data);
+            case SPAWNER -> new PacketSpawnerBlock(location, data);
+            default -> new PacketBlock(location, data);
+        };
     }
 
     @Override
     public Location getLocation() {
-        return new Location(world, this.vector.x, this.vector.y, this.vector.z);
+        return this.location.clone();
     }
 
-    public static final class Builder {
-        private final PacketBlock block;
-
-        public Builder(@NotNull Location location, @NotNull BlockData data) {
-            this.block = new PacketBlock(location, data, true);
-        }
-
-        public @NotNull Builder global(boolean global) {
-            this.block.setGlobal(global);
-            return this;
-        }
-
-        public @NotNull Builder interactionHandler(@NotNull InteractionHandler interactionHandler) {
-            Objects.requireNonNull(interactionHandler);
-            this.block.setInteractionHandler(interactionHandler);
-            return this;
-        }
-
-        public @NotNull Builder viewers(@NotNull Player... viewers) {
-            Objects.requireNonNull(viewers);
-            this.block.setGlobal(false);
-            this.block.allowedViewers.addAll(Arrays.stream(viewers).toList());
-            return this;
-        }
-
-        public @NotNull Builder data(@NotNull BlockData data) {
-            Objects.requireNonNull(data);
-            this.block.setData(data);
-            return this;
-        }
-
-        public @NotNull PacketBlock build() {
-            return this.block;
-        }
+    public Vector3i getVector3i() {
+        return new Vector3i(this.location.getBlockX(), this.location.getBlockY(), this.location.getBlockZ());
     }
 
+    @Override
+    public void spawn(Collection<Player> players) {
+        this.getGoals().forEach(goal -> goal.beforeSpawn(this, players.toArray(new Player[0])));
+        PacketFactory.INSTANCE.consume(factory -> {
+            for (Player player : players) {
+                factory.placeBlock(player, this);
+            }
+        });
+        this.getGoals().forEach(goal -> goal.onSpawn(this, players.toArray(new Player[0])));
+    }
+
+    @Override
+    public void despawn(Collection<Player> players) {
+        this.getGoals().forEach(goal -> goal.beforeDespawn(this, players.toArray(new Player[0])));
+        PacketFactory.INSTANCE.consume(factory -> {
+            for (Player player : players) {
+                factory.breakBlock(player, this);
+            }
+        });
+        this.getGoals().forEach(goal -> goal.onDespawn(this, players.toArray(new Player[0])));
+    }
 }

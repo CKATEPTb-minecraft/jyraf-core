@@ -14,9 +14,10 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.interact.PlayerInteractService;
+import dev.ckateptb.minecraft.jyraf.interact.enums.MouseButton;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
-import dev.ckateptb.minecraft.jyraf.packet.enums.MouseButton;
+import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
 import org.apache.commons.math3.util.Pair;
@@ -43,18 +44,20 @@ public class PlayerInteractListener extends PacketListenerAbstract {
     private final PlayerInteractService service;
 
     private final WorldRepositoryService repository;
+    private final PacketFactory factory;
 
-    public PlayerInteractListener(PlayerInteractService service, WorldRepositoryService repository) {
+    public PlayerInteractListener(PlayerInteractService service, WorldRepositoryService repository, PacketFactory factory) {
         super(PacketListenerPriority.HIGHEST);
         this.service = service;
         this.repository = repository;
+        this.factory = factory;
     }
 
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
         PacketTypeCommon packetType = event.getPacketType();
-        if (packetType == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) { // RMB
+        if (packetType == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) {
             WrapperPlayClientPlayerBlockPlacement wrapper = new WrapperPlayClientPlayerBlockPlacement(event);
             if (wrapper.getHand() != InteractionHand.MAIN_HAND) return;
             this.findBlock(player, wrapper.getBlockPosition())
@@ -83,7 +86,9 @@ public class PlayerInteractListener extends PacketListenerAbstract {
                         // PacketBlockService - START
                         if (packet != null) {
                             event.setCancelled(true);
-                            packet.update(player, wrapper);
+                            if (packet.isViewed(player)) {
+                                this.factory.acknowledgeBlockChanges(player, wrapper.getSequence());
+                            }
                         }
                         // PacketBlockService - END
                     });
@@ -134,7 +139,7 @@ public class PlayerInteractListener extends PacketListenerAbstract {
                 .filterWhen(repository -> repository.hasChunk(chunkKey))
                 .flatMap(repository -> repository.getChunk(chunkKey))
                 .flatMapMany(Repository::get)
-                .filter(block -> block.getVector().equals(position) && block.isViewed(player))
+                .filter(block -> block.getVector3i().equals(position) && block.isViewed(player))
                 .next();
     }
 

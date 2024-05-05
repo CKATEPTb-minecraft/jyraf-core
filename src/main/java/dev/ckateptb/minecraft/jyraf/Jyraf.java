@@ -54,14 +54,6 @@ import reactor.core.scheduler.Schedulers;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-// TODO:
-//  Redis database
-//  Temporary system (blocks, effects, callbacks, etc.)
-//  Packet block
-//  Packet boss bar
-//  Packet scoreboard
-//  Split by subprojects for better dependency control
-//  Починить PacketBlock
 public class Jyraf extends JavaPlugin {
     private final static Cache<Plugin, SyncScheduler> SCHEDULER_CACHE = Caffeine.newBuilder().build();
 
@@ -152,7 +144,8 @@ public class Jyraf extends JavaPlugin {
         this.packetAPI.consume(PacketEventsAPI::terminate);
 
         // DO LAST
-        Hooks.onErrorDropped(throwable -> {});
+        Hooks.onErrorDropped(throwable -> {
+        });
         Schedulers.shutdownNow();
     }
 

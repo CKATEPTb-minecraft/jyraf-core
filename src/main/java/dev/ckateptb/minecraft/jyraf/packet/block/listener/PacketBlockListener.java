@@ -14,6 +14,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -32,6 +33,6 @@ public class PacketBlockListener implements Listener {
                         .filter(block -> block.isViewed(player))
                         .delaySubscription(Duration.ofSeconds(3)))
                 .subscribeOn(Schedulers.boundedElastic())
-                .subscribe(block -> block.display(player));
+                .subscribe(block -> block.spawn(List.of(player)));
     }
 }

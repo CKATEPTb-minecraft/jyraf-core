@@ -27,12 +27,12 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
 
     @Override
     protected boolean isValid(PacketBlock entry) {
-        return this.world.getUID().equals(entry.getWorld().getUID());
+        return this.world.getUID().equals(entry.getLocation().getWorld().getUID());
     }
 
     @Override
     protected Vector3i getKey(PacketBlock entry) {
-        return entry.getVector();
+        return entry.getVector3i();
     }
 
     @Override
@@ -63,18 +63,17 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
 
         @Override
         protected Vector3i getKey(PacketBlock entry) {
-            return entry.getVector();
+            return entry.getVector3i();
         }
 
         @Override
         public void tick() {
-            this.get()
-                    .subscribe(PacketBlock::tick);
+            this.get().subscribe(PacketBlock::tick);
         }
 
         @Override
         public Mono<PacketBlock> add(PacketBlock entry) {
-            return Mono.justOrEmpty(this.entries.getIfPresent(entry.getVector()))
+            return Mono.justOrEmpty(this.entries.getIfPresent(entry.getVector3i()))
                     .flatMap(Mono::fromFuture)
                     .map(this::remove)
                     .flatMap(ignored -> Mono.empty())
@@ -84,8 +83,7 @@ public class PacketBlockRepository extends AbstractWorldRepository<Vector3i, Pac
 
         @Override
         public Mono<PacketBlock> remove(PacketBlock entry) {
-            return super.remove(entry)
-                    .doOnNext(PacketBlock::destroy);
+            return super.remove(entry);
         }
 
         @Override
