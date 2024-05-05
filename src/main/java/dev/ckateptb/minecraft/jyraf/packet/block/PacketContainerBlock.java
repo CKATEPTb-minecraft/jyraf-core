@@ -1,6 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.packet.block;
 
-import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
@@ -13,18 +12,10 @@ public class PacketContainerBlock extends PacketBlock {
     }
 
     public void open(Collection<Player> players) {
-        PacketFactory.INSTANCE.consume(factory -> {
-            for (Player player : players) {
-                factory.playBlockAction(player, this, 1, 1);
-            }
-        });
+        this.playAction(1, 1, players);
     }
 
     public void close(Collection<Player> players) {
-        PacketFactory.INSTANCE.consume(factory -> {
-            for (Player player : players) {
-                factory.playBlockAction(player, this, 1, 0);
-            }
-        });
+        this.playAction(1, 0, players);
     }
 }

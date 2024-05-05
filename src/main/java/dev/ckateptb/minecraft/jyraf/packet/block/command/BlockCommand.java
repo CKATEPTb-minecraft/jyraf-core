@@ -6,6 +6,7 @@ import cloud.commandframework.annotations.CommandPermission;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
+import dev.ckateptb.minecraft.jyraf.packet.block.PacketBellBlock;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketBlock;
 import dev.ckateptb.minecraft.jyraf.packet.block.PacketChestBlock;
 import dev.ckateptb.minecraft.jyraf.packet.goal.PacketGoal;
@@ -16,6 +17,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.entity.Player;
@@ -51,6 +53,16 @@ public class BlockCommand implements Command {
                 public void onSpawn(PacketChestBlock entry, Player... players) {
                     Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () ->
                                     entry.open(Arrays.asList(players))
+                            , 60);
+                }
+            });
+        }
+        if (packetBlock instanceof PacketBellBlock bellBlock) {
+            bellBlock.addGoal(new PacketGoal<PacketBellBlock>(PacketGoal.Priority.NORMAL) {
+                @Override
+                public void onSpawn(PacketBellBlock entry, Player... players) {
+                    Bukkit.getScheduler().runTaskLaterAsynchronously(Jyraf.getPlugin(), () ->
+                                    entry.ring(BlockFace.NORTH, Arrays.asList(players))
                             , 60);
                 }
             });

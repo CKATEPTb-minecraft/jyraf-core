@@ -65,7 +65,7 @@ public class NpcCommand implements Command {
             blockDisplayMeta.setScale(new Vector3f());
             blockDisplayMeta.setRightRotation(quaternion4f);
         }
-        if (meta instanceof ItemDisplayMeta itemDisplayMeta) {
+        if(meta instanceof ItemDisplayMeta itemDisplayMeta) {
             itemDisplayMeta.setItem(SpigotConversionUtil.fromBukkitItemStack(Menu.builder().item(data).build()));
         }
         if (meta instanceof PlayerMeta playerMeta) {
