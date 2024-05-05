@@ -77,4 +77,12 @@ public class PacketBlock extends RepositoryManaged {
         });
         this.getGoals().forEach(goal -> goal.onDespawn(this, players.toArray(new Player[0])));
     }
+
+    public void playAction(int action, int param, Collection<Player> players) {
+        PacketFactory.INSTANCE.consume(factory -> {
+            for (Player player : players) {
+                factory.playBlockAction(player, this, action, param);
+            }
+        });
+    }
 }

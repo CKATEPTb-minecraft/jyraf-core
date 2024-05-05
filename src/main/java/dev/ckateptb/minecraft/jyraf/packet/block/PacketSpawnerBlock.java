@@ -1,6 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.packet.block;
 
-import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
@@ -13,10 +12,6 @@ public class PacketSpawnerBlock extends PacketBlock {
     }
 
     public void resetDelay(Collection<Player> players) {
-        PacketFactory.INSTANCE.consume(factory -> {
-            for (Player player : players) {
-                factory.playBlockAction(player, this, 1, 0);
-            }
-        });
+        this.playAction(1, 0, players);
     }
 }

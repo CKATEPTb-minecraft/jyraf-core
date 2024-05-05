@@ -1,6 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.packet.block;
 
-import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
@@ -15,19 +14,11 @@ public class PacketPistonBlock extends PacketBlock {
     }
 
     public void extend(Collection<Player> players) {
-        PacketFactory.INSTANCE.consume(factory -> {
-            for (Player player : players) {
-                factory.playBlockAction(player, this, 0, this.getFacingParam());
-            }
-        });
+        this.playAction(0, this.getFacingParam(), players);
     }
 
     public void retract(Collection<Player> players) {
-        PacketFactory.INSTANCE.consume(factory -> {
-            for (Player player : players) {
-                factory.playBlockAction(player, this, 1, this.getFacingParam());
-            }
-        });
+        this.playAction(1, this.getFacingParam(), players);
     }
 
     private int getFacingParam() {

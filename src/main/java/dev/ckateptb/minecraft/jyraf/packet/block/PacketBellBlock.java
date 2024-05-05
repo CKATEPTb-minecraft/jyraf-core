@@ -1,6 +1,5 @@
 package dev.ckateptb.minecraft.jyraf.packet.block;
 
-import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
@@ -14,11 +13,7 @@ public class PacketBellBlock extends PacketBlock {
     }
 
     public void ring(BlockFace facing, Collection<Player> players) {
-        PacketFactory.INSTANCE.consume(factory -> {
-            for (Player player : players) {
-                factory.playBlockAction(player, this, 1, this.getFacingParam(facing));
-            }
-        });
+        this.playAction(1, this.getFacingParam(facing), players);
     }
 
     private int getFacingParam(BlockFace facing) {
