@@ -24,6 +24,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.Arrays;
 
+// TODO Remove. We don't need debugging commands in production
 @Getter
 @Component
 @RequiredArgsConstructor
