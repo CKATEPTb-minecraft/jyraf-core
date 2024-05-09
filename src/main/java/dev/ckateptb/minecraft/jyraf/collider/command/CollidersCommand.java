@@ -1,14 +1,14 @@
-package dev.ckateptb.minecraft.jyraf.colider.command;
+package dev.ckateptb.minecraft.jyraf.collider.command;
 
 import cloud.commandframework.annotations.Argument;
 import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.CommandPermission;
 import com.destroystokyo.paper.ParticleBuilder;
 import dev.ckateptb.minecraft.jyraf.Jyraf;
-import dev.ckateptb.minecraft.jyraf.colider.Collider;
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
-import dev.ckateptb.minecraft.jyraf.colider.geometry.OrientedBoundingBoxCollider;
-import dev.ckateptb.minecraft.jyraf.colider.geometry.SphereBoundingBoxCollider;
+import dev.ckateptb.minecraft.jyraf.collider.Collider;
+import dev.ckateptb.minecraft.jyraf.collider.Colliders;
+import dev.ckateptb.minecraft.jyraf.collider.geometry.OrientedBoundingBoxCollider;
+import dev.ckateptb.minecraft.jyraf.collider.geometry.SphereBoundingBoxCollider;
 import dev.ckateptb.minecraft.jyraf.command.Command;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.schedule.Schedule;

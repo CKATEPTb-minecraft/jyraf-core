@@ -1,6 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.packet.managed;
 
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import dev.ckateptb.minecraft.jyraf.collider.Colliders;
 import dev.ckateptb.minecraft.jyraf.packet.goal.PacketGoal;
 import dev.ckateptb.minecraft.jyraf.packet.property.Property;
 import lombok.Getter;

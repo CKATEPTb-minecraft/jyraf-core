@@ -1,6 +1,6 @@
-package dev.ckateptb.minecraft.jyraf.colider;
+package dev.ckateptb.minecraft.jyraf.collider;
 
-import dev.ckateptb.minecraft.jyraf.colider.geometry.*;
+import dev.ckateptb.minecraft.jyraf.collider.geometry.*;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import org.bukkit.Location;
 import org.bukkit.World;

@@ -1,7 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.math;
 
 import com.google.common.primitives.Doubles;
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import dev.ckateptb.minecraft.jyraf.collider.Colliders;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;

@@ -1,8 +1,8 @@
-package dev.ckateptb.minecraft.jyraf.colider.geometry;
+package dev.ckateptb.minecraft.jyraf.collider.geometry;
 
 import com.google.common.base.Objects;
-import dev.ckateptb.minecraft.jyraf.colider.Collider;
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
+import dev.ckateptb.minecraft.jyraf.collider.Collider;
+import dev.ckateptb.minecraft.jyraf.collider.Colliders;
 import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
