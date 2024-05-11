@@ -3,7 +3,9 @@ package dev.ckateptb.minecraft.jyraf.packet.goal;
 import dev.ckateptb.minecraft.jyraf.packet.managed.RepositoryManaged;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 @Getter
 @RequiredArgsConstructor
@@ -25,6 +27,12 @@ public abstract class PacketGoal<T extends RepositoryManaged> {
     }
 
     public void onDespawn(T entry, Player... players) {
+    }
+
+    public void onTeleport(T entry, Location location, Player... players) {
+    }
+
+    public void onVelocity(T entry, Vector vector, Player... players) {
     }
 
     public enum Result {
