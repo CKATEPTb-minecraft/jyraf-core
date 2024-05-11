@@ -1,70 +1,67 @@
 package dev.ckateptb.minecraft.jyraf.collider.geometry;
 
-import com.google.common.base.Objects;
 import dev.ckateptb.minecraft.jyraf.collider.Collider;
-import dev.ckateptb.minecraft.jyraf.collider.Colliders;
+import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import lombok.Getter;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Math;
-import reactor.core.publisher.Flux;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @Getter
-public class OrientedBoundingBoxCollider implements Collider {
-    protected final World world;
-    protected final ImmutableVector center;
+public class OrientedBoundingBoxCollider implements Collider<OrientedBoundingBoxCollider> {
+    protected final Location location;
     protected final EulerAngle rotation;
     protected final ImmutableVector right;
     protected final ImmutableVector up;
     protected final ImmutableVector forward;
     protected final ImmutableVector halfExtents;
 
-    private OrientedBoundingBoxCollider(OrientedBoundingBoxCollider obb, ImmutableVector center) {
-        this(obb, center, obb.halfExtents);
-    }
-
-    private OrientedBoundingBoxCollider(OrientedBoundingBoxCollider obb, ImmutableVector center, ImmutableVector halfExtents) {
-        this.world = obb.world;
-        this.center = center;
-        this.rotation = obb.rotation;
-        this.right = obb.right;
-        this.up = obb.up;
-        this.forward = obb.forward;
-        this.halfExtents = halfExtents;
-    }
-
-    public OrientedBoundingBoxCollider(AxisAlignedBoundingBoxCollider aabb, EulerAngle eulerAngle) {
-        this(aabb.world, aabb.getCenter(), aabb.max, eulerAngle);
-    }
-
-    public OrientedBoundingBoxCollider(World world, ImmutableVector center, ImmutableVector halfExtents, EulerAngle eulerAngle) {
-        this.world = world;
-        this.center = center;
-        this.rotation = eulerAngle.setZ(0); // Roll is not implement now
+    public OrientedBoundingBoxCollider(Location center, Vector halfExtents, EulerAngle eulerAngle) {
+        this.location = center;
+        this.rotation = new EulerAngle(eulerAngle.getX(), eulerAngle.getY(), 0);
         this.right = ImmutableVector.PLUS_I.rotate(this.rotation);
         this.up = ImmutableVector.PLUS_J.rotate(this.rotation);
         this.forward = ImmutableVector.PLUS_K.rotate(this.rotation);
-        this.halfExtents = halfExtents;
+        this.halfExtents = ImmutableVector.of(halfExtents);
+    }
+
+
+    @Override
+    public @NotNull OrientedBoundingBoxCollider at(@NotNull Location center) {
+        return new OrientedBoundingBoxCollider(center, this.halfExtents, this.rotation);
     }
 
     @Override
     public @NotNull OrientedBoundingBoxCollider grow(Vector vector) {
-        return new OrientedBoundingBoxCollider(this, center, halfExtents.add(vector));
+        return new OrientedBoundingBoxCollider(this.location, this.halfExtents.add(ImmutableVector.of(vector).abs()), this.rotation);
     }
 
-    public ImmutableVector getClosestPosition(ImmutableVector target) {
-        ImmutableVector destination = target.subtract(center);
-        ImmutableVector closest = center;
+    @Override
+    public @NotNull OrientedBoundingBoxCollider scale(double amount) {
+        return new OrientedBoundingBoxCollider(this.location, this.halfExtents.multiply(amount), this.rotation);
+    }
+
+    @Override
+    public boolean contains(@NotNull Vector vector) {
+        ImmutableVector point = ImmutableVector.of(vector);
+        return getClosestPosition(point).distanceSquared(point) <= 0.01;
+    }
+
+    @Override
+    public @NotNull Location getLocation() {
+        return this.location.clone();
+    }
+
+    private ImmutableVector getClosestPosition(Vector target) {
+        ImmutableVector closest = ImmutableVector.of(this.location);
+        ImmutableVector destination = ImmutableVector.of(target).subtract(closest);
         for (int i = 0; i < 3; i++) {
             ImmutableVector axis = switch (i) {
                 case 0 -> right;
@@ -79,38 +76,33 @@ public class OrientedBoundingBoxCollider implements Collider {
         return closest;
     }
 
-    @Override
-    public boolean intersects(@NotNull Collider other) {
-        World otherWorld = other.getWorld();
-        if (!otherWorld.equals(world)) return false;
-        if (other instanceof OrientedBoundingBoxCollider obb) {
-            ImmutableVector centerDifference = obb.center.subtract(this.center);
-            for (int i = 0; i < 15; i++) {
-                ImmutableVector current = this.getByIndex(i, obb);
-                if (projectionOnAxis(centerDifference, current) >
-                        projectionOnAxis(this.right.multiply(this.halfExtents.getX()), current) +
-                                projectionOnAxis(this.up.multiply(this.halfExtents.getY()), current) +
-                                projectionOnAxis(this.forward.multiply(this.halfExtents.getZ()), current) +
-                                projectionOnAxis(obb.right.multiply(obb.halfExtents.getX()), current) +
-                                projectionOnAxis(obb.up.multiply(obb.halfExtents.getY()), current) +
-                                projectionOnAxis(obb.forward.multiply(obb.halfExtents.getZ()), current)) {
-                    return false;
-                }
+    public boolean intersectsAABB(AxisAlignedBoundingBoxCollider aabb) {
+        return this.intersects(new OrientedBoundingBoxCollider(this.location, this.halfExtents, EulerAngle.ZERO))
+                && aabb.contains(this.getClosestPosition(ImmutableVector.of(aabb.getLocation())));
+    }
+
+    public boolean intersectsSphere(SphereBoundingBoxCollider sphere) {
+        ImmutableVector sphereCenter = ImmutableVector.of(sphere.getLocation());
+        ImmutableVector distance = sphereCenter.subtract(getClosestPosition(sphereCenter));
+        double radius = sphere.getRadius();
+        return distance.dot(distance) <= radius * radius;
+    }
+
+    public boolean intersectsOBB(OrientedBoundingBoxCollider obb) {
+        ImmutableVector centerDifference = ImmutableVector.of(obb.location).subtract(ImmutableVector.of(this.location));
+        for (int i = 0; i < 15; i++) {
+            ImmutableVector current = this.getByIndex(i, obb);
+            if (projectionOnAxis(centerDifference, current) >
+                    projectionOnAxis(this.right.multiply(this.halfExtents.getX()), current) +
+                            projectionOnAxis(this.up.multiply(this.halfExtents.getY()), current) +
+                            projectionOnAxis(this.forward.multiply(this.halfExtents.getZ()), current) +
+                            projectionOnAxis(obb.right.multiply(obb.halfExtents.getX()), current) +
+                            projectionOnAxis(obb.up.multiply(obb.halfExtents.getY()), current) +
+                            projectionOnAxis(obb.forward.multiply(obb.halfExtents.getZ()), current)) {
+                return false;
             }
-            return true;
         }
-        if (other instanceof AxisAlignedBoundingBoxCollider aabb) {
-            return this.intersects(new OrientedBoundingBoxCollider(aabb, EulerAngle.ZERO))
-                    && aabb.contains(this.getClosestPosition(aabb.getCenter()));
-        }
-        if (other instanceof SphereBoundingBoxCollider sphere) {
-            ImmutableVector distance = sphere.center.subtract(getClosestPosition(sphere.center));
-            return distance.dot(distance) <= sphere.radius * sphere.radius;
-        }
-        if (other instanceof RayTraceCollider ray) {
-            return ray.intersects(this);
-        }
-        return false;
+        return true;
     }
 
     private double projectionOnAxis(Vector vector, Vector vector2) {
@@ -138,79 +130,41 @@ public class OrientedBoundingBoxCollider implements Collider {
         };
     }
 
-    @Override
-    public @NotNull OrientedBoundingBoxCollider at(@NotNull Vector center) {
-        return new OrientedBoundingBoxCollider(this, ImmutableVector.of(center));
-    }
+    @Getter
+    private final LazyLoader<Collection<ImmutableVector>> draw = LazyLoader.of(() -> {
+        Collection<ImmutableVector> drawPoints = new ArrayList<>();
+        drawPoints.add(ImmutableVector.of(this.getLocation()));
 
-    @Override
-    public @NotNull OrientedBoundingBoxCollider scale(double amount) {
-        return new OrientedBoundingBoxCollider(this, center, halfExtents.multiply(amount));
-    }
+        // Получаем вершины объекта OBB
+        ImmutableVector[] corners = this.getCorners();
 
-    @Override
-    public boolean contains(@NotNull Vector vector) {
-        ImmutableVector point = ImmutableVector.of(vector);
-        return getClosestPosition(point).distanceSquared(point) <= 0.01;
-    }
+        // Добавляем вершины к границам
+        for (int i = 0; i < corners.length; i++) {
+            drawPoints.add(corners[i]);
+            drawPoints.add(corners[(i + 1) % corners.length]); // Добавляем ребра
+        }
 
-    @Override
-    public @NotNull OrientedBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
-        this.wrapToAABB().affectEntities(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
-        return this;
-    }
+        return drawPoints;
+    });
 
-    @Override
-    public @NotNull OrientedBoundingBoxCollider affectBlocks(@NotNull Consumer<Flux<Block>> consumer) {
-        this.wrapToAABB().affectBlocks(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
-        return this;
-    }
+    public ImmutableVector[] getCorners() {
+        ImmutableVector[] corners = new ImmutableVector[8];
+        ImmutableVector locationVector = ImmutableVector.of(location);
 
-    @Override
-    public @NotNull OrientedBoundingBoxCollider affectLocations(@NotNull Consumer<Flux<Location>> consumer) {
-        this.wrapToAABB().affectLocations(flux -> consumer.accept(applyFilter(flux, Colliders::aabb)));
-        return this;
-    }
+        // Вычисляем вершины OBB
+        for (int i = 0; i < 8; i++) {
+            ImmutableVector offset = new ImmutableVector(
+                    (i & 1) == 0 ? halfExtents.getX() : -halfExtents.getX(),
+                    (i & 2) == 0 ? halfExtents.getY() : -halfExtents.getY(),
+                    (i & 4) == 0 ? halfExtents.getZ() : -halfExtents.getZ()
+            );
+            corners[i] = locationVector.add(
+                    right.multiply(offset.getX())
+                            .add(up.multiply(offset.getY()))
+                            .add(forward.multiply(offset.getZ()))
+            );
+        }
 
-    private <T> Flux<T> applyFilter(Flux<T> flux, Function<T, Collider> getter) {
-        return flux.filter(t -> this.intersects(getter.apply(t)));
-    }
-
-    private Collider wrapToAABB() {
-        double maxComponent = this.halfExtents.maxComponent();
-        ImmutableVector halfExtents = new ImmutableVector(maxComponent, maxComponent, maxComponent);
-        return Colliders.aabb(world, halfExtents.negative().add(center), halfExtents.add(center));
-    }
-
-    @Override
-    public @NotNull World getWorld() {
-        return world;
-    }
-
-    @Override
-    public @NotNull ImmutableVector getCenter() {
-        return center;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof OrientedBoundingBoxCollider that)) return false;
-        return Objects.equal(world, that.world) && Objects.equal(center, that.center) && Objects.equal(rotation, that.rotation) && Objects.equal(halfExtents, that.halfExtents);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(world, center, rotation, halfExtents);
-    }
-
-    @Override
-    public String toString() {
-        return "OrientedBoundingBoxCollider{" +
-                "world=" + world.getName() +
-                ", center=" + center +
-                ", rotation=" + rotation +
-                ", halfExtents=" + halfExtents +
-                '}';
+        return corners;
     }
 }

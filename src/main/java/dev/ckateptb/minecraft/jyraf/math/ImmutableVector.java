@@ -341,9 +341,14 @@ public class ImmutableVector extends Vector {
     }
 
     public double getDistanceAboveGround(World world, boolean ignoreLiquids) {
-        return Colliders.ray(world, this, ImmutableVector.MINUS_J, FastMath.min(world.getMaxHeight(), this.y), 0)
-                .getFirstBlockOptional(ignoreLiquids, true)
-                .map(entry -> y - Colliders.aabb(entry.getKey()).getMax().getY())
+        Location location = new Location(world, this.x, this.y, this.z);
+        ImmutableVector size = new ImmutableVector(0.1, 0.1, FastMath.min(world.getMaxHeight(), this.y));
+        return Colliders.ray(location, ImmutableVector.MINUS_J, size)
+                .block()
+                .liquid(!ignoreLiquids)
+                .passable(false)
+                .find()
+                .map(block -> y - Colliders.aabb(block).getMax().getY())
                 .orElse(Double.MAX_VALUE);
     }
 }

@@ -64,25 +64,24 @@ public abstract class RepositoryManaged {
     public void tick() {
         Location location = this.getLocation();
         Colliders.sphere(location, Property.VIEW_DISTANCE.parse(this, Double.class))
-                .affectEntities(entities -> entities
-                        .filter(entity -> entity instanceof Player)
-                        .cast(Player.class)
-                        .sort((o1, o2) -> {
-                            Location first = o1.getLocation();
-                            Location second = o2.getLocation();
-                            return (int) (first.distanceSquared(location) - second.distanceSquared(location));
-                        })
-                        .filter(this::canView)
-                        .collectList()
-                        .subscribe(players -> {
-                            for (PacketGoal<RepositoryManaged> goal : this.getGoals().stream()
-                                    .sorted(Comparator.comparing(PacketGoal::getPriority)).toList()) {
-                                PacketGoal.Result result = goal.onTick(this, players.toArray(new Player[0]));
-                                if (result == PacketGoal.Result.PENDING) break;
-                                if (result == PacketGoal.Result.DESTROY) this.removeGoal(goal);
-                            }
-                        })
-                );
+                .findEntities()
+                .filter(entity -> entity instanceof Player)
+                .cast(Player.class)
+                .sort((o1, o2) -> {
+                    Location first = o1.getLocation();
+                    Location second = o2.getLocation();
+                    return (int) (first.distanceSquared(location) - second.distanceSquared(location));
+                })
+                .filter(this::canView)
+                .collectList()
+                .subscribe(players -> {
+                    for (PacketGoal<RepositoryManaged> goal : this.getGoals().stream()
+                            .sorted(Comparator.comparing(PacketGoal::getPriority)).toList()) {
+                        PacketGoal.Result result = goal.onTick(this, players.toArray(new Player[0]));
+                        if (result == PacketGoal.Result.PENDING) break;
+                        if (result == PacketGoal.Result.DESTROY) this.removeGoal(goal);
+                    }
+                });
     }
 
     public abstract void spawn(Collection<Player> players);

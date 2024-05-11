@@ -1,192 +1,127 @@
 package dev.ckateptb.minecraft.jyraf.collider.geometry;
 
-import com.google.common.base.Objects;
 import dev.ckateptb.minecraft.jyraf.collider.Collider;
-import dev.ckateptb.minecraft.jyraf.collider.Colliders;
-import dev.ckateptb.minecraft.jyraf.container.IoC;
-import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
-import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
-import dev.ckateptb.minecraft.jyraf.repository.entity.EntityRepository;
 import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
+import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import lombok.Getter;
-import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
-import reactor.util.function.Tuple3;
-import reactor.util.function.Tuples;
 
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
-@Getter
-public class AxisAlignedBoundingBoxCollider implements Collider {
-    public static final LazyLoader<Mono<WorldRepositoryService>> WORLD_SERVICE_CACHED_REFERENCE =
-            LazyLoader.of(() -> IoC.getBean(WorldRepositoryService.class).orElseGet(Mono::empty));
+public class AxisAlignedBoundingBoxCollider implements Collider<AxisAlignedBoundingBoxCollider> {
+    protected final Location location;
+    protected final ImmutableVector halfExtents;
 
-    protected final @NotNull World world;
-    protected final @NotNull ImmutableVector min;
-    protected final @NotNull ImmutableVector max;
-
-    public AxisAlignedBoundingBoxCollider(@NotNull World world, @NotNull ImmutableVector min, @NotNull ImmutableVector max) {
-        java.util.Objects.requireNonNull(world);
-        java.util.Objects.requireNonNull(min);
-        java.util.Objects.requireNonNull(max);
-        this.world = world;
-        this.min = min.min(max);
-        this.max = max.max(min);
+    public AxisAlignedBoundingBoxCollider(@NotNull Location location, @NotNull Vector halfExtends) {
+        Objects.requireNonNull(location);
+        Objects.requireNonNull(halfExtends);
+        this.location = location.clone();
+        this.halfExtents = ImmutableVector.of(halfExtends);
     }
 
     @Override
-    public @NotNull AxisAlignedBoundingBoxCollider at(@NotNull Vector center) {
-        ImmutableVector halfExtents = this.getHalfExtents();
-        ImmutableVector immutableCenter = ImmutableVector.of(center);
-        return new AxisAlignedBoundingBoxCollider(world, immutableCenter.add(halfExtents.negative()), immutableCenter.add(halfExtents));
+    public @NotNull AxisAlignedBoundingBoxCollider at(@NotNull Location location) {
+        return new AxisAlignedBoundingBoxCollider(location, this.halfExtents);
     }
 
     @Override
-    public @NotNull AxisAlignedBoundingBoxCollider grow(Vector vector) {
-        return new AxisAlignedBoundingBoxCollider(world, min.subtract(vector), max.add(vector));
+    public @NotNull AxisAlignedBoundingBoxCollider grow(Vector size) {
+        return new AxisAlignedBoundingBoxCollider(this.location, this.halfExtents.add(ImmutableVector.of(size).abs()));
     }
 
     @Override
     public @NotNull AxisAlignedBoundingBoxCollider scale(double multiplier) {
-        return this.scale(multiplier, multiplier, multiplier);
-    }
-
-    public AxisAlignedBoundingBoxCollider scale(double multiplierX, double multiplierY, double multiplierZ) {
-        ImmutableVector halfExtents = this.getHalfExtents();
-        ImmutableVector newExtents = new ImmutableVector(halfExtents.getX() * multiplierX,
-                halfExtents.getY() * multiplierY,
-                halfExtents.getZ() * multiplierZ);
-        ImmutableVector diff = newExtents.subtract(halfExtents);
-        return new AxisAlignedBoundingBoxCollider(world, min.subtract(diff), max.add(diff));
+        return new AxisAlignedBoundingBoxCollider(this.location, this.halfExtents.multiply(multiplier));
     }
 
     @Override
     public @NotNull ImmutableVector getHalfExtents() {
-        return max.subtract(min).multiply(0.5).abs();
+        return this.halfExtents;
+    }
+
+    public ImmutableVector getMax() {
+        return ImmutableVector.of(this.location).add(this.halfExtents);
+    }
+
+    public ImmutableVector getMin() {
+        return ImmutableVector.of(this.location).subtract(this.halfExtents);
     }
 
     @Override
-    public @NotNull ImmutableVector getCenter() {
-        return min.add(max.subtract(min).multiply(0.5));
+    public @NotNull Location getLocation() {
+        return this.location.clone();
     }
 
     @Override
     public boolean contains(@NotNull Vector vector) {
+        ImmutableVector center = ImmutableVector.of(this.location);
+        ImmutableVector max = center.add(this.halfExtents);
+        ImmutableVector min = center.subtract(this.halfExtents);
         return vector.isInAABB(min, max);
-    }
-
-    private boolean intersects(AxisAlignedBoundingBoxCollider first, AxisAlignedBoundingBoxCollider second) {
-        return first.min.getX() <= second.max.getX()
-                && first.max.getX() >= second.min.getX()
-                && first.min.getY() <= second.max.getY()
-                && first.max.getY() >= second.min.getY()
-                && first.min.getZ() <= second.max.getZ()
-                && first.max.getZ() >= second.min.getZ();
-    }
-
-    @Override
-    public boolean intersects(@NotNull Collider other) {
-        World otherWorld = other.getWorld();
-        if (!otherWorld.equals(world)) return false;
-        if (other instanceof AxisAlignedBoundingBoxCollider aabb) {
-            return this.intersects(aabb, this) || this.intersects(this, aabb);
-        }
-        if (other instanceof SphereBoundingBoxCollider sphere) {
-            return sphere.intersects(this);
-        }
-        if (other instanceof OrientedBoundingBoxCollider obb) {
-            return obb.intersects(this);
-        }
-        if (other instanceof RayTraceCollider ray) {
-            return ray.intersects(this);
-        }
-        return false;
-    }
-
-    @Override
-    public @NotNull AxisAlignedBoundingBoxCollider affectEntities(Consumer<Flux<Entity>> consumer) {
-        ImmutableVector center = this.getCenter();
-        ImmutableVector vector = min.max(max).subtract(center);
-        consumer.accept(Mono.defer(() -> Mono.just(center.toLocation(world)))
-                .flatMapMany(location -> WORLD_SERVICE_CACHED_REFERENCE.get()
-                        .flatMap(worldService -> worldService.getRepository(Entity.class, world))
-                        .cast(EntityRepository.class)
-                        .flatMapMany(worldRepository -> worldRepository.getNearbyEntities(location, vector.maxComponent())))
-                .filter(entity -> this.intersects(Colliders.aabb(entity))));
-        return this;
-    }
-
-    @Override
-    public @NotNull AxisAlignedBoundingBoxCollider affectBlocks(@NotNull Consumer<Flux<Block>> consumer) {
-        this.affectLocations(flux ->
-                consumer.accept(flux
-                        .map(Location::getBlock)
-                        .filter(block -> {
-                            AxisAlignedBoundingBoxCollider aabb = Colliders.aabb(block);
-                            return aabb.intersects(this) || this.intersects(aabb);
-                        })));
-        return this;
-    }
-
-    @Override
-    public @NotNull AxisAlignedBoundingBoxCollider affectLocations(@NotNull Consumer<Flux<Location>> consumer) {
-        ImmutableVector position = this.getCenter();
-        double maxExtent = getHalfExtents().maxComponent();
-        int radius = (int) (FastMath.ceil(maxExtent) + 1);
-        double originX = position.getX();
-        double originY = position.getY();
-        double originZ = position.getZ();
-        Sinks.Many<Tuple3<Double, Double, Double>> locations = Sinks.many().unicast().onBackpressureBuffer();
-        Flux<Tuple3<Double, Double, Double>> flux = locations.asFlux();
-        consumer.accept(flux
-                .map(tuple -> new ImmutableVector(tuple.getT1(), tuple.getT2(), tuple.getT3()))
-                .map(vector -> vector.toLocation(world).toCenterLocation())
-                .filter(location -> {
-                    Collider aabb = Colliders.BLOCK.apply(world).at(location);
-                    return aabb.intersects(this) || this.intersects(aabb);
-                }));
-        for (double x = originX - radius; x <= originX + radius; x++) {
-            for (double y = originY - radius; y <= originY + radius; y++) {
-                for (double z = originZ - radius; z <= originZ + radius; z++) {
-                    locations.tryEmitNext(Tuples.of(x, y, z));
-                }
-            }
-        }
-        locations.tryEmitComplete();
-        return this;
-    }
-
-    @Override
-    public @NotNull World getWorld() {
-        return this.world;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof AxisAlignedBoundingBoxCollider that)) return false;
-        return Objects.equal(world, that.world) && Objects.equal(min, that.min) && Objects.equal(max, that.max);
+        return Objects.equals(this.location, that.location) && Objects.equals(this.halfExtents, that.halfExtents);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(world, min, max);
+        return Objects.hash(this.location, this.halfExtents);
     }
 
-    @Override
-    public String toString() {
-        return "AxisAlignedBoundingBoxCollider{" +
-                "world=" + world.getName() +
-                ", min=" + min +
-                ", max=" + max +
-                '}';
+    @Getter
+    private final LazyLoader<Collection<ImmutableVector>> draw = LazyLoader.of(() -> {
+        ImmutableVector[] corners = this.getCorners();
+        List<ImmutableVector> bounds = new ArrayList<>();
+        bounds.add(ImmutableVector.of(this.getLocation()));
+
+        // Добавляем вершины к границам
+        for (int i = 0; i < corners.length; i++) {
+            bounds.add(corners[i]);
+            bounds.add(corners[(i + 1) % corners.length]); // Добавляем ребра
+        }
+
+        return bounds;
+    });
+
+    private ImmutableVector[] getCorners() {
+        ImmutableVector locationVector = ImmutableVector.of(this.location);
+        ImmutableVector halfExtents = this.getHalfExtents();
+
+        // Вычисляем вершины AABB
+        ImmutableVector corner1 = locationVector.add(-halfExtents.getX(), -halfExtents.getY(), -halfExtents.getZ());
+        ImmutableVector corner2 = locationVector.add(halfExtents.getX(), -halfExtents.getY(), -halfExtents.getZ());
+        ImmutableVector corner3 = locationVector.add(-halfExtents.getX(), -halfExtents.getY(), halfExtents.getZ());
+        ImmutableVector corner4 = locationVector.add(halfExtents.getX(), -halfExtents.getY(), halfExtents.getZ());
+        ImmutableVector corner5 = locationVector.add(-halfExtents.getX(), halfExtents.getY(), -halfExtents.getZ());
+        ImmutableVector corner6 = locationVector.add(halfExtents.getX(), halfExtents.getY(), -halfExtents.getZ());
+        ImmutableVector corner7 = locationVector.add(-halfExtents.getX(), halfExtents.getY(), halfExtents.getZ());
+        ImmutableVector corner8 = locationVector.add(halfExtents.getX(), halfExtents.getY(), halfExtents.getZ());
+
+        // Возвращаем массив вершин
+        return new ImmutableVector[]{corner1, corner2, corner3, corner4, corner5, corner6, corner7, corner8};
+    }
+
+    public boolean intersectsAABB(AxisAlignedBoundingBoxCollider other) {
+        ImmutableVector center = ImmutableVector.of(this.getLocation());
+        ImmutableVector otherCenter = ImmutableVector.of(other.getLocation());
+        Vector min = center.subtract(this.halfExtents);
+        Vector max = center.add(this.halfExtents);
+        Vector otherMin = otherCenter.subtract(other.halfExtents);
+        Vector otherMax = otherCenter.add(other.halfExtents);
+        return min.getX() <= otherMax.getX()
+                && max.getX() >= otherMin.getX()
+                && min.getY() <= otherMax.getY()
+                && max.getY() >= otherMin.getY()
+                && min.getZ() <= otherMax.getZ()
+                && max.getZ() >= otherMin.getZ();
     }
 }

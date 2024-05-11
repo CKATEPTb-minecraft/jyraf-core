@@ -1,7 +1,9 @@
 package dev.ckateptb.minecraft.jyraf.collider;
 
+import dev.ckateptb.minecraft.jyraf.Jyraf;
 import dev.ckateptb.minecraft.jyraf.collider.geometry.*;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
+import lombok.experimental.UtilityClass;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -11,80 +13,140 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 
+@UtilityClass
 public class Colliders {
-    public static final Function<World, AxisAlignedBoundingBoxCollider> BLOCK = world -> Colliders.aabb(world, ImmutableVector.ZERO, ImmutableVector.ONE);
+    private final Map<Tuple2<Class<? extends Collider<?>>, Class<? extends Collider<?>>>, ColliderIntersectHandler<?, ?>> intersects =
+            Collections.synchronizedMap(new HashMap<>());
 
-    public static AxisAlignedBoundingBoxCollider aabb(@NotNull Entity entity) {
+    static {
+        registerIntersect(SphereBoundingBoxCollider.class, SphereBoundingBoxCollider.class, (first, second) -> {
+            if (!first.getWorld().equals(second.getWorld())) return false;
+            return first.getLocation().toVector()
+                    .isInSphere(second.getLocation().toVector(), second.getRadius() + first.getRadius());
+        });
+        registerIntersect(SphereBoundingBoxCollider.class, AxisAlignedBoundingBoxCollider.class, (first, second) -> {
+            if (!first.getWorld().equals(second.getWorld())) return false;
+            return first.intersectsAABB(second);
+        });
+        registerIntersect(SphereBoundingBoxCollider.class, OrientedBoundingBoxCollider.class, (first, second) -> {
+            if (!first.getWorld().equals(second.getWorld())) return false;
+            return second.intersectsSphere(first);
+        });
+        registerIntersect(AxisAlignedBoundingBoxCollider.class, AxisAlignedBoundingBoxCollider.class, (first, second) -> {
+            if (!first.getWorld().equals(second.getWorld())) return false;
+            return first.intersectsAABB(second) || second.intersectsAABB(first);
+        });
+        registerIntersect(AxisAlignedBoundingBoxCollider.class, OrientedBoundingBoxCollider.class, (first, second) -> {
+            if (!first.getWorld().equals(second.getWorld())) return false;
+            return second.intersectsAABB(first);
+        });
+        registerIntersect(OrientedBoundingBoxCollider.class, OrientedBoundingBoxCollider.class, (first, second) -> {
+            if (!first.getWorld().equals(second.getWorld())) return false;
+            return first.intersectsOBB(second);
+        });
+        registerIntersect(RayTraceCollider.class, RayTraceCollider.class, ((first, second) -> first.getObb().intersects(second.getObb())));
+        registerIntersect(RayTraceCollider.class, AxisAlignedBoundingBoxCollider.class, ((first, second) -> first.getObb().intersects(second)));
+        registerIntersect(RayTraceCollider.class, SphereBoundingBoxCollider.class, ((first, second) -> first.getObb().intersects(second)));
+        registerIntersect(RayTraceCollider.class, OrientedBoundingBoxCollider.class, ((first, second) -> first.getObb().intersects(second)));
+    }
+
+    public synchronized <F extends Collider<F>, S extends Collider<S>> void registerIntersect(@NotNull Class<F> first,
+                                                                                              @NotNull Class<S> second,
+                                                                                              ColliderIntersectHandler<F, S> handler) {
+        intersects.put(Tuples.of(first, second), handler);
+    }
+
+    @SuppressWarnings("unchecked")
+    public synchronized <F extends Collider<F>, S extends Collider<S>, RF extends Collider<RF>, RS extends Collider<RS>> ColliderIntersectHandler<RF, RS> findIntersect(Class<F> first, Class<S> second) {
+        Tuple2<Class<F>, Class<S>> objects = Tuples.of(first, second);
+        if (intersects.containsKey(objects)) {
+            return (ColliderIntersectHandler<RF, RS>) intersects.get(objects);
+        }
+        Tuple2<Class<S>, Class<F>> reversed = Tuples.of(second, first);
+        if (intersects.containsKey(reversed)) {
+            ColliderIntersectHandler<RF, RS> handler = (ColliderIntersectHandler<RF, RS>) intersects.get(reversed);
+            return (f, s) -> handler.intersect((RF) s, (RS) f);
+        }
+        if (first.equals(CombinedBoundingBoxCollider.class)) {
+            return Collider::intersects;
+        }
+        if (second.equals(CombinedBoundingBoxCollider.class)) {
+            return (f, s) -> s.intersects(f);
+        }
+        return (f, s) -> {
+            Jyraf.getPlugin().getLogger().warning("No collider intersect handler found for " + first + " and " + second);
+            return false;
+        };
+    }
+
+    public AxisAlignedBoundingBoxCollider aabb(World world, BoundingBox boundingBox) {
+        Vector center = boundingBox.getCenter();
+        Vector half = boundingBox.getMax().subtract(center);
+        return aabb(center.toLocation(world), half);
+    }
+
+    public AxisAlignedBoundingBoxCollider aabb(@NotNull Entity entity) {
         Objects.requireNonNull(entity);
-        ImmutableVector location = ImmutableVector.of(entity.getLocation());
-        double x = location.getX();
-        double y = location.getY();
-        double z = location.getZ();
-        double halfWidth = 0.5 * entity.getWidth();
-        ImmutableVector min = new ImmutableVector(x - halfWidth, y, z - halfWidth);
-        ImmutableVector max = new ImmutableVector(x + halfWidth, y + entity.getHeight(), z + halfWidth);
-        return new AxisAlignedBoundingBoxCollider(entity.getWorld(), min, max).at(location);
+        BoundingBox boundingBox = entity.getBoundingBox();
+        return aabb(entity.getWorld(), boundingBox);
     }
 
-    public static AxisAlignedBoundingBoxCollider aabb(@NotNull Block block) {
+    public AxisAlignedBoundingBoxCollider aabb(@NotNull Block block) {
         Objects.requireNonNull(block);
+        BoundingBox boundingBox = block.getBoundingBox();
         World world = block.getWorld();
-        BoundingBox box = block.getBoundingBox();
-        if (block.getType().isAir()) {
-            return new AxisAlignedBoundingBoxCollider(world, ImmutableVector.ZERO, ImmutableVector.ZERO);
+        if (block.isSolid() || block.getType().isAir() || boundingBox.getVolume() != 0) {
+            return aabb(world, boundingBox);
         }
-        if (box.getVolume() == 0 || !block.isSolid()) {
-            return BLOCK.apply(world).at(block.getLocation().toCenterLocation());
-        }
-        ImmutableVector min = new ImmutableVector(box.getMinX(), box.getMinY(), box.getMinZ());
-        ImmutableVector max = new ImmutableVector(box.getMaxX(), box.getMaxY(), box.getMaxZ());
-        return new AxisAlignedBoundingBoxCollider(world, min, max);
+        return aabb(block.getLocation().toCenterLocation());
     }
 
-    public static AxisAlignedBoundingBoxCollider aabb(@NotNull Location location) {
-        Objects.requireNonNull(location);
-        return BLOCK.apply(location.getWorld()).at(location);
+    public AxisAlignedBoundingBoxCollider aabb(@NotNull Location center) {
+        return aabb(center, ImmutableVector.ONE.multiply(0.5));
     }
 
-    public static AxisAlignedBoundingBoxCollider aabb(@NotNull World world, @NotNull Vector half) {
-        ImmutableVector max = ImmutableVector.of(half);
-        return new AxisAlignedBoundingBoxCollider(world, max.negative(), max);
+    public AxisAlignedBoundingBoxCollider aabb(@NotNull Location center, @NotNull Vector half) {
+        return new AxisAlignedBoundingBoxCollider(center, half);
     }
 
-    public static AxisAlignedBoundingBoxCollider aabb(@NotNull World world, @NotNull Vector min, @NotNull Vector max) {
-        return new AxisAlignedBoundingBoxCollider(world, ImmutableVector.of(min), ImmutableVector.of(max));
+    public SphereBoundingBoxCollider sphere(@NotNull Location center, double radius) {
+        return new SphereBoundingBoxCollider(center, radius);
     }
 
-    public static SphereBoundingBoxCollider sphere(@NotNull Location center, double radius) {
-        return sphere(center.getWorld(), ImmutableVector.of(center), radius);
+    public CombinedBoundingBoxCollider combined(@NotNull CombinedBoundingBoxCollider.CombinedIntersectsMode mode, @NotNull Collider<?>... colliders) {
+        return new CombinedBoundingBoxCollider(mode, colliders);
     }
 
-    public static SphereBoundingBoxCollider sphere(@NotNull World world, @NotNull Vector center, double radius) {
-        return new SphereBoundingBoxCollider(world, center, radius);
+    public CombinedBoundingBoxCollider disk(@NotNull OrientedBoundingBoxCollider obb, @NotNull SphereBoundingBoxCollider sphereCollider) {
+        return new CombinedBoundingBoxCollider(CombinedBoundingBoxCollider.CombinedIntersectsMode.ALL, sphereCollider, obb);
     }
 
-    public static CombinedBoundingBoxCollider combined(@NotNull World world, @NotNull CombinedBoundingBoxCollider.CombinedIntersectsMode mode, @NotNull Collider... colliders) {
-        return new CombinedBoundingBoxCollider(world, mode, colliders);
+    public OrientedBoundingBoxCollider obb(@NotNull Location center, @NotNull Vector half, @NotNull EulerAngle angle) {
+        return new OrientedBoundingBoxCollider(center, ImmutableVector.of(half), angle);
     }
 
-    public static CombinedBoundingBoxCollider disk(@NotNull World world, @NotNull OrientedBoundingBoxCollider obb, @NotNull SphereBoundingBoxCollider sphereCollider) {
-        return new CombinedBoundingBoxCollider(world, CombinedBoundingBoxCollider.CombinedIntersectsMode.ALL, sphereCollider, obb);
-    }
-
-    public static OrientedBoundingBoxCollider obb(@NotNull World world, @NotNull Vector center, @NotNull Vector max, @NotNull EulerAngle eulerAngle) {
-        return new OrientedBoundingBoxCollider(world, ImmutableVector.of(center), ImmutableVector.of(max), eulerAngle);
-    }
-
-    public static RayTraceCollider ray(@NotNull LivingEntity entity, double distance, double size) {
+    public RayTraceCollider ray(@NotNull LivingEntity entity, double distance, double size) {
         Location eyeLocation = entity.getEyeLocation();
-        return ray(entity.getWorld(), eyeLocation.toVector(), eyeLocation.getDirection(), distance, size);
+        return ray(eyeLocation, eyeLocation.getDirection(), size, size, distance);
     }
 
-    public static RayTraceCollider ray(@NotNull World world, @NotNull Vector center, @NotNull Vector direction, double distance, double size) {
-        return new RayTraceCollider(world, ImmutableVector.of(center), ImmutableVector.of(direction), distance, size);
+    public RayTraceCollider ray(@NotNull Location start, @NotNull Vector direction, double width, double height, double distance) {
+        return new RayTraceCollider(start, direction, width, height, distance);
+    }
+
+    public RayTraceCollider ray(@NotNull Location start, @NotNull Vector direction, Vector size) {
+        return new RayTraceCollider(start, direction, size);
+    }
+
+    public interface ColliderIntersectHandler<F extends Collider<F>, S extends Collider<S>> {
+        boolean intersect(F first, S second);
     }
 }
