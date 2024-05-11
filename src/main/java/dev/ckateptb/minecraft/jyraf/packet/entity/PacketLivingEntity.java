@@ -8,6 +8,7 @@ import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.LivingEntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.factory.PacketFactory;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,9 @@ public class PacketLivingEntity extends PacketEntity {
     }
 
     public @NotNull org.bukkit.inventory.ItemStack getItem(@NotNull EquipmentSlot slot) {
-        return SpigotConversionUtil.toBukkitItemStack(this.equipment[slot.ordinal()]);
+        ItemStack stack = this.equipment[slot.ordinal()];
+        if(stack == null) return new org.bukkit.inventory.ItemStack(Material.AIR);
+        return SpigotConversionUtil.toBukkitItemStack(stack);
     }
 
     public void animation(WrapperPlayServerEntityAnimation.EntityAnimationType animation, Player... players) {
