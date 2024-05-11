@@ -7,17 +7,21 @@ import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import com.github.retrooper.packetevents.util.Quaternion4f;
 import com.github.retrooper.packetevents.util.Vector3f;
 import dev.ckateptb.minecraft.jyraf.command.Command;
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.container.annotation.Component;
 import dev.ckateptb.minecraft.jyraf.menu.Menu;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketEntity;
+import dev.ckateptb.minecraft.jyraf.packet.entity.PacketHologram;
 import dev.ckateptb.minecraft.jyraf.packet.entity.PacketPlayer;
 import dev.ckateptb.minecraft.jyraf.packet.entity.enums.TeamColor;
 import dev.ckateptb.minecraft.jyraf.packet.entity.goal.FallEntityGoal;
 import dev.ckateptb.minecraft.jyraf.packet.entity.goal.LookEntityGoal;
+import dev.ckateptb.minecraft.jyraf.packet.entity.goal.NameTagGoal;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.EntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.display.BlockDisplayMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.display.ItemDisplayMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.other.FallingBlockMeta;
+import dev.ckateptb.minecraft.jyraf.packet.entity.meta.projectile.ItemEntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.PlayerMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.skin.Skin;
 import dev.ckateptb.minecraft.jyraf.packet.property.Property;
@@ -28,9 +32,11 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 
+import java.util.Arrays;
 import java.util.List;
 
 // TODO Remove. We don't need debugging commands in production
@@ -39,6 +45,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NpcCommand implements Command {
     private final WorldRepositoryService service;
+
+    @CommandMethod("jyrafholo <lines>")
+    @CommandPermission("jnpcs.admin")
+    public void holo(Player sender, @Argument("lines") String[] lines) {
+        PacketHologram entity = PacketEntity.hologram(sender.getLocation(), Arrays.stream(lines).map(Text::of).toList());
+        entity.setViewedByEveryone(true);
+        this.service.getRepository(PacketEntity.class, sender.getWorld())
+                .flatMap(repository -> repository.add(entity))
+                .subscribe();
+    }
 
     @CommandMethod("jyrafnpc <type> [data]")
     @CommandPermission("jnpcs.admin")
@@ -65,10 +81,14 @@ public class NpcCommand implements Command {
             blockDisplayMeta.setScale(new Vector3f());
             blockDisplayMeta.setRightRotation(quaternion4f);
         }
-        if(meta instanceof ItemDisplayMeta itemDisplayMeta) {
+        if (meta instanceof ItemDisplayMeta itemDisplayMeta) {
             itemDisplayMeta.setItem(SpigotConversionUtil.fromBukkitItemStack(Menu.builder().item(data).build()));
         }
+        if (meta instanceof ItemEntityMeta itemEntityMeta) {
+            itemEntityMeta.setItem(SpigotConversionUtil.fromBukkitItemStack(new ItemStack(data)));
+        }
         if (meta instanceof PlayerMeta playerMeta) {
+            entity.addGoal(new NameTagGoal(2, List.of(Text.of(sender.getName()))));
             playerMeta.setCapeEnabled(true);
             playerMeta.setHatEnabled(true);
             playerMeta.setJacketEnabled(true);

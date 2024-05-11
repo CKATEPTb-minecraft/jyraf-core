@@ -12,6 +12,7 @@ import dev.ckateptb.minecraft.jyraf.packet.property.Property;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
 import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
@@ -27,11 +28,11 @@ import java.util.UUID;
 // BlockDisplay doesn't work in packetevents use ItemDisplay instead
 @Getter
 public class PacketEntity extends RepositoryManaged {
-    private final int id;
-    private final UUID uuid;
-    private final EntityType type;
-    private final EntityMeta meta;
-    private final Location location;
+    protected final int id;
+    protected final UUID uuid;
+    protected final EntityType type;
+    protected final EntityMeta meta;
+    protected final Location location;
 
     protected PacketEntity(int id, UUID uuid, EntityType type, EntityMeta meta, Location location) {
         meta.getMetadata().getEntity().defer(() -> this);
@@ -41,6 +42,13 @@ public class PacketEntity extends RepositoryManaged {
         this.meta = meta;
         this.location = location.clone();
         this.addGoal(new ViewGoal());
+    }
+
+    public static PacketHologram hologram(Location location, Collection<Component> lines) {
+        int id = SpigotReflectionUtil.generateEntityId();
+        PacketHologram hologram = new PacketHologram(id, UUID.randomUUID(), location);
+        lines.forEach(hologram::addLine);
+        return hologram;
     }
 
     public static PacketEntity entity(EntityType type, Location location) {
@@ -77,6 +85,7 @@ public class PacketEntity extends RepositoryManaged {
                 this.location.add(vector);
             }
         });
+        this.getGoals().forEach(goal -> goal.onVelocity(this, vector.clone(), players.toArray(new Player[0])));
     }
 
     public void teleport(Location location, Collection<Player> players) {
@@ -90,6 +99,7 @@ public class PacketEntity extends RepositoryManaged {
                 factory.teleportEntity(player, this, onGround);
             }
         });
+        this.getGoals().forEach(goal -> goal.onTeleport(this, location.clone(), players.toArray(new Player[0])));
     }
 
     public void spawn(Collection<Player> players) {
