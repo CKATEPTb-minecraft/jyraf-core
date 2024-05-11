@@ -1,7 +1,7 @@
 package dev.ckateptb.minecraft.jyraf.repository.entity.asynchronous;
 
-import dev.ckateptb.minecraft.jyraf.colider.Colliders;
-import dev.ckateptb.minecraft.jyraf.colider.geometry.SphereBoundingBoxCollider;
+import dev.ckateptb.minecraft.jyraf.collider.Colliders;
+import dev.ckateptb.minecraft.jyraf.collider.geometry.SphereBoundingBoxCollider;
 import dev.ckateptb.minecraft.jyraf.repository.Repository;
 import dev.ckateptb.minecraft.jyraf.repository.entity.EntityRepository;
 import dev.ckateptb.minecraft.jyraf.repository.world.AbstractWorldRepository;
