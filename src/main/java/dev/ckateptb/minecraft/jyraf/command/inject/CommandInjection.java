@@ -1,5 +1,6 @@
 package dev.ckateptb.minecraft.jyraf.command.inject;
 
+import cloud.commandframework.CommandManager;
 import cloud.commandframework.annotations.AnnotationParser;
 import cloud.commandframework.arguments.parser.ParserRegistry;
 import cloud.commandframework.bukkit.BukkitCommandManager;
@@ -69,7 +70,9 @@ public class CommandInjection implements ComponentRegisterHandler, ContainerInit
                             .build()
             );
         });
-        ParserRegistry<CommandSender> registry = parser.manager().parserRegistry();
+        CommandManager<CommandSender> manager = parser.manager();
+        command.setCommandManager(manager);
+        ParserRegistry<CommandSender> registry = manager.parserRegistry();
         command.getParsers().forEach(registry::registerParserSupplier);
         parser.parse(command);
         parser.parseContainers();
