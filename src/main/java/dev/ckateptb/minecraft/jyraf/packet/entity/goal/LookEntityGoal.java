@@ -23,6 +23,7 @@ public class LookEntityGoal extends PacketGoal<PacketEntity> {
 
     @Override
     public Result onTick(PacketEntity entry, Player... players) {
+        if(players.length == 0) return Result.CONTINUE;
         Location location = entry.getLocation();
         ImmutableVector original = ImmutableVector.of(location);
         EntityType type = entry.getType();
