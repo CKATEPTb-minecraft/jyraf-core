@@ -3,6 +3,9 @@ package dev.ckateptb.minecraft.jyraf.packet.entity.meta.mobs.water;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.Metadata;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.types.ObjectData;
+import lombok.Getter;
+import lombok.Setter;
+import org.bukkit.DyeColor;
 import org.jetbrains.annotations.NotNull;
 
 public class TropicalFishMeta extends BaseFishMeta implements ObjectData {
@@ -15,26 +18,17 @@ public class TropicalFishMeta extends BaseFishMeta implements ObjectData {
     }
 
     public static int getVariantID(Variant variant) {
-        int id = 0;
-        id |= variant.patternColor;
-        id <<= 8;
-        id |= variant.bodyColor;
-        id <<= 8;
-        id |= variant.pattern.ordinal();
-        id <<= 8;
-        id |= variant.type.ordinal();
-        return id;
+        Pattern pattern = variant.getPattern();
+        DyeColor bodyColor = variant.getBodyColor();
+        DyeColor patternColor = variant.getPatternColor();
+        return pattern.getId() & '\uffff' | (bodyColor.ordinal() & 255) << 16 | (patternColor.ordinal() & 255) << 24;
     }
 
     public static Variant getVariantFromID(int variantID) {
-        Type type = Type.VALUES[variantID & 0xFF];
-        variantID >>= 8;
-        Pattern pattern = Pattern.VALUES[variantID & 0xFF];
-        variantID >>= 8;
-        byte bodyColor = (byte) (variantID & 0xFF);
-        variantID >>= 8;
-        byte patternColor = (byte) (variantID & 0xFF);
-        return new Variant(type, pattern, bodyColor, patternColor);
+        Pattern pattern = Pattern.fromVariant(variantID);
+        DyeColor bodyColor = DyeColor.values()[(variantID >> 16) & 0xFF];
+        DyeColor patternColor = DyeColor.values()[(variantID >> 24) & 0xFF];
+        return new Variant(pattern, bodyColor, patternColor);
     }
 
     public Variant getVariant() {
@@ -56,71 +50,50 @@ public class TropicalFishMeta extends BaseFishMeta implements ObjectData {
         return false;
     }
 
-    public enum Type {
-        SMALL,
-        LARGE,
-        INVISIBLE;
-
-        private final static Type[] VALUES = values();
-    }
-
+    @Getter
     public enum Pattern {
-        KOB, // FLOPPER for LARGE fish
-        SUNSTREAK, // STRIPEY for LARGE fish
-        SNOOPER, // GLITTER for LARGE fish
-        DASHER, // BLOCKFISH for LARGE fish
-        BRINELY, // BETTY for LARGE fish
-        SPOTTY, // CLAYFISH for LARGE fish
-        NONE;
+        KOB(0, 0),
+        SUNSTREAK(0, 1),
+        SNOOPER(0, 2),
+        DASHER(0, 3),
+        BRINELY(0, 4),
+        SPOTTY(0, 5),
+        FLOPPER(1, 0),
+        STRIPEY(1, 1),
+        GLITTER(1, 2),
+        BLOCKFISH(1, 3),
+        BETTY(1, 4),
+        CLAYFISH(1, 5);
 
-        private final static Pattern[] VALUES = values();
+        private final int size;
+        private final int id;
+
+        Pattern(int size, int id) {
+            this.size = size;
+            this.id = size | id << 8;
+        }
+
+        public static Pattern fromVariant(int variant) {
+            int id = variant & '\uffff';
+            for (Pattern pattern : values()) {
+                if (pattern.id == id) {
+                    return pattern;
+                }
+            }
+            return Pattern.KOB;
+        }
     }
 
+    @Getter
+    @Setter
     public static class Variant {
-
-        private Type type;
         private Pattern pattern;
-        private byte bodyColor;
-        private byte patternColor;
+        private DyeColor bodyColor;
+        private DyeColor patternColor;
 
-        public Variant(@NotNull Type type, @NotNull Pattern pattern, byte bodyColor, byte patternColor) {
-            this.type = type;
+        public Variant(@NotNull Pattern pattern, DyeColor bodyColor, DyeColor patternColor) {
             this.pattern = pattern;
             this.bodyColor = bodyColor;
-            this.patternColor = patternColor;
-        }
-
-        @NotNull
-        public Type getType() {
-            return this.type;
-        }
-
-        public void setType(@NotNull Type type) {
-            this.type = type;
-        }
-
-        @NotNull
-        public Pattern getPattern() {
-            return this.pattern;
-        }
-
-        public void setPattern(@NotNull Pattern pattern) {
-            this.pattern = pattern;
-        }
-
-        public byte getBodyColor() {
-            return this.bodyColor;
-        }
-
-        public void setBodyColor(byte bodyColor) {
-            this.bodyColor = bodyColor;
-        }
-
-        public byte getPatternColor() {
-            return this.patternColor;
-        }
-
-        public void setPatternColor(byte patternColor) {
             this.patternColor = patternColor;
         }
     }
