@@ -4,6 +4,7 @@ import dev.ckateptb.minecraft.jyraf.container.IoC;
 import dev.ckateptb.minecraft.jyraf.lazy.LazyLoader;
 import dev.ckateptb.minecraft.jyraf.math.ImmutableVector;
 import dev.ckateptb.minecraft.jyraf.repository.WorldRepositoryService;
+import dev.ckateptb.minecraft.jyraf.repository.entity.EntityRepository;
 import dev.ckateptb.minecraft.jyraf.repository.world.chunk.ChunkRepository;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
@@ -58,9 +59,8 @@ public interface Collider<T extends Collider<T>> {
         double finalRadius = FastMath.max(radius, FastMath.min(radius * 2, 9));
         return SERVICE.get()
                 .flatMap(service -> service.getRepository(Entity.class, world))
-                .flatMapMany(repository -> repository.getNearbyChunks(location, finalRadius, finalRadius))
-                .flatMap(ChunkRepository::get)
-                .cast(Entity.class)
+                .cast(EntityRepository.class)
+                .flatMapMany(repository -> repository.getNearbyEntities(location, finalRadius))
                 .filter(entity -> this.intersects(Colliders.aabb(entity)));
     }
 
