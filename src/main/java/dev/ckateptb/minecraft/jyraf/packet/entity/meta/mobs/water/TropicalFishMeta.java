@@ -41,7 +41,6 @@ public class TropicalFishMeta extends BaseFishMeta implements ObjectData {
 
     @Override
     public int getObjectData() {
-        // TODO: returns Entity ID of the owner (???)
         return 0;
     }
 

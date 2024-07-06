@@ -1,7 +1,9 @@
 package dev.ckateptb.minecraft.jyraf.packet.entity;
 
+import dev.ckateptb.minecraft.jyraf.component.Text;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.EntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.other.ArmorStandMeta;
+import dev.ckateptb.minecraft.jyraf.placeholder.PAPI;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import net.kyori.adventure.text.Component;
 import org.apache.commons.lang3.Validate;
@@ -14,13 +16,13 @@ import org.patheloper.api.pathing.strategy.PathfinderStrategy;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public class PacketHologram extends PacketEntity {
     private final List<PacketEntity> lines = new ArrayList<>();
+    private final Map<String, String> placeholders = new ConcurrentHashMap<>();
 
     protected PacketHologram(int id, UUID uuid, Location location) {
         super(id, uuid, EntityType.ARMOR_STAND,
@@ -44,7 +46,7 @@ public class PacketHologram extends PacketEntity {
             armorStandMeta.setSmall(true);
             armorStandMeta.setMarker(true);
         }
-        if(index >= this.lines.size()) {
+        if (index >= this.lines.size()) {
             this.lines.add(entity);
         } else {
             this.lines.get(index).despawn(this.currentViewers);
@@ -56,6 +58,18 @@ public class PacketHologram extends PacketEntity {
 
     public void addLine(@Nullable Component line) {
         this.setLine(lines.size(), line);
+    }
+
+    public synchronized void addPlaceholder(String key, String value) {
+        this.placeholders.put(key, value);
+    }
+
+    public synchronized String getPlaceholder(String key) {
+        return this.placeholders.get(key);
+    }
+
+    public synchronized boolean removePlaceholder(String key) {
+        return this.placeholders.remove(key) != null;
     }
 
     @Override
@@ -72,7 +86,9 @@ public class PacketHologram extends PacketEntity {
 
     @Override
     public void despawn(Collection<Player> players) {
+        this.getGoals().forEach(goal -> goal.beforeDespawn(this, players.toArray(new Player[0])));
         Flux.fromIterable(this.lines).subscribe(line -> line.despawn(players));
+        this.getGoals().forEach(goal -> goal.onDespawn(this, players.toArray(new Player[0])));
     }
 
     @Override
@@ -88,7 +104,22 @@ public class PacketHologram extends PacketEntity {
 
     @Override
     public void spawn(Collection<Player> players) {
-        Flux.fromIterable(this.lines).subscribe(line -> line.spawn(players));
+        this.getGoals().forEach(goal -> goal.beforeSpawn(this, players.toArray(new Player[0])));
+        Flux.fromIterable(players)
+                .flatMap(player -> Flux.fromIterable(this.lines)
+                        .doOnNext(line -> {
+                            Component original = line.meta.getCustomName();
+                            String[] placeholders = this.placeholders.entrySet()
+                                    .stream()
+                                    .flatMap(entity -> Stream.of(entity.getKey(), entity.getValue()))
+                                    .toArray(String[]::new);
+                            Component papi = Text.of(PAPI.setPlaceholders(player, Text.of(original)), placeholders);
+                            line.meta.setCustomName(papi);
+                            line.spawn(List.of(player));
+                            line.meta.setCustomName(original);
+                        }))
+                .subscribe();
+        this.getGoals().forEach(goal -> goal.onSpawn(this, players.toArray(new Player[0])));
     }
 
     @Override
@@ -104,6 +135,7 @@ public class PacketHologram extends PacketEntity {
                     PacketEntity line = objects.getT2();
                     line.teleport(location.clone().add(0, -0.3 * index, 0), players);
                 });
+        this.getGoals().forEach(goal -> goal.onTeleport(this, location.clone(), players.toArray(new Player[0])));
     }
 
     @Override
@@ -116,6 +148,7 @@ public class PacketHologram extends PacketEntity {
                     PacketEntity line = objects.getT2();
                     line.velocity(vector.clone().add(new Vector(0, -0.3 * index, 0)), players);
                 });
+        this.getGoals().forEach(goal -> goal.onVelocity(this, vector.clone(), players.toArray(new Player[0])));
     }
 
     @Override
