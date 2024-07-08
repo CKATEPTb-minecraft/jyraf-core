@@ -53,7 +53,9 @@ public class PacketLivingEntity extends PacketEntity {
     }
 
     public @NotNull org.bukkit.inventory.ItemStack getItem(@NotNull EquipmentSlot slot) {
-        ItemStack stack = this.equipment[slot.ordinal()];
+        int ordinal = slot.ordinal();
+        if(this.equipment.length <= ordinal) return new org.bukkit.inventory.ItemStack(Material.AIR);
+        ItemStack stack = this.equipment[ordinal];
         if(stack == null) return new org.bukkit.inventory.ItemStack(Material.AIR);
         return SpigotConversionUtil.toBukkitItemStack(stack);
     }
