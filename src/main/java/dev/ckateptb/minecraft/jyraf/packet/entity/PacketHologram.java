@@ -5,6 +5,7 @@ import dev.ckateptb.minecraft.jyraf.packet.entity.meta.EntityMeta;
 import dev.ckateptb.minecraft.jyraf.packet.entity.meta.other.ArmorStandMeta;
 import dev.ckateptb.minecraft.jyraf.placeholder.PAPI;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
@@ -18,9 +19,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class PacketHologram extends PacketEntity {
+    @Getter
     private final List<PacketEntity> lines = new ArrayList<>();
     private final Map<String, String> placeholders = new ConcurrentHashMap<>();
 
@@ -98,27 +101,30 @@ public class PacketHologram extends PacketEntity {
 
     @Override
     public void refresh(Collection<Player> players) {
-        Flux.fromIterable(this.lines).subscribe(line -> line.refresh(players));
+        Flux.fromIterable(this.lines).subscribe(line -> this.applyPlaceholders(players, line, player -> line.metadata(List.of(player))));
         this.teleport(this.location, players);
+    }
+
+    private void applyPlaceholders(Collection<Player> players, PacketEntity line, Consumer<Player> consumer) {
+        Flux.fromIterable(players)
+                .subscribe(player -> {
+                    Component original = line.meta.getCustomName();
+                    String[] placeholders = this.placeholders.entrySet()
+                            .stream()
+                            .flatMap(entity -> Stream.of(entity.getKey(), entity.getValue()))
+                            .toArray(String[]::new);
+                    Component papi = Text.of(PAPI.setPlaceholders(player, Text.of(original)), placeholders);
+                    line.meta.setCustomName(papi);
+                    consumer.accept(player);
+                    line.meta.setCustomName(original);
+                });
     }
 
     @Override
     public void spawn(Collection<Player> players) {
         this.getGoals().forEach(goal -> goal.beforeSpawn(this, players.toArray(new Player[0])));
-        Flux.fromIterable(players)
-                .flatMap(player -> Flux.fromIterable(this.lines)
-                        .doOnNext(line -> {
-                            Component original = line.meta.getCustomName();
-                            String[] placeholders = this.placeholders.entrySet()
-                                    .stream()
-                                    .flatMap(entity -> Stream.of(entity.getKey(), entity.getValue()))
-                                    .toArray(String[]::new);
-                            Component papi = Text.of(PAPI.setPlaceholders(player, Text.of(original)), placeholders);
-                            line.meta.setCustomName(papi);
-                            line.spawn(List.of(player));
-                            line.meta.setCustomName(original);
-                        }))
-                .subscribe();
+        Flux.fromIterable(this.lines)
+                .subscribe(line -> this.applyPlaceholders(players, line, player -> line.spawn(List.of(player))));
         this.getGoals().forEach(goal -> goal.onSpawn(this, players.toArray(new Player[0])));
     }
 
